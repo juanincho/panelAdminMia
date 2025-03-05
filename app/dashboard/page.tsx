@@ -1,33 +1,26 @@
-"use client"
+"use client";
 
 import { Card } from "@/components/ui/card";
 import { usePathname } from "next/navigation";
-import { 
-  BarChart3, 
-  Calendar, 
-  CheckCircle2, 
-  Clock, 
-  Users 
-} from "lucide-react";
+import { BarChart3, Calendar, CheckCircle2, Clock, Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
   const [data, setData] = useState([]);
-  useEffect(() =>{
-    const fetchData = async() => {
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const data = await fetch("../api/solicitudes");
+        const data = await fetch("/api/solicitudes");
         const response = await data.json();
         console.log(response);
-        setData(response);
-      }catch(error){
-        console.log(error);
-        console.log("hola");
+        // setData(response);
+      } catch (error) {
+        console.error(error);
       }
-    }
+    };
 
     fetchData();
-  }, [])
+  }, []);
 
   const pathname = usePathname();
   return (
@@ -36,7 +29,7 @@ export default function DashboardPage() {
         <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
         <div className="flex items-center space-x-4">
           <span className="text-sm text-muted-foreground">
-            Última actualización: {new Date().toLocaleString('es-ES')}
+            Última actualización: {new Date().toLocaleString("es-ES")}
           </span>
         </div>
       </div>
@@ -56,7 +49,10 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6" onClick={() => window.location.href = "/dashboard/pending"}>
+        <Card
+          className="p-6"
+          onClick={() => (window.location.href = "/dashboard/pending")}
+        >
           <div className="flex items-center space-x-4">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <Clock className="h-6 w-6 text-yellow-700" />
@@ -70,7 +66,10 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6" onClick={() => window.location.href = "/dashboard/completed"}>
+        <Card
+          className="p-6"
+          onClick={() => (window.location.href = "/dashboard/completed")}
+        >
           <div className="flex items-center space-x-4">
             <div className="p-2 bg-green-100 rounded-lg">
               <CheckCircle2 className="h-6 w-6 text-green-700" />
@@ -107,11 +106,14 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4 space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0">
+              <div
+                key={i}
+                className="flex items-center justify-between border-b pb-4 last:border-0"
+              >
                 <div>
                   <p className="font-medium">Cliente {i}</p>
                   <p className="text-sm text-muted-foreground">
-                    {new Date().toLocaleDateString('es-ES')}
+                    {new Date().toLocaleDateString("es-ES")}
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800">
@@ -129,11 +131,14 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4 space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between border-b pb-4 last:border-0">
+              <div
+                key={i}
+                className="flex items-center justify-between border-b pb-4 last:border-0"
+              >
                 <div>
                   <p className="font-medium">Reserva #{i} actualizada</p>
                   <p className="text-sm text-muted-foreground">
-                    hace {i} {i === 1 ? 'hora' : 'horas'}
+                    hace {i} {i === 1 ? "hora" : "horas"}
                   </p>
                 </div>
                 <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
