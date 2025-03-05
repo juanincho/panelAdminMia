@@ -1,4 +1,7 @@
+"use client"
+
 import { Card } from "@/components/ui/card";
+import { usePathname } from "next/navigation";
 import { 
   BarChart3, 
   Calendar, 
@@ -6,8 +9,26 @@ import {
   Clock, 
   Users 
 } from "lucide-react";
+import { useEffect, useState } from "react";
 
 export default function DashboardPage() {
+  const [data, setData] = useState([]);
+  useEffect(() =>{
+    const fetchData = async() => {
+      try {
+        const data = await fetch("../../api/posts");
+        const response = await data.json();
+        console.log(response);
+        setData(response);
+      }catch(error){
+        console.log(error);
+      }
+    }
+
+    fetchData();
+  }, [])
+
+  const pathname = usePathname();
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-center">
@@ -34,7 +55,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6" onClick={() => window.location.href = "/dashboard/pending"}>
           <div className="flex items-center space-x-4">
             <div className="p-2 bg-yellow-100 rounded-lg">
               <Clock className="h-6 w-6 text-yellow-700" />
@@ -48,7 +69,7 @@ export default function DashboardPage() {
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6" onClick={() => window.location.href = "/dashboard/completed"}>
           <div className="flex items-center space-x-4">
             <div className="p-2 bg-green-100 rounded-lg">
               <CheckCircle2 className="h-6 w-6 text-green-700" />
