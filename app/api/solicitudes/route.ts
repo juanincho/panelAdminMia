@@ -1,23 +1,27 @@
-export async function GET(req: Request): Promise<Response> {
+import { NextResponse } from "next/server";
+
+export async function GET() {
   try {
-    const response = await fetch("http://localhost:3001/v1/mia/solicitud", {
+    let response = await fetch("http://localhost:3001/v1/mia/solicitud", {
       headers: {
-        "x-api-key": API_KEY,
+        "x-api-key": API_KEY || "",
       },
     });
-    const json = await response.json();
-    return new Response(JSON.stringify(json), { status: 200 });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    console.log(response);
+    const data = await response.json();
+    console.log(data);
+    const nextResponse = NextResponse.json(data, { status: 200 });
+    nextResponse.headers.set("Cache-Control", "no-store");
+    return nextResponse;
   } catch (error) {
-    console.log(error);
-    return new Response(
-      JSON.stringify({
-        message:
-          "Puede ocurrir un accidente a la hora de manejar la conexión, revisa los logs del servidos",
-      }),
-      { status: 500, statusText: "Internal Server Error" }
+    console.error("Error fetching data:", error);
+    return NextResponse.json(
+      { error: "Error al obtener los datos" },
+      { status: 500 }
     );
   }
 }
-
-const API_KEY: string =
-  "nkt-U9TdZU63UENrblg1WI9I1Ln9NcGrOyaCANcpoS2PJT3BlbkFJ1KW2NIGUYF87cuvgUF3Q976fv4fPrnWQroZf0RzXTZTA942H3AMTKFKJHV6cTi8c6dd6tybUD65fybhPJT3BlbkFJ1KW2NIGPrnWQroZf0RzXTZTA942H3AMTKFy15whckAGSSRSTDvsvfHsrtbXhdrT";
