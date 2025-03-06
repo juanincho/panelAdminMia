@@ -5,7 +5,12 @@ export async function GET() {
     let response = await fetch("http://localhost:3001/v1/mia/solicitud", {
       headers: {
         "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache",
+        Pragma: "no-cache",
+        Expires: "0",
       },
+      cache: "no-store",
+      next: { revalidate: 0 },
     });
 
     if (!response.ok) {
@@ -14,8 +19,14 @@ export async function GET() {
     console.log(response);
     const data = await response.json();
     console.log(data);
-    const nextResponse = NextResponse.json(data, { status: 200 });
-    nextResponse.headers.set("Cache-Control", "no-store");
+    const nextResponse = NextResponse.json(data, {
+      status: 200,
+      headers: {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+    });
     return nextResponse;
   } catch (error) {
     console.error("Error fetching data:", error);
@@ -25,3 +36,6 @@ export async function GET() {
     );
   }
 }
+
+const API_KEY: string =
+  "nkt-U9TdZU63UENrblg1WI9I1Ln9NcGrOyaCANcpoS2PJT3BlbkFJ1KW2NIGUYF87cuvgUF3Q976fv4fPrnWQroZf0RzXTZTA942H3AMTKFKJHV6cTi8c6dd6tybUD65fybhPJT3BlbkFJ1KW2NIGPrnWQroZf0RzXTZTA942H3AMTKFy15whckAGSSRSTDvsvfHsrtbXhdrT";

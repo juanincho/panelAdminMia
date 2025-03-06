@@ -6,9 +6,12 @@ export default async function Dashboard() {
     // Realiza la petición desde el servidor
     const res = await fetch("http://localhost:3001/v1/mia/solicitud", {
       headers: {
-        "x-api-key": API_KEY || "", // Asegúrate de tener la API_KEY correctamente definida en el .env
-        cache: "no-cache", // Evita que se cachee la respuesta
+        "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
       },
+      cache: "no-store",
     });
 
     // Convierte la respuesta a JSON
@@ -20,19 +23,6 @@ export default async function Dashboard() {
       <Suspense fallback={<div>Cargando...</div>}>
         <DashboardModule data={json}></DashboardModule>
       </Suspense>
-      // <div>
-      //   <h1>Solicitudes</h1>
-      //   {json.length === 0 ? (
-      //     <p>No hay registros.</p>
-      //   ) : (
-      //     json.map((registro: any, index: number) => (
-      //       <div key={index}>
-      //         <p>{registro.nombre}</p>{" "}
-      //         {/* Ajusta los campos según tu estructura */}
-      //       </div>
-      //     ))
-      //   )}
-      // </div>
     );
   } catch (error) {
     console.log(error);
