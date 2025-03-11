@@ -180,7 +180,7 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-xl font-semibold">
+        <h2 className="text-xl font-semibold w-40 text-center">
           {format(currentDate, "MMMM yyyy", { locale: es })}
         </h2>
         <Button
