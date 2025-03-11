@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import DashboardModule from "./_dashboard";
+// import { TEST_RESERVATIONS } from "../../constants/mockData.ts";
 
 export default async function Dashboard() {
   try {
@@ -21,7 +22,7 @@ export default async function Dashboard() {
 
     return (
       <Suspense fallback={<div>Cargando...</div>}>
-        <DashboardModule data={json}></DashboardModule>
+        <DashboardModule data={json || []}></DashboardModule>
       </Suspense>
     );
   } catch (error) {

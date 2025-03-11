@@ -24,6 +24,7 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
+import { ReservationForm } from "@/app/dashboard/_reservation-form";
 
 interface Reservation {
   confirmation_code: string;
@@ -76,26 +77,6 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
   const handleEdit = (item: Reservation) => {
     setSelectedItem(item);
     setIsModalOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!selectedItem) return;
-
-    try {
-      // Aquí implementarías la lógica para guardar los cambios
-      await fetch(`/api/solicitudes/${selectedItem.confirmation_code}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(selectedItem),
-      });
-
-      setIsModalOpen(false);
-      window.location.reload(); // Recargar para obtener datos actualizados
-    } catch (error) {
-      console.error("Error al guardar:", error);
-    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -283,82 +264,16 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
 
       {/* Modal de Edición */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle>Editar Reserva</DialogTitle>
             <DialogDescription>
-              Realiza los cambios necesarios en la reserva. Haz clic en guardar
-              cuando termines.
+              Modifica los detalles de la reserva a continuación.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="hotel" className="text-right">
-                Hotel
-              </Label>
-              <Input
-                id="hotel"
-                value={selectedItem?.hotel || ""}
-                onChange={(e) =>
-                  setSelectedItem(
-                    selectedItem
-                      ? {
-                          ...selectedItem,
-                          hotel: e.target.value,
-                        }
-                      : null
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="room" className="text-right">
-                Habitación
-              </Label>
-              <Input
-                id="room"
-                value={selectedItem?.room || ""}
-                onChange={(e) =>
-                  setSelectedItem(
-                    selectedItem
-                      ? {
-                          ...selectedItem,
-                          room: e.target.value,
-                        }
-                      : null
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="total" className="text-right">
-                Total
-              </Label>
-              <Input
-                id="total"
-                type="number"
-                value={selectedItem?.total || ""}
-                onChange={(e) =>
-                  setSelectedItem(
-                    selectedItem
-                      ? {
-                          ...selectedItem,
-                          total: parseFloat(e.target.value),
-                        }
-                      : null
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
+          <div className="flex-1 overflow-y-auto pr-4 -mr-4">
+            <ReservationForm />
           </div>
-          <DialogFooter>
-            <Button type="submit" onClick={handleSave}>
-              Guardar cambios
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
