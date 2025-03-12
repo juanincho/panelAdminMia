@@ -272,7 +272,7 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-4 -mr-4">
-            <ReservationForm />
+            <ReservationForm item={selectedItem} />
           </div>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,13 +105,25 @@ const StatusModal: React.FC<StatusModalProps> = ({
   </AlertDialog>
 );
 
-export function ReservationForm() {
+interface Reservation {
+  confirmation_code: string;
+  id_viajero: number;
+  hotel: string;
+  check_in: string;
+  check_out: string;
+  room: string;
+  total: number;
+  status: string;
+}
+
+export function ReservationForm({ item }: { item: Reservation }) {
+  console.log(item);
   const [formData, setFormData] = useState({
     registrationDate: new Date().toISOString().split("T")[0],
-    checkIn: "",
-    checkOut: "",
+    check_in: item.check_in ? item.check_in.split("T")[0] : "",
+    check_out: item.check_out ? item.check_out.split("T")[0] : "",
     hotel: "",
-    reservationCode: "",
+    reservation_code: "",
     roomType: "",
     rooms: 1,
     mainTraveler: "",
@@ -166,10 +178,10 @@ export function ReservationForm() {
       // Reset form or close dialog if needed
       setFormData({
         registrationDate: new Date().toISOString().split("T")[0],
-        checkIn: "",
-        checkOut: "",
+        check_in: "",
+        check_out: "",
         hotel: "",
-        reservationCode: "",
+        reservation_code: "",
         roomType: "",
         rooms: 1,
         mainTraveler: "",
@@ -209,6 +221,10 @@ export function ReservationForm() {
     }));
   };
 
+  useEffect(() => {
+    console.log(formData);
+  }, [formData]);
+
   return (
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -228,14 +244,16 @@ export function ReservationForm() {
             <div className="flex gap-2">
               <Input
                 type="date"
-                value={formData.checkIn}
+                value={formData.check_in}
+                disabled
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, checkIn: e.target.value }))
                 }
               />
               <Input
                 type="date"
-                value={formData.checkOut}
+                value={formData.check_out}
+                disabled
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, checkOut: e.target.value }))
                 }
@@ -267,11 +285,11 @@ export function ReservationForm() {
           <div className="space-y-2">
             <Label>Código de reservación</Label>
             <Input
-              value={formData.reservationCode}
+              value={formData.reservation_code}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  reservationCode: e.target.value,
+                  reservation_code: e.target.value,
                 }))
               }
             />

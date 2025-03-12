@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import {
+  Factory,
   ChevronDown,
   Menu,
   LayoutDashboard,
@@ -35,12 +36,12 @@ const navItems: NavItem[] = [
   },
   {
     title: "Solicitudes",
-    href: "/dashboard",
+    href: "/dashboard/solicitudes",
     icon: FileText,
   },
   {
     title: "Reservas",
-    href: "/dashboard",
+    href: "/dashboard/reservas",
     icon: BookOpen,
   },
   {
@@ -62,6 +63,16 @@ const navItems: NavItem[] = [
     title: "Facturas",
     href: "/dashboard/invoices",
     icon: Receipt,
+  },
+  {
+    title: "Empresas",
+    href: "/dashboard/empresas",
+    icon: Factory,
+  },
+  {
+    title: "Viajeros",
+    href: "/dashboard/viajeros",
+    icon: Users,
   },
 ];
 
