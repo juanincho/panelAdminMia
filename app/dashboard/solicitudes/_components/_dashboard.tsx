@@ -7,12 +7,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   ChevronLeft,
   ChevronRight,
@@ -24,9 +21,10 @@ import {
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { ReservationForm } from "@/app/dashboard/_reservation-form";
+import { ReservationForm } from "@/app/dashboard/solicitudes/_components/_reservation-form";
+import { Traveler } from "@/app/_types";
 
-interface Reservation {
+interface Solicitud {
   confirmation_code: string;
   id_viajero: number;
   hotel: string;
@@ -37,12 +35,16 @@ interface Reservation {
   status: string;
 }
 
-export default function DashboardModule({ data }: { data: Reservation[] }) {
+export default function DashboardModule({
+  data,
+  viajeros,
+}: {
+  data: Solicitud[];
+  viajeros: Traveler[];
+}) {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Reservation | null>(null);
+  const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
-
-  console.log(data);
 
   // Estadísticas
   const totalReservations = data.length;
@@ -74,7 +76,7 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
     );
   });
 
-  const handleEdit = (item: Reservation) => {
+  const handleEdit = (item: Solicitud) => {
     setSelectedItem(item);
     setIsModalOpen(true);
   };
@@ -272,7 +274,9 @@ export default function DashboardModule({ data }: { data: Reservation[] }) {
             </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-4 -mr-4">
-            <ReservationForm item={selectedItem} />
+            {selectedItem && (
+              <ReservationForm viajeros={viajeros} item={selectedItem} />
+            )}
           </div>
         </DialogContent>
       </Dialog>

@@ -1,42 +1,36 @@
 import { Suspense } from "react";
-import DashboardModule from "./_components/_dashboard";
+import { TravelersPage } from "./_components/traveler_main";
 import { API_KEY } from "../../constants/constantes";
 
-export default async function Dashboard() {
+export default async function TravelerDashboard() {
   try {
     const apiEndpoints = [
-      "http://localhost:3001/v1/mia/solicitud",
+      "http://localhost:3001/v1/mia/empresas",
       "http://localhost:3001/v1/mia/viajeros",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>
         fetch(endpoint, {
+          method: "GET",
           headers: {
             "x-api-key": API_KEY || "",
             "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
+            "Content-Type": "application/json",
           },
           cache: "no-store",
         }).then((res) => res.json())
       )
     );
-    const [solicitudes, viajeros] = responses;
+    console.log(responses);
+    const [empresas, viajeros] = responses;
 
     return (
-      <Suspense fallback={<div>Cargando...</div>}>
-        <DashboardModule
-          data={solicitudes || []}
-          viajeros={viajeros || []}
-        ></DashboardModule>
+      <Suspense fallback={<h1>Cargando...</h1>}>
+        <TravelersPage empresas={empresas} viajeros={viajeros}></TravelersPage>
       </Suspense>
     );
   } catch (error) {
     console.log(error);
-    return (
-      <div>
-        <h1>Ocurrió un error al obtener los registros.</h1>
-      </div>
-    );
+    return <h1>Error al cargar los datos :c</h1>;
   }
 }

@@ -20,6 +20,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Traveler } from "@/app/_types";
 
 // Mock data - Replace with actual data when available
 const MOCK_HOTELS = ["Hotel A", "Hotel B", "Hotel C", "Hotel D"];
@@ -30,26 +31,23 @@ interface CompanionSelectProps {
   value: string;
   onChange: (value: string) => void;
   selectedTravelers: string[];
+  travelers: Traveler[];
 }
 
 const CompanionSelect: React.FC<CompanionSelectProps> = ({
   value,
   onChange,
-  selectedTravelers,
+  travelers,
 }) => {
-  const availableTravelers = MOCK_TRAVELERS.filter(
-    (t) => !selectedTravelers.includes(t)
-  );
-
   return (
     <Select value={value} onValueChange={onChange}>
       <SelectTrigger>
         <SelectValue placeholder="Seleccionar acompañante" />
       </SelectTrigger>
       <SelectContent>
-        {availableTravelers.map((traveler) => (
-          <SelectItem key={traveler} value={traveler}>
-            {traveler}
+        {travelers.map((traveler) => (
+          <SelectItem key={traveler.id_viajero} value={traveler.id_viajero}>
+            {`${traveler.primer_nombre} ${traveler.segundo_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno}`}
           </SelectItem>
         ))}
       </SelectContent>
@@ -116,7 +114,13 @@ interface Reservation {
   status: string;
 }
 
-export function ReservationForm({ item }: { item: Reservation }) {
+export function ReservationForm({
+  item,
+  viajeros,
+}: {
+  item: Reservation;
+  viajeros: Traveler[];
+}) {
   console.log(item);
   const [formData, setFormData] = useState({
     registrationDate: new Date().toISOString().split("T")[0],
@@ -341,9 +345,12 @@ export function ReservationForm({ item }: { item: Reservation }) {
                 <SelectValue placeholder="Seleccionar viajero" />
               </SelectTrigger>
               <SelectContent>
-                {MOCK_TRAVELERS.map((traveler) => (
-                  <SelectItem key={traveler} value={traveler}>
-                    {traveler}
+                {viajeros.map((traveler) => (
+                  <SelectItem
+                    key={traveler.id_viajero}
+                    value={traveler.id_viajero}
+                  >
+                    {`${traveler.primer_nombre} ${traveler.segundo_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno}`}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -372,6 +379,7 @@ export function ReservationForm({ item }: { item: Reservation }) {
           {formData.companions.map((companion, index) => (
             <div key={index} className="flex gap-2 mt-2">
               <CompanionSelect
+                travelers={viajeros}
                 value={companion}
                 onChange={(value) =>
                   setFormData((prev) => ({
