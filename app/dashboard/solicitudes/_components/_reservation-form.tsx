@@ -20,12 +20,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Traveler } from "@/app/_types";
+import { Traveler, Tax } from "@/app/_types";
 
 // Mock data - Replace with actual data when available
 const MOCK_HOTELS = ["Hotel A", "Hotel B", "Hotel C", "Hotel D"];
-const MOCK_TRAVELERS = ["John Doe", "Jane Smith", "Bob Johnson", "Alice Brown"];
-const MOCK_TAXES = ["IVA 16%", "Impuesto Hotelero 3%", "Impuesto Municipal 2%"];
 
 interface CompanionSelectProps {
   value: string;
@@ -58,17 +56,22 @@ const CompanionSelect: React.FC<CompanionSelectProps> = ({
 interface TaxSelectProps {
   value: string;
   onChange: (value: string) => void;
+  impuestos: Tax[];
 }
 
-const TaxSelect: React.FC<TaxSelectProps> = ({ value, onChange }) => (
+const TaxSelect: React.FC<TaxSelectProps> = ({
+  value,
+  onChange,
+  impuestos,
+}) => (
   <Select value={value} onValueChange={onChange}>
     <SelectTrigger>
       <SelectValue placeholder="Seleccionar impuesto" />
     </SelectTrigger>
     <SelectContent>
-      {MOCK_TAXES.map((tax) => (
-        <SelectItem key={tax} value={tax}>
-          {tax}
+      {impuestos.map((tax) => (
+        <SelectItem key={tax.id_impuesto} value={tax.id_impuesto.toString()}>
+          {tax.name}
         </SelectItem>
       ))}
     </SelectContent>
@@ -117,11 +120,13 @@ interface Reservation {
 export function ReservationForm({
   item,
   viajeros,
+  impuestos,
 }: {
   item: Reservation;
   viajeros: Traveler[];
+  impuestos: Tax[];
 }) {
-  console.log(item);
+  console.log(impuestos);
   const [formData, setFormData] = useState({
     registrationDate: new Date().toISOString().split("T")[0],
     check_in: item.check_in ? item.check_in.split("T")[0] : "",
@@ -132,7 +137,7 @@ export function ReservationForm({
     rooms: 1,
     mainTraveler: "",
     companions: [""],
-    roomCost: 0,
+    total: item.total,
     taxes: [""],
     comments: "",
   });
@@ -190,8 +195,8 @@ export function ReservationForm({
         rooms: 1,
         mainTraveler: "",
         companions: [""],
-        roomCost: 0,
-        taxes: [""],
+        total: 0,
+        taxes: [],
         comments: "",
       });
     }
@@ -225,7 +230,34 @@ export function ReservationForm({
     }));
   };
 
+  interface TaxProcesed {
+    id_impuesto: number;
+    name: string;
+    base: number;
+    total: number;
+  }
+
   useEffect(() => {
+    const impuestosProcesados: TaxProcesed[] = formData.taxes.includes("")
+      ? []
+      : formData.taxes.map((tax) => {
+          const impuesto: Tax = impuestos.filter(
+            (impuesto) => impuesto.id_impuesto.toString() === tax
+          )[0];
+          return {
+            id_impuesto: Number(tax),
+            name: impuesto.name,
+            base: formData.total,
+            total: formData.total * impuesto.rate,
+          };
+        });
+
+    let servicio = {
+      total: formData.total,
+      impuestos: impuestosProcesados,
+    };
+    console.log(servicio);
+    console.log(item.total);
     console.log(formData);
   }, [formData]);
 
@@ -363,11 +395,11 @@ export function ReservationForm({
               type="number"
               min="0"
               step="0.01"
-              value={formData.roomCost}
+              value={formData.total}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  roomCost: parseFloat(e.target.value),
+                  total: parseFloat(e.target.value),
                 }))
               }
             />
@@ -427,6 +459,7 @@ export function ReservationForm({
                     taxes: prev.taxes.map((t, i) => (i === index ? value : t)),
                   }))
                 }
+                impuestos={impuestos}
               />
               <Button
                 type="button"

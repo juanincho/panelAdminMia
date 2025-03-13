@@ -23,3 +23,9 @@ export interface Traveler {
   telefono: number;
   status: "active" | "inactive";
 }
+
+export interface Tax {
+  id_impuesto: number;
+  name: string;
+  rate: number;
+}

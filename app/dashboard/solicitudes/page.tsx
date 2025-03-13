@@ -7,6 +7,7 @@ export default async function Dashboard() {
     const apiEndpoints = [
       "http://localhost:3001/v1/mia/solicitud",
       "http://localhost:3001/v1/mia/viajeros",
+      "http://localhost:3001/v1/mia/impuestos",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>
@@ -21,13 +22,15 @@ export default async function Dashboard() {
         }).then((res) => res.json())
       )
     );
-    const [solicitudes, viajeros] = responses;
+    console.log(responses);
+    const [solicitudes, viajeros, impuestos] = responses;
 
     return (
       <Suspense fallback={<div>Cargando...</div>}>
         <DashboardModule
           data={solicitudes || []}
           viajeros={viajeros || []}
+          impuestos={impuestos || []}
         ></DashboardModule>
       </Suspense>
     );

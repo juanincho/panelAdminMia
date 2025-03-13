@@ -22,7 +22,7 @@ import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { ReservationForm } from "@/app/dashboard/solicitudes/_components/_reservation-form";
-import { Traveler } from "@/app/_types";
+import { Traveler, Tax } from "@/app/_types";
 
 interface Solicitud {
   confirmation_code: string;
@@ -38,9 +38,11 @@ interface Solicitud {
 export default function DashboardModule({
   data,
   viajeros,
+  impuestos,
 }: {
   data: Solicitud[];
   viajeros: Traveler[];
+  impuestos: Tax[];
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
@@ -275,7 +277,11 @@ export default function DashboardModule({
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-4 -mr-4">
             {selectedItem && (
-              <ReservationForm viajeros={viajeros} item={selectedItem} />
+              <ReservationForm
+                viajeros={viajeros}
+                item={selectedItem}
+                impuestos={impuestos}
+              />
             )}
           </div>
         </DialogContent>
