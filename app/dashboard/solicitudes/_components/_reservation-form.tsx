@@ -175,6 +175,13 @@ export function ReservationForm({
     status: "pending",
     fecha_limite_cancelacion: "",
     fecha_limite_pago: "",
+    numero_habitacion: "",
+    is_rembolsable: false,
+    monto_penalizacion: 0,
+    costo_total: 0,
+    costo_impuestos: 0,
+    costo_subtotal: 0,
+    cadena_hotel: "",
   });
 
   const [items, setItems] = useState<ReservationItem[]>([]);
@@ -223,9 +230,9 @@ export function ReservationForm({
     const taxTotal = itemTaxes.reduce((sum, tax) => sum + tax.amount, 0);
 
     return {
-      subtotal: item.cost - taxTotal,
+      subtotal: item.cost,
       taxes: itemTaxes,
-      total: item.cost,
+      total: item.cost + taxTotal,
     };
   };
 
@@ -248,20 +255,62 @@ export function ReservationForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // Validar que el total coincida
-      if (Math.abs(totals.total - formData.total) > 0.01) {
-        throw new Error(
-          `El total de los items (${totals.total.toFixed(
-            2
-          )}) no coincide con el total de la reservación (${formData.total.toFixed(
-            2
-          )})`
-        );
+      if (Math.abs(formData.total - totals.total) >= 0.1) {
+        throw new Error("No concuerdan los precios");
       }
+      console.log("entramos");
+      const nights = differenceInDays(
+        parseISO(formData.check_out),
+        parseISO(formData.check_in)
+      );
 
-      console.log("Form Data:", formData);
-      console.log("Items:", items);
-      console.log("Totals:", totals);
+      const response = {
+        total: totals.total,
+        impuestos: totals.taxes.reduce((sum, tax) => sum + tax.amount, 0),
+        is_credito: formData.is_credito,
+        fecha_limite_pago: formData.fecha_limite_pago,
+        booking: {
+          check_in: formData.check_in,
+          check_out: formData.check_out,
+          total: totals.total,
+          nombre_hotel: formData.hotel,
+          cadena_hotel: formData.cadena_hotel,
+          tipo_cuarto: formData.roomType,
+          numero_habitacion: formData.numero_habitacion,
+          noches: nights.toString(),
+          is_rembolsable: formData.is_rembolsable,
+          monto_penalizacion: formData.monto_penalizacion,
+          conciliado: false,
+          credito: formData.is_credito,
+          codigo_reservacion_hotel: formData.reservation_code,
+          estado: formData.status,
+          costo_total: formData.costo_total,
+          costo_impuestos: formData.costo_impuestos,
+          costo_subtotal: formData.costo_subtotal,
+          fecha_limite_pago: formData.fecha_limite_pago,
+          fecha_limite_cancelacion: formData.fecha_limite_cancelacion,
+          impuestos: totals.taxes.map((tax) => ({
+            id_impuesto: parseInt(tax.id),
+            name: tax.name,
+            total: tax.amount,
+            base: totals.subtotal,
+          })),
+          items,
+          viajeros: [
+            {
+              id_viajero: parseInt(formData.mainTraveler),
+              is_principal: true,
+            },
+            ...formData.companions.map((companion) => ({
+              id_viajero: parseInt(companion),
+              is_principal: false,
+            })),
+          ],
+        },
+      };
+      console.log(formData);
+      // console.log(items);
+      console.log("Response:", response);
 
       setModalState({
         isOpen: true,
@@ -280,27 +329,6 @@ export function ReservationForm({
 
   const closeModal = () => {
     setModalState((prev) => ({ ...prev, isOpen: false }));
-    if (modalState.success) {
-      setFormData({
-        registrationDate: new Date().toISOString().split("T")[0],
-        check_in: "",
-        check_out: "",
-        hotel: "",
-        reservation_code: "",
-        roomType: "",
-        rooms: 1,
-        mainTraveler: "",
-        companions: [""],
-        total: 0,
-        taxes: [],
-        comments: "",
-        fecha_pago_proveedor: "",
-        is_credito: false,
-        status: "pending",
-        fecha_limite_cancelacion: "",
-        fecha_limite_pago: "",
-      });
-    }
   };
 
   const addCompanion = () => {
@@ -344,6 +372,7 @@ export function ReservationForm({
     <>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
+          {/* Campos existentes */}
           <div className="space-y-2">
             <Label htmlFor="registrationDate">Fecha de registro</Label>
             <Input
@@ -399,6 +428,20 @@ export function ReservationForm({
           </div>
 
           <div className="space-y-2">
+            <Label>Cadena hotelera</Label>
+            <Input
+              value={formData.cadena_hotel}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  cadena_hotel: e.target.value,
+                }))
+              }
+              disabled
+            />
+          </div>
+
+          <div className="space-y-2">
             <Label>Código de reservación</Label>
             <Input
               value={formData.reservation_code}
@@ -431,15 +474,13 @@ export function ReservationForm({
           </div>
 
           <div className="space-y-2">
-            <Label>Número de habitaciones</Label>
+            <Label>Número de habitación</Label>
             <Input
-              type="number"
-              min="1"
-              value={formData.rooms}
+              value={formData.numero_habitacion}
               onChange={(e) =>
                 setFormData((prev) => ({
                   ...prev,
-                  rooms: parseInt(e.target.value),
+                  numero_habitacion: e.target.value,
                 }))
               }
             />
@@ -488,6 +529,103 @@ export function ReservationForm({
             </Select>
           </div>
 
+          {/* Nuevos campos */}
+          <div className="space-y-2">
+            <Label>Costo total (hotel)</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.costo_total}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  costo_total: parseFloat(e.target.value),
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Costo subtotal (hotel)</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.costo_subtotal}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  costo_subtotal: parseFloat(e.target.value),
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Costo impuestos (hotel)</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.costo_impuestos}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  costo_impuestos: parseFloat(e.target.value),
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Monto penalización</Label>
+            <Input
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.monto_penalizacion}
+              onChange={(e) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  monto_penalizacion: parseFloat(e.target.value),
+                }))
+              }
+            />
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_rembolsable"
+                checked={formData.is_rembolsable}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_rembolsable: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="is_rembolsable">¿Es reembolsable?</Label>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="is_credito"
+                checked={formData.is_credito}
+                onCheckedChange={(checked) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    is_credito: checked as boolean,
+                  }))
+                }
+              />
+              <Label htmlFor="is_credito">¿Es crédito?</Label>
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Fecha pago proveedor</Label>
             <Input
@@ -531,23 +669,7 @@ export function ReservationForm({
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_credito"
-                checked={formData.is_credito}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_credito: checked as boolean,
-                  }))
-                }
-              />
-              <Label htmlFor="is_credito">¿Es crédito?</Label>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Total de la reservación</Label>
+            <Label>Total de la reservación (cliente)</Label>
             <Input
               type="number"
               min="0"
