@@ -9,7 +9,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -19,95 +18,71 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { X, Plus, Trash } from "lucide-react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { X } from "lucide-react";
 import { Traveler, Tax } from "@/app/_types";
 import { differenceInDays, parseISO } from "date-fns";
 
-// Mock data - Replace with actual data when available
-const MOCK_HOTELS = ["Hotel A", "Hotel B", "Hotel C", "Hotel D"];
+interface BookingItem {
+  id_item: number;
+  total: number;
+  subtotal: number;
+  impuestos: {
+    id_impuesto: number;
+    name: string;
+    total: number;
+    base: number;
+    rate: number;
+  }[];
+}
+
+interface BookingData {
+  check_in: string;
+  check_out: string;
+  total: number;
+  nombre_hotel: string;
+  cadena_hotel: string;
+  tipo_cuarto: string;
+  numero_habitacion: string;
+  noches: string;
+  is_rembolsable: boolean;
+  monto_penalizacion: number;
+  conciliado: boolean;
+  credito: boolean;
+  codigo_reservacion_hotel: string;
+  estado: string;
+  costo_total: number;
+  costo_impuestos: number;
+  costo_subtotal: number;
+  fecha_limite_pago: string;
+  fecha_limite_cancelacion: string;
+  items: BookingItem[];
+  viajeros: {
+    id_viajero: number;
+    is_principal: boolean;
+  }[];
+}
+
+interface ReservationData {
+  total: number;
+  impuestos: number;
+  is_credito: boolean;
+  fecha_limite_pago: string;
+  booking: BookingData;
+}
 
 interface CompanionSelectProps {
   value: string;
   onChange: (value: string) => void;
-  selectedTravelers: string[];
   travelers: Traveler[];
 }
-
-interface ReservationItem {
-  id: string;
-  type: "night" | "extra";
-  description: string;
-  cost: number;
-  taxes: string[];
-}
-
-interface ItemTotal {
-  subtotal: number;
-  taxes: {
-    id: string;
-    name: string;
-    amount: number;
-  }[];
-  total: number;
-}
-
-const CompanionSelect: React.FC<CompanionSelectProps> = ({
-  value,
-  onChange,
-  travelers,
-}) => {
-  return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="Seleccionar acompañante" />
-      </SelectTrigger>
-      <SelectContent>
-        {travelers.map((traveler) => (
-          <SelectItem key={traveler.id_viajero} value={traveler.id_viajero}>
-            {`${traveler.primer_nombre} ${traveler.segundo_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno}`}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-};
-
-interface TaxSelectProps {
-  value: string[];
-  onChange: (value: string[]) => void;
-  impuestos: Tax[];
-}
-
-const TaxSelect: React.FC<TaxSelectProps> = ({
-  value,
-  onChange,
-  impuestos,
-}) => (
-  <Select
-    value={value[0]}
-    onValueChange={(newValue) => onChange([...value, newValue])}
-  >
-    <SelectTrigger>
-      <SelectValue placeholder="Seleccionar impuesto" />
-    </SelectTrigger>
-    <SelectContent>
-      {impuestos.map((tax) => (
-        <SelectItem key={tax.id_impuesto} value={tax.id_impuesto.toString()}>
-          {tax.name}
-        </SelectItem>
-      ))}
-    </SelectContent>
-  </Select>
-);
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -116,26 +91,11 @@ interface StatusModalProps {
   message: string;
 }
 
-const StatusModal: React.FC<StatusModalProps> = ({
-  isOpen,
-  onClose,
-  success,
-  message,
-}) => (
-  <AlertDialog open={isOpen}>
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>
-          {success ? "Operación Exitosa" : "Error"}
-        </AlertDialogTitle>
-        <AlertDialogDescription>{message}</AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogAction onClick={onClose}>Confirmar</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-);
+interface CustomTax {
+  id: string;
+  name: string;
+  rate: number;
+}
 
 interface Reservation {
   confirmation_code: string;
@@ -148,6 +108,27 @@ interface Reservation {
   status: string;
 }
 
+const StatusModal: React.FC<StatusModalProps> = ({
+  isOpen,
+  onClose,
+  success,
+  message,
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{success ? "Operación Exitosa" : "Error"}</DialogTitle>
+          <DialogDescription>{message}</DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button onClick={onClose}>Aceptar</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export function ReservationForm({
   item,
   viajeros,
@@ -157,348 +138,519 @@ export function ReservationForm({
   viajeros: Traveler[];
   impuestos: Tax[];
 }) {
-  const [formData, setFormData] = useState({
-    registrationDate: new Date().toISOString().split("T")[0],
-    check_in: item.check_in ? item.check_in.split("T")[0] : "",
-    check_out: item.check_out ? item.check_out.split("T")[0] : "",
-    hotel: "",
-    reservation_code: "",
-    roomType: "",
-    rooms: 1,
-    mainTraveler: "",
-    companions: [""],
+  const [customTaxes, setCustomTaxes] = useState<CustomTax[]>([]);
+  const [newTaxName, setNewTaxName] = useState("");
+  const [newTaxRate, setNewTaxRate] = useState("");
+
+  const [formData, setFormData] = useState<ReservationData>({
     total: item.total,
-    taxes: [""],
-    comments: "",
-    fecha_pago_proveedor: "",
+    impuestos: 0,
     is_credito: false,
-    status: "pending",
-    fecha_limite_cancelacion: "",
-    fecha_limite_pago: "",
-    numero_habitacion: "",
-    is_rembolsable: false,
-    monto_penalizacion: 0,
-    costo_total: 0,
-    costo_impuestos: 0,
-    costo_subtotal: 0,
-    cadena_hotel: "",
+    fecha_limite_pago: new Date().toISOString().split("T")[0],
+    booking: {
+      check_in: item.check_in.split("T")[0],
+      check_out: item.check_out.split("T")[0],
+      total: item.total,
+      nombre_hotel: item.hotel,
+      cadena_hotel: "",
+      tipo_cuarto: item.room,
+      numero_habitacion: "",
+      noches: "0",
+      is_rembolsable: false,
+      monto_penalizacion: 0,
+      conciliado: false,
+      credito: false,
+      codigo_reservacion_hotel: "",
+      estado: "pending",
+      costo_total: 0,
+      costo_impuestos: 0,
+      costo_subtotal: 0,
+      fecha_limite_pago: new Date().toISOString().split("T")[0],
+      fecha_limite_cancelacion: new Date().toISOString().split("T")[0],
+      items: [],
+      viajeros: [
+        {
+          id_viajero: item.id_viajero,
+          is_principal: true,
+        },
+      ],
+    },
   });
 
-  const [items, setItems] = useState<ReservationItem[]>([]);
+  const [selectedTaxes, setSelectedTaxes] = useState<Tax[]>([]);
   const [modalState, setModalState] = useState({
     isOpen: false,
     success: false,
     message: "",
   });
 
-  // Calcular noches cuando cambian las fechas
   useEffect(() => {
-    if (formData.check_in && formData.check_out) {
+    if (formData.booking.check_in && formData.booking.check_out) {
       const nights = differenceInDays(
-        parseISO(formData.check_out),
-        parseISO(formData.check_in)
+        parseISO(formData.booking.check_out),
+        parseISO(formData.booking.check_in)
       );
 
       if (nights > 0) {
-        const nightItems: ReservationItem[] = Array.from(
+        const costPerNight = formData.total / nights;
+        const newItems: BookingItem[] = Array.from(
           { length: nights },
           (_, index) => ({
-            id: `night-${index}`,
-            type: "night",
-            description: `Noche ${index + 1}`,
-            cost: formData.total / nights,
-            taxes: [],
+            id_item: index,
+            total: costPerNight,
+            subtotal: costPerNight,
+            impuestos: selectedTaxes.map((tax) => ({
+              id_impuesto: tax.id_impuesto,
+              name: tax.name,
+              total: costPerNight * tax.rate,
+              base: costPerNight,
+              rate: tax.rate,
+            })),
           })
         );
-        setItems(nightItems);
+
+        const totalImpuestos = selectedTaxes.reduce(
+          (sum, tax) => sum + formData.total * tax.rate,
+          0
+        );
+
+        setFormData((prev) => ({
+          ...prev,
+          impuestos: totalImpuestos,
+          booking: {
+            ...prev.booking,
+            noches: nights.toString(),
+            items: newItems,
+          },
+        }));
       }
     }
-  }, [formData.check_in, formData.check_out, formData.total]);
-
-  // Calcular totales
-  const calculateItemTotal = (item: ReservationItem): ItemTotal => {
-    const itemTaxes = item.taxes.map((taxId) => {
-      const tax = impuestos.find((t) => t.id_impuesto.toString() === taxId);
-      if (!tax) return { id: taxId, name: "Unknown", amount: 0 };
-      return {
-        id: taxId,
-        name: tax.name,
-        amount: item.cost * (tax.rate / 100),
-      };
-    });
-
-    const taxTotal = itemTaxes.reduce((sum, tax) => sum + tax.amount, 0);
-
-    return {
-      subtotal: item.cost,
-      taxes: itemTaxes,
-      total: item.cost + taxTotal,
-    };
-  };
-
-  const totals = items.reduce(
-    (acc, item) => {
-      const itemTotal = calculateItemTotal(item);
-      return {
-        subtotal: acc.subtotal + itemTotal.subtotal,
-        taxes: acc.taxes.concat(itemTotal.taxes),
-        total: acc.total + itemTotal.total,
-      };
-    },
-    {
-      subtotal: 0,
-      taxes: [] as { id: string; name: string; amount: number }[],
-      total: 0,
-    }
-  );
+  }, [
+    formData.booking.check_in,
+    formData.booking.check_out,
+    formData.total,
+    selectedTaxes,
+  ]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      if (Math.abs(formData.total - totals.total) >= 0.1) {
-        throw new Error("No concuerdan los precios");
-      }
-      console.log("entramos");
-      const nights = differenceInDays(
-        parseISO(formData.check_out),
-        parseISO(formData.check_in)
+    let objeto = {
+      ...formData,
+      booking: {
+        ...formData.booking,
+        subtotal: formData.total * 0.84,
+        impuestos: formData.total * 0.16,
+      },
+    };
+    console.log("Datos de la reservación:", formData);
+  };
+
+  const addCompanion = (id_viajero: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      booking: {
+        ...prev.booking,
+        viajeros: [
+          ...prev.booking.viajeros,
+          {
+            id_viajero,
+            is_principal: false,
+          },
+        ],
+      },
+    }));
+  };
+
+  const removeCompanion = (id_viajero: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      booking: {
+        ...prev.booking,
+        viajeros: prev.booking.viajeros.filter(
+          (v) => v.id_viajero !== id_viajero || v.is_principal
+        ),
+      },
+    }));
+  };
+
+  const updateItemCost = (id_item: number, newCost: number) => {
+    setFormData((prev) => {
+      const updatedItems = prev.booking.items.map((item) => {
+        if (item.id_item === id_item) {
+          const subtotal = newCost;
+          const impuestos = selectedTaxes.map((tax) => ({
+            id_impuesto: tax.id_impuesto,
+            name: tax.name,
+            total: subtotal * tax.rate,
+            base: subtotal,
+            rate: tax.rate,
+          }));
+
+          const total =
+            subtotal + impuestos.reduce((sum, tax) => sum + tax.total, 0);
+
+          return {
+            ...item,
+            subtotal,
+            total,
+            impuestos,
+          };
+        }
+        return item;
+      });
+
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + item.subtotal,
+        0
+      );
+      const totalImpuestos = selectedTaxes.reduce(
+        (sum, tax) => sum + newTotal * tax.rate,
+        0
       );
 
-      const response = {
-        total: totals.total,
-        impuestos: totals.taxes.reduce((sum, tax) => sum + tax.amount, 0),
-        is_credito: formData.is_credito,
-        fecha_limite_pago: formData.fecha_limite_pago,
+      return {
+        ...prev,
+        total: newTotal,
+        impuestos: totalImpuestos,
         booking: {
-          check_in: formData.check_in,
-          check_out: formData.check_out,
-          total: totals.total,
-          nombre_hotel: formData.hotel,
-          cadena_hotel: formData.cadena_hotel,
-          tipo_cuarto: formData.roomType,
-          numero_habitacion: formData.numero_habitacion,
-          noches: nights.toString(),
-          is_rembolsable: formData.is_rembolsable,
-          monto_penalizacion: formData.monto_penalizacion,
-          conciliado: false,
-          credito: formData.is_credito,
-          codigo_reservacion_hotel: formData.reservation_code,
-          estado: formData.status,
-          costo_total: formData.costo_total,
-          costo_impuestos: formData.costo_impuestos,
-          costo_subtotal: formData.costo_subtotal,
-          fecha_limite_pago: formData.fecha_limite_pago,
-          fecha_limite_cancelacion: formData.fecha_limite_cancelacion,
-          impuestos: totals.taxes.map((tax) => ({
-            id_impuesto: parseInt(tax.id),
-            name: tax.name,
-            total: tax.amount,
-            base: totals.subtotal,
-          })),
-          items,
-          viajeros: [
-            {
-              id_viajero: parseInt(formData.mainTraveler),
-              is_principal: true,
-            },
-            ...formData.companions.map((companion) => ({
-              id_viajero: parseInt(companion),
-              is_principal: false,
-            })),
-          ],
+          ...prev.booking,
+          items: updatedItems,
+          total: newTotal + totalImpuestos,
         },
       };
-      console.log(formData);
-      // console.log(items);
-      console.log("Response:", response);
+    });
+  };
 
-      setModalState({
-        isOpen: true,
-        success: true,
-        message: "La reservación se ha guardado exitosamente",
-      });
-    } catch (error: any) {
-      setModalState({
-        isOpen: true,
-        success: false,
-        message:
-          error.message || "Ha ocurrido un error al guardar la reservación",
-      });
+  const addCustomTax = () => {
+    if (newTaxName && newTaxRate) {
+      const newTax: CustomTax = {
+        id: `custom-${Date.now()}`,
+        name: newTaxName,
+        rate: parseFloat(newTaxRate) / 100,
+      };
+      setCustomTaxes([...customTaxes, newTax]);
+      setNewTaxName("");
+      setNewTaxRate("");
     }
   };
 
-  const closeModal = () => {
-    setModalState((prev) => ({ ...prev, isOpen: false }));
-  };
+  const handleTaxSelect = (tax: Tax | CustomTax) => {
+    const taxToAdd = {
+      id_impuesto: "id" in tax ? parseInt(tax.id) : tax.id_impuesto,
+      name: tax.name,
+      rate: tax.rate,
+    };
 
-  const addCompanion = () => {
-    setFormData((prev) => ({
-      ...prev,
-      companions: [...prev.companions, ""],
-    }));
-  };
-
-  const removeCompanion = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      companions: prev.companions.filter((_, i) => i !== index),
-    }));
-  };
-
-  const addItem = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        id: `extra-${Date.now()}`,
-        type: "extra",
-        description: "",
-        cost: 0,
-        taxes: [],
-      },
-    ]);
-  };
-
-  const removeItem = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
-  };
-
-  const updateItem = (id: string, field: keyof ReservationItem, value: any) => {
-    setItems((prev) =>
-      prev.map((item) => (item.id === id ? { ...item, [field]: value } : item))
+    setSelectedTaxes((prev) =>
+      prev.find((t) => t.id_impuesto === taxToAdd.id_impuesto)
+        ? prev.filter((t) => t.id_impuesto !== taxToAdd.id_impuesto)
+        : [...prev, taxToAdd as Tax]
     );
   };
 
   return (
-    <>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
-          {/* Campos existentes */}
-          <div className="space-y-2">
-            <Label htmlFor="registrationDate">Fecha de registro</Label>
-            <Input
-              id="registrationDate"
-              type="date"
-              value={formData.registrationDate}
-              disabled
-            />
-          </div>
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <Label>Hotel</Label>
+          <Input value={formData.booking.nombre_hotel} disabled />
+        </div>
 
-          <div className="space-y-2">
-            <Label>Check-in / Check-out</Label>
-            <div className="flex gap-2">
-              <Input
-                type="date"
-                value={formData.check_in}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, check_in: e.target.value }))
-                }
-              />
-              <Input
-                type="date"
-                value={formData.check_out}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    check_out: e.target.value,
-                  }))
-                }
-              />
-            </div>
-          </div>
+        <div>
+          <Label>Tipo de habitación</Label>
+          <Input value={formData.booking.tipo_cuarto} disabled />
+        </div>
 
-          <div className="space-y-2">
-            <Label>Hotel</Label>
-            <Select
-              value={formData.hotel}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, hotel: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar hotel" />
-              </SelectTrigger>
-              <SelectContent>
-                {MOCK_HOTELS.map((hotel) => (
-                  <SelectItem key={hotel} value={hotel}>
-                    {hotel}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        <div>
+          <Label>Check-in</Label>
+          <Input type="date" value={formData.booking.check_in} disabled />
+        </div>
 
-          <div className="space-y-2">
-            <Label>Cadena hotelera</Label>
-            <Input
-              value={formData.cadena_hotel}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  cadena_hotel: e.target.value,
-                }))
-              }
-              disabled
-            />
-          </div>
+        <div>
+          <Label>Check-out</Label>
+          <Input type="date" value={formData.booking.check_out} disabled />
+        </div>
 
-          <div className="space-y-2">
-            <Label>Código de reservación</Label>
-            <Input
-              value={formData.reservation_code}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  reservation_code: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Tipo de habitación</Label>
-            <Select
-              value={formData.roomType}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, roomType: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="sencilla">Sencilla</SelectItem>
-                <SelectItem value="doble">Doble</SelectItem>
-                <SelectItem value="penthouse">Pent House</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Número de habitación</Label>
-            <Input
-              value={formData.numero_habitacion}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
+        <div>
+          <Label>Número de habitación</Label>
+          <Input
+            value={formData.booking.numero_habitacion}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
                   numero_habitacion: e.target.value,
-                }))
-              }
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Código de reservación</Label>
+          <Input
+            value={formData.booking.codigo_reservacion_hotel}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  codigo_reservacion_hotel: e.target.value,
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Costo total (hotel)</Label>
+          <Input
+            type="number"
+            value={formData.booking.costo_total}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  costo_total: parseFloat(e.target.value),
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Costo subtotal (hotel)</Label>
+          <Input
+            type="number"
+            value={formData.booking.costo_subtotal}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  costo_subtotal: parseFloat(e.target.value),
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Costo impuestos (hotel)</Label>
+          <Input
+            type="number"
+            value={formData.booking.costo_impuestos}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  costo_impuestos: parseFloat(e.target.value),
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Monto penalización</Label>
+          <Input
+            type="number"
+            value={formData.booking.monto_penalizacion}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  monto_penalizacion: parseFloat(e.target.value),
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Fecha límite de pago</Label>
+          <Input
+            type="date"
+            value={formData.booking.fecha_limite_pago}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  fecha_limite_pago: e.target.value,
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div>
+          <Label>Fecha límite de cancelación</Label>
+          <Input
+            type="date"
+            value={formData.booking.fecha_limite_cancelacion}
+            onChange={(e) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  fecha_limite_cancelacion: e.target.value,
+                },
+              }))
+            }
+          />
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="is_rembolsable"
+            checked={formData.booking.is_rembolsable}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({
+                ...prev,
+                booking: {
+                  ...prev.booking,
+                  is_rembolsable: checked as boolean,
+                },
+              }))
+            }
+          />
+          <Label htmlFor="is_rembolsable">¿Es reembolsable?</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="is_credito"
+            checked={formData.is_credito}
+            onCheckedChange={(checked) =>
+              setFormData((prev) => ({
+                ...prev,
+                is_credito: checked as boolean,
+                booking: {
+                  ...prev.booking,
+                  credito: checked as boolean,
+                },
+              }))
+            }
+          />
+          <Label htmlFor="is_credito">¿Es crédito?</Label>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Impuestos aplicables</Label>
+
+        <div className="flex gap-4 items-end mb-4">
+          <div className="flex-1">
+            <Label>Nombre del impuesto</Label>
+            <Input
+              value={newTaxName}
+              onChange={(e) => setNewTaxName(e.target.value)}
+              placeholder="Ej: IVA Especial"
             />
           </div>
+          <div className="flex-1">
+            <Label>Tasa (%)</Label>
+            <Input
+              type="number"
+              value={newTaxRate}
+              onChange={(e) => setNewTaxRate(e.target.value)}
+              placeholder="Ej: 16"
+            />
+          </div>
+          <Button type="button" onClick={addCustomTax}>
+            Agregar
+          </Button>
+        </div>
 
-          <div className="space-y-2">
-            <Label>Viajero principal</Label>
-            <Select
-              value={formData.mainTraveler}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, mainTraveler: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar viajero" />
-              </SelectTrigger>
-              <SelectContent>
-                {viajeros.map((traveler) => (
+        <div className="grid grid-cols-2 gap-4">
+          {impuestos.map((tax) => (
+            <div key={tax.id_impuesto} className="flex items-center space-x-2">
+              <Checkbox
+                id={`tax-${tax.id_impuesto}`}
+                checked={selectedTaxes.some(
+                  (t) => t.id_impuesto === tax.id_impuesto
+                )}
+                onCheckedChange={() => handleTaxSelect(tax)}
+              />
+              <Label htmlFor={`tax-${tax.id_impuesto}`}>
+                {tax.name} ({tax.rate * 100}%)
+              </Label>
+            </div>
+          ))}
+
+          {customTaxes.map((tax) => (
+            <div key={tax.id} className="flex items-center space-x-2">
+              <Checkbox
+                id={tax.id}
+                checked={selectedTaxes.some((t) => t.name === tax.name)}
+                onCheckedChange={() => handleTaxSelect(tax)}
+              />
+              <Label htmlFor={tax.id}>
+                {tax.name} ({tax.rate * 100}%)
+              </Label>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() =>
+                  setCustomTaxes(customTaxes.filter((t) => t.id !== tax.id))
+                }
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <Label>Viajeros</Label>
+        <div className="space-y-2">
+          {formData.booking.viajeros.map((viajero) => {
+            const travelerData = viajeros.find(
+              (t) => t.id_viajero === viajero.id_viajero.toString()
+            );
+            return (
+              <div key={viajero.id_viajero} className="flex items-center gap-2">
+                <Input
+                  value={
+                    travelerData
+                      ? `${travelerData.primer_nombre} ${travelerData.segundo_nombre} ${travelerData.apellido_paterno} ${travelerData.apellido_materno}`
+                      : ""
+                  }
+                  disabled
+                />
+                {!viajero.is_principal && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeCompanion(viajero.id_viajero)}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            );
+          })}
+          <Select onValueChange={(value) => addCompanion(parseInt(value))}>
+            <SelectTrigger>
+              <SelectValue placeholder="Agregar acompañante" />
+            </SelectTrigger>
+            <SelectContent>
+              {viajeros
+                .filter(
+                  (t) =>
+                    !formData.booking.viajeros.some(
+                      (v) => v.id_viajero.toString() === t.id_viajero
+                    )
+                )
+                .map((traveler) => (
                   <SelectItem
                     key={traveler.id_viajero}
                     value={traveler.id_viajero}
@@ -506,384 +658,83 @@ export function ReservationForm({
                     {`${traveler.primer_nombre} ${traveler.segundo_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno}`}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Estado de la solicitud</Label>
-            <Select
-              value={formData.status}
-              onValueChange={(value) =>
-                setFormData((prev) => ({ ...prev, status: value }))
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Seleccionar estado" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="pending">Pendiente</SelectItem>
-                <SelectItem value="completed">Completado</SelectItem>
-                <SelectItem value="cancelled">Cancelado</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* Nuevos campos */}
-          <div className="space-y-2">
-            <Label>Costo total (hotel)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.costo_total}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  costo_total: parseFloat(e.target.value),
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Costo subtotal (hotel)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.costo_subtotal}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  costo_subtotal: parseFloat(e.target.value),
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Costo impuestos (hotel)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.costo_impuestos}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  costo_impuestos: parseFloat(e.target.value),
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Monto penalización</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.monto_penalizacion}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  monto_penalizacion: parseFloat(e.target.value),
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_rembolsable"
-                checked={formData.is_rembolsable}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_rembolsable: checked as boolean,
-                  }))
-                }
-              />
-              <Label htmlFor="is_rembolsable">¿Es reembolsable?</Label>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="is_credito"
-                checked={formData.is_credito}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    is_credito: checked as boolean,
-                  }))
-                }
-              />
-              <Label htmlFor="is_credito">¿Es crédito?</Label>
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label>Fecha pago proveedor</Label>
-            <Input
-              type="date"
-              value={formData.fecha_pago_proveedor}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  fecha_pago_proveedor: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Fecha límite cancelación</Label>
-            <Input
-              type="date"
-              value={formData.fecha_limite_cancelacion}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  fecha_limite_cancelacion: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Fecha límite pago</Label>
-            <Input
-              type="date"
-              value={formData.fecha_limite_pago}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  fecha_limite_pago: e.target.value,
-                }))
-              }
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Total de la reservación (cliente)</Label>
-            <Input
-              type="number"
-              min="0"
-              step="0.01"
-              value={formData.total}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  total: parseFloat(e.target.value),
-                }))
-              }
-            />
-          </div>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <Label>Viajeros acompañantes</Label>
-          {formData.companions.map((companion, index) => (
-            <div key={index} className="flex gap-2 mt-2">
-              <CompanionSelect
-                travelers={viajeros}
-                value={companion}
-                onChange={(value) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    companions: prev.companions.map((c, i) =>
-                      i === index ? value : c
-                    ),
-                  }))
-                }
-                selectedTravelers={[
-                  formData.mainTraveler,
-                  ...formData.companions.filter((_, i) => i !== index),
-                ]}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="icon"
-                onClick={() => removeCompanion(index)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2"
-            onClick={addCompanion}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Agregar acompañante
-          </Button>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <Label>Items de la reservación</Label>
-            <Button type="button" variant="outline" onClick={addItem}>
-              <Plus className="h-4 w-4 mr-2" />
-              Agregar item
-            </Button>
-          </div>
-
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Descripción</TableHead>
-                <TableHead>Costo</TableHead>
-                <TableHead>Impuestos</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Acciones</TableHead>
+      <div className="space-y-4">
+        <Label>Items de la reservación</Label>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Descripción</TableHead>
+              <TableHead>Subtotal</TableHead>
+              {selectedTaxes.map((tax) => (
+                <TableHead key={tax.id_impuesto}>
+                  {tax.name} ({(tax.rate * 100).toFixed(0)}%)
+                </TableHead>
+              ))}
+              <TableHead>Total</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {formData.booking.items.map((item, index) => (
+              <TableRow key={item.id_item}>
+                <TableCell>Noche {index + 1}</TableCell>
+                <TableCell>
+                  <Input
+                    type="number"
+                    value={item.subtotal}
+                    onChange={(e) =>
+                      updateItemCost(item.id_item, parseFloat(e.target.value))
+                    }
+                  />
+                </TableCell>
+                {selectedTaxes.map((tax) => {
+                  const itemTax = item.impuestos.find(
+                    (t) => t.id_impuesto === tax.id_impuesto
+                  );
+                  return (
+                    <TableCell key={tax.id_impuesto}>
+                      ${itemTax ? itemTax.total.toFixed(2) : "0.00"}
+                    </TableCell>
+                  );
+                })}
+                <TableCell>${item.total.toFixed(2)}</TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.map((item) => {
-                const itemTotal = calculateItemTotal(item);
+            ))}
+            <TableRow>
+              <TableCell className="font-bold">Totales</TableCell>
+              <TableCell className="font-bold">
+                ${formData.total.toFixed(2)}
+              </TableCell>
+              {selectedTaxes.map((tax) => {
+                const totalTax = formData.total * tax.rate;
                 return (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      {item.type === "night" ? (
-                        item.description
-                      ) : (
-                        <Input
-                          value={item.description}
-                          onChange={(e) =>
-                            updateItem(item.id, "description", e.target.value)
-                          }
-                          placeholder="Descripción del cargo"
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Input
-                        type="number"
-                        value={item.cost}
-                        onChange={(e) =>
-                          updateItem(
-                            item.id,
-                            "cost",
-                            parseFloat(e.target.value)
-                          )
-                        }
-                        placeholder="Costo"
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <TaxSelect
-                        value={item.taxes}
-                        onChange={(value) =>
-                          updateItem(item.id, "taxes", value)
-                        }
-                        impuestos={impuestos}
-                      />
-                      {item.taxes.map((taxId, index) => {
-                        const tax = impuestos.find(
-                          (t) => t.id_impuesto.toString() === taxId
-                        );
-                        const taxAmount =
-                          itemTotal.taxes.find((t) => t.id === taxId)?.amount ||
-                          0;
-                        return tax ? (
-                          <div
-                            key={index}
-                            className="flex items-center gap-2 mt-1"
-                          >
-                            <span className="text-sm">
-                              {tax.name} (${taxAmount.toFixed(2)})
-                            </span>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                updateItem(
-                                  item.id,
-                                  "taxes",
-                                  item.taxes.filter((_, i) => i !== index)
-                                )
-                              }
-                            >
-                              <X className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        ) : null;
-                      })}
-                    </TableCell>
-                    <TableCell>${itemTotal.total.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeItem(item.id)}
-                      >
-                        <Trash className="h-4 w-4" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <TableCell key={tax.id_impuesto} className="font-bold">
+                    ${totalTax.toFixed(2)}
+                  </TableCell>
                 );
               })}
-              <TableRow>
-                <TableCell colSpan={2} className="font-bold">
-                  Totales
-                </TableCell>
-                <TableCell>
-                  {totals.taxes
-                    .reduce((acc, tax) => {
-                      const existingTax = acc.find((t) => t.id === tax.id);
-                      if (existingTax) {
-                        existingTax.amount += tax.amount;
-                      } else {
-                        acc.push({ ...tax });
-                      }
-                      return acc;
-                    }, [] as typeof totals.taxes)
-                    .map((tax, index) => (
-                      <div key={index} className="text-sm">
-                        {tax.name}: ${tax.amount.toFixed(2)}
-                      </div>
-                    ))}
-                </TableCell>
-                <TableCell className="font-bold">
-                  ${totals.total.toFixed(2)}
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
+              <TableCell className="font-bold">
+                ${(formData.total + formData.impuestos).toFixed(2)}
+              </TableCell>
+            </TableRow>
+          </TableBody>
+        </Table>
+      </div>
 
-        <div className="space-y-2">
-          <Label>Comentarios</Label>
-          <Textarea
-            value={formData.comments}
-            onChange={(e) =>
-              setFormData((prev) => ({ ...prev, comments: e.target.value }))
-            }
-            placeholder="Agregar comentarios sobre la reserva..."
-          />
-        </div>
-
-        <Button type="submit" className="w-full">
-          Guardar Reserva
-        </Button>
-      </form>
+      <Button type="submit" className="w-full">
+        Guardar Reserva
+      </Button>
 
       <StatusModal
         isOpen={modalState.isOpen}
-        onClose={closeModal}
+        onClose={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
         success={modalState.success}
         message={modalState.message}
       />
-    </>
+    </form>
   );
 }
