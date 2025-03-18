@@ -29,6 +29,7 @@ import {
 import { X } from "lucide-react";
 import { Traveler, Tax } from "@/app/_types";
 import { differenceInDays, parseISO } from "date-fns";
+import { API_KEY } from "../../../constants/constantes";
 
 interface BookingItem {
   id_item: number;
@@ -240,9 +241,28 @@ export function ReservationForm({
         ...formData.booking,
         subtotal: formData.total * 0.84,
         impuestos: formData.total * 0.16,
+        estado: "Confirmada",
       },
     };
-    console.log("Datos de la reservación:", formData);
+    console.log(objeto);
+    try {
+      const response = await fetch("http://localhost:3001/v1/mia/reservas", {
+        method: "POST",
+        headers: {
+          "x-api-key": API_KEY || "",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Content-type": "application/json",
+        },
+        cache: "no-store",
+        body: JSON.stringify(objeto),
+      });
+      const json = await response.json();
+      console.log(json);
+    } catch (error) {
+      console.log(error);
+    }
+
+    console.log("Datos de la reservación:", objeto);
   };
 
   const addCompanion = (id_viajero: number) => {
