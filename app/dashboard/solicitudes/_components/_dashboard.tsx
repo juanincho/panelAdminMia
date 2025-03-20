@@ -25,6 +25,8 @@ import { ReservationForm } from "@/app/dashboard/solicitudes/_components/_reserv
 import { Traveler, Tax } from "@/app/_types";
 
 interface Solicitud {
+  id_servicio: string;
+  id_solicitud: string;
   confirmation_code: string;
   id_viajero: number;
   hotel: string;
@@ -52,7 +54,7 @@ export default function DashboardModule({
   const totalReservations = data.length;
   const pendingReservations = data.filter((r) => r.status === "pending").length;
   const completedReservations = data.filter(
-    (r) => r.status === "completed"
+    (r) => r.status === "complete"
   ).length;
   const uniqueCustomers = new Set(data.map((r) => r.id_viajero)).size;
 
@@ -112,10 +114,6 @@ export default function DashboardModule({
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Panel de Control</h1>
-      </div>
-
       {/* Cards de Resumen */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="p-6">
@@ -277,11 +275,7 @@ export default function DashboardModule({
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-4 -mr-4">
             {selectedItem && (
-              <ReservationForm
-                viajeros={viajeros}
-                item={selectedItem}
-                impuestos={impuestos}
-              />
+              <ReservationForm viajeros={viajeros} item={selectedItem} />
             )}
           </div>
         </DialogContent>

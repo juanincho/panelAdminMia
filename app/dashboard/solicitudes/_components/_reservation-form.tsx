@@ -37,9 +37,11 @@ interface NightCost {
   night: number;
   baseCost: number;
   taxes: {
+    base: number;
+    total: number;
     name: string;
     rate: number;
-    amount: number;
+    mount: number;
   }[];
   totalWithTaxes: number;
 }
@@ -56,18 +58,49 @@ interface ReservationFormProps {
   viajeros: Traveler[];
 }
 
+const estados = ["Confirmada", "Cancelada", "En proceso"];
+const taxes = [
+  {
+    id: 1,
+    selected: false,
+    descripcion: "IVA (16%)",
+    name: "IVA",
+    rate: 0.16,
+    mount: 0,
+  },
+  {
+    id: 2,
+    selected: false,
+    descripcion: "ISH (3%)",
+    name: "ISH",
+    rate: 0.03,
+    mount: 0,
+  },
+  {
+    id: 3,
+    selected: false,
+    descripcion: "Saneamiento ($32)",
+    name: "Saneamiento",
+    rate: 0,
+    mount: 32,
+  },
+];
+
 export function ReservationForm({ item, viajeros }: ReservationFormProps) {
   const [activeTab, setActiveTab] = useState("cliente");
   const [selectedTraveler, setSelectedTraveler] = useState<string>("");
   const [companions, setCompanions] = useState<string[]>([]);
-  const [totalSalePrice, setTotalSalePrice] = useState<number>(0);
+  const [totalSalePrice, setTotalSalePrice] = useState<number>(item.total);
   const [totalCost, setTotalCost] = useState<number>(0);
+  const [totalCostImpuestos, setTotalCostImpuestos] = useState<number>(0);
   const [nights, setNights] = useState<NightCost[]>([]);
-  const [enabledTaxes, setEnabledTaxes] = useState({
-    iva: true,
-    ish: true,
-    saneamiento: true,
+  const [client, setClient] = useState({
+    estado: "Confirmada",
   });
+  const [proveedor, setProveedor] = useState({
+    codigo_reservacion_hotel: "",
+  });
+  const [enabledTaxes, setEnabledTaxes] = useState(taxes);
   const [customTaxes, setCustomTaxes] = useState<
     { name: string; rate: number }[]
   >([]);
@@ -86,26 +119,85 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
 
       if (nightsCount > 0 && totalCost > 0) {
         const costPerNight = totalCost / nightsCount;
+        const taxFilter = enabledTaxes.filter((tax) => tax.selected);
         const newNights: NightCost[] = Array.from(
           { length: nightsCount },
           (_, index) => ({
             night: index + 1,
             baseCost: costPerNight,
-            taxes: [
-              { name: "IVA", rate: 0.16, amount: costPerNight * 0.16 },
-              { name: "ISH", rate: 0.03, amount: costPerNight * 0.03 },
-              { name: "Saneamiento", rate: 0, amount: 32 },
-            ],
-            totalWithTaxes: costPerNight + costPerNight * 0.19 + 32,
+            taxes: taxFilter.map(({ name, rate, mount }) => ({
+              name,
+              rate,
+              mount,
+              base: costPerNight,
+              total: costPerNight * rate + mount,
+            })),
+            totalWithTaxes: taxFilter.reduce(
+              (prev, current) =>
+                prev + (costPerNight * current.rate + current.mount),
+              costPerNight
+            ),
           })
         );
         setNights(newNights);
+
+        const costoTotal = newNights.reduce(
+          (prev, current) => prev + current.totalWithTaxes,
+          0
+        );
+        setTotalCostImpuestos(costoTotal);
       }
     }
-  }, [item.check_in, item.check_out, totalCost]);
+  }, [item.check_in, item.check_out, totalCost, enabledTaxes]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const nightsCount = differenceInDays(
+      parseISO(item.check_out),
+      parseISO(item.check_in)
+    );
+    const objeto = {
+      id_solicitud: item.id_solicitud,
+      id_servicio: item.id_servicio,
+      estado: client.estado,
+      check_in: item.check_in.split("T")[0],
+      check_out: item.check_out.split("T")[0],
+      id_viajero: item.id_viajero,
+      nombre_hotel: item.hotel,
+      total: item.total,
+      subtotal: parseFloat((item.total * 0.84).toFixed(2)),
+      impuestos: parseFloat((item.total * 0.16).toFixed(2)),
+      tipo_cuarto: item.room,
+      noches: nightsCount,
+      costo_subtotal: totalCost,
+      costo_total: totalCostImpuestos,
+      costo_impuestos: totalCostImpuestos - totalCost,
+      codigo_reservacion_hotel: proveedor.codigo_reservacion_hotel,
+      items: nights.map((item_booking) => ({
+        total: item_booking.totalWithTaxes,
+        subtotal: item_booking.baseCost,
+        impuestos: item_booking.totalWithTaxes - item_booking.baseCost,
+        taxes: item_booking.taxes,
+      })),
+    };
+
+    try {
+      const response = await fetch("http://localhost:3001/v1/mia/reservas", {
+        method: "POST",
+        headers: {
+          "x-api-key": API_KEY || "",
+          "Content-Type": "application/json",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+        cache: "no-store",
+        body: JSON.stringify(objeto),
+      }).then((res) => res.json());
+      console.log(response);
+    } catch (error) {
+      console.log(error);
+    }
     // Implementation for form submission
   };
 
@@ -117,9 +209,7 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
     setCustomTaxes(customTaxes.filter((_, i) => i !== index));
   };
 
-  const generateCoupon = () => {
-    // Implementation for coupon generation
-  };
+  const generateCoupon = () => {};
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -131,17 +221,21 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
         </TabsList>
 
         <TabsContent value="cliente" className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid  md:grid-cols-2 gap-4 sm:grid-cols-1">
             <div>
               <Label>Check-in</Label>
-              <Input type="date" value={item.check_in} />
+              <Input type="date" disabled value={item.check_in.split("T")[0]} />
             </div>
             <div>
               <Label>Check-out</Label>
-              <Input type="date" value={item.check_out} />
+              <Input
+                type="date"
+                disabled
+                value={item.check_out.split("T")[0]}
+              />
             </div>
 
-            <div>
+            {/* <div>
               <Label>Viajero Principal</Label>
               <Select
                 value={selectedTraveler}
@@ -161,6 +255,10 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                   ))}
                 </SelectContent>
               </Select>
+            </div> */}
+            <div>
+              <Label>#ID viajero</Label>
+              <Input value={item.id_viajero} disabled />
             </div>
 
             <div>
@@ -168,7 +266,7 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
               <Input value={item.hotel} disabled />
             </div>
 
-            <div>
+            {/* <div>
               <Label>Tipo de Habitación</Label>
               <Select>
                 <SelectTrigger>
@@ -178,8 +276,12 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                   <SelectItem value="standard">Standard</SelectItem>
                   <SelectItem value="deluxe">Deluxe</SelectItem>
                   <SelectItem value="suite">Suite</SelectItem>
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                  </Select>
+                </div> */}
+            <div>
+              <Label>Habitación</Label>
+              <Input value={item.room} disabled />
             </div>
 
             <div>
@@ -191,6 +293,26 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
               />
             </div>
           </div>
+          <div>
+            <Label>Estado</Label>
+            <Select
+              value={client.estado}
+              onValueChange={(e) => {
+                setClient((prev) => ({ ...prev, estado: e }));
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar estado" />
+              </SelectTrigger>
+              <SelectContent>
+                {estados.map((estado) => (
+                  <SelectItem key={estado} value={estado}>
+                    {`${estado}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </TabsContent>
 
         <TabsContent value="proveedor" className="space-y-4">
@@ -198,10 +320,18 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label>Código de Reserva</Label>
-                <Input />
+                <Input
+                  value={proveedor.codigo_reservacion_hotel}
+                  onChange={(e) =>
+                    setProveedor((prev) => ({
+                      ...prev,
+                      codigo_reservacion_hotel: e.target.value,
+                    }))
+                  }
+                />
               </div>
               <div>
-                <Label>Costo Total (con impuestos)</Label>
+                <Label>Costo Total (sin impuestos)</Label>
                 <Input
                   type="number"
                   value={totalCost}
@@ -211,32 +341,26 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
             </div>
 
             <div className="flex gap-4 items-center">
-              <Checkbox
-                checked={enabledTaxes.iva}
-                onCheckedChange={(checked) =>
-                  setEnabledTaxes({ ...enabledTaxes, iva: checked as boolean })
-                }
-              />
-              <Label>IVA (16%)</Label>
-
-              <Checkbox
-                checked={enabledTaxes.ish}
-                onCheckedChange={(checked) =>
-                  setEnabledTaxes({ ...enabledTaxes, ish: checked as boolean })
-                }
-              />
-              <Label>ISH (3%)</Label>
-
-              <Checkbox
-                checked={enabledTaxes.saneamiento}
-                onCheckedChange={(checked) =>
-                  setEnabledTaxes({
-                    ...enabledTaxes,
-                    saneamiento: checked as boolean,
-                  })
-                }
-              />
-              <Label>Saneamiento ($32)</Label>
+              {enabledTaxes.map((tax, id) => {
+                return (
+                  <Label key={tax.name + id}>
+                    <Checkbox
+                      checked={tax.selected}
+                      onCheckedChange={(checked) => {
+                        const arrayUpdate = enabledTaxes.map((obj) => ({
+                          ...obj,
+                          selected:
+                            obj.id == tax.id
+                              ? (checked as boolean)
+                              : obj.selected,
+                        }));
+                        setEnabledTaxes(arrayUpdate);
+                      }}
+                    />
+                    {` ${tax.descripcion}`}
+                  </Label>
+                );
+              })}
 
               <Button type="button" variant="outline" onClick={addCustomTax}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -280,9 +404,13 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                 <TableRow>
                   <TableHead>Noche</TableHead>
                   <TableHead>Costo Base</TableHead>
-                  <TableHead>IVA</TableHead>
-                  <TableHead>ISH</TableHead>
-                  <TableHead>Saneamiento</TableHead>
+                  {enabledTaxes
+                    .filter((tax) => tax.selected)
+                    .map((tax) => (
+                      <TableHead key={tax.name + tax.rate}>
+                        {tax.descripcion}
+                      </TableHead>
+                    ))}
                   {customTaxes.map((tax) => (
                     <TableHead key={tax.name}>{tax.name}</TableHead>
                   ))}
@@ -304,12 +432,37 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                     </TableCell>
                     {night.taxes.map((tax) => (
                       <TableCell key={tax.name}>
-                        ${tax.amount.toFixed(2)}
+                        ${tax.total.toFixed(2)}
                       </TableCell>
                     ))}
                     <TableCell>${night.totalWithTaxes.toFixed(2)}</TableCell>
                   </TableRow>
                 ))}
+              </TableBody>
+            </Table>
+            <Table>
+              <TableBody>
+                <TableRow className="bg-gray-100">
+                  <TableCell>Venta:</TableCell>
+                  <TableCell>{totalSalePrice}</TableCell>
+                  <TableCell>Costo:</TableCell>
+                  <TableCell>{totalCostImpuestos}</TableCell>
+                </TableRow>
+                {totalCost > 0 && (
+                  <TableRow className="bg-gray-200">
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                    <TableCell>Markup: </TableCell>
+                    <TableCell>
+                      {(
+                        ((totalSalePrice - totalCostImpuestos) /
+                          totalCostImpuestos) *
+                        100
+                      ).toFixed(2)}
+                      %
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>

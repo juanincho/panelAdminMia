@@ -18,10 +18,6 @@ export function TravelersPage({
 
   return (
     <div className="space-y-8">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold tracking-tight">Viajeros</h1>
-      </div>
-
       <Card>
         <div className="p-6 space-y-4">
           <TravelerFilters onCreateClick={() => setIsDialogOpen(true)} />

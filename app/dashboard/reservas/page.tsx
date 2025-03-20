@@ -27,15 +27,21 @@ interface Booking {
 }
 
 export default async function ReservationsPage() {
-  const response = await fetch("http://localhost:3001/v1/mia/reservas", {
-    headers: {
-      "x-api-key": API_KEY || "",
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-    },
-    cache: "no-store",
-  });
-  const json = await response.json();
-  console.log(json);
+  try {
+    const response = await fetch("http://localhost:3001/v1/mia/reservas", {
+      method: "GET",
+      headers: {
+        "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/json",
+      },
+      cache: "no-store",
+    }).then((res) => res.json());
+    console.log(response);
 
-  return <ReservationsMain bookings={json.data} />;
+    return <ReservationsMain bookings={response.data} />;
+  } catch (error) {
+    console.error(error);
+    return <h1>Ocurrio un error</h1>;
+  }
 }
