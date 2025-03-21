@@ -28,7 +28,14 @@ interface NavItem {
   icon: React.ComponentType<{ className?: string }>;
 }
 
+const Hola = () => <h1>Hola</h1>;
+
 const navItems: NavItem[] = [
+  {
+    title: "Inicio",
+    href: "/",
+    icon: Hola,
+  },
   {
     title: "Dashboard",
     href: "/dashboard",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Fragment, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,8 @@ import {
   Clock,
   CheckCircle2,
   Users,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
@@ -35,6 +37,12 @@ interface Solicitud {
   room: string;
   total: number;
   status: string;
+  created_at: string;
+}
+
+interface GroupedSolicitudes {
+  id_servicio: string;
+  solicitudes: Solicitud[];
 }
 
 export default function DashboardModule({
@@ -42,23 +50,43 @@ export default function DashboardModule({
   viajeros,
   impuestos,
 }: {
-  data: Solicitud[];
+  data: GroupedSolicitudes[];
   viajeros: Traveler[];
   impuestos: Tax[];
 }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [expandedGroups, setExpandedGroups] = useState<string[]>([]);
+
+  // Group solicitudes by id_servicio
+  const groupedData: GroupedSolicitudes[] = data;
+
+  useEffect(() => {
+    setExpandedGroups(
+      groupedData
+        .filter(
+          (servicio) =>
+            servicio.solicitudes.filter(
+              (solicitud) => solicitud.status != "complete"
+            ).length > 0
+        )
+        .map((servicio) => servicio.id_servicio)
+    );
+    console.log(groupedData);
+  }, []);
 
   // Estadísticas
-  const totalReservations = data.length;
-  const pendingReservations = data.filter((r) => r.status === "pending").length;
-  const completedReservations = data.filter(
+  const solicitudes = data.flatMap((servicio) => servicio.solicitudes);
+  const totalReservations = solicitudes.length;
+  const pendingReservations = solicitudes.filter(
+    (r) => r.status === "pending"
+  ).length;
+  const completedReservations = solicitudes.filter(
     (r) => r.status === "complete"
   ).length;
-  const uniqueCustomers = new Set(data.map((r) => r.id_viajero)).size;
+  const uniqueCustomers = new Set(solicitudes.map((r) => r.id_viajero)).size;
 
-  // Función para cambiar de mes
   const changeMonth = (direction: "prev" | "next") => {
     setCurrentDate((prevDate) => {
       const newDate = new Date(prevDate);
@@ -71,14 +99,13 @@ export default function DashboardModule({
     });
   };
 
-  // Filtrar datos por mes actual
-  const filteredData = data.filter((item) => {
-    const itemDate = new Date(item.check_in);
-    return (
-      itemDate.getMonth() === currentDate.getMonth() &&
-      itemDate.getFullYear() === currentDate.getFullYear()
+  const toggleGroup = (id_servicio: string) => {
+    setExpandedGroups((prev) =>
+      prev.includes(id_servicio)
+        ? prev.filter((id) => id !== id_servicio)
+        : [...prev, id_servicio]
     );
-  });
+  };
 
   const handleEdit = (item: Solicitud) => {
     setSelectedItem(item);
@@ -173,56 +200,23 @@ export default function DashboardModule({
         </Card>
       </div>
 
-      {/* Filtro de Mes */}
-      <div className="flex items-center justify-center space-x-4 mb-6">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => changeMonth("prev")}
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h2 className="text-xl font-semibold w-40 text-center">
-          {format(currentDate, "MMMM yyyy", { locale: es })}
-        </h2>
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => changeMonth("next")}
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {/* Tabla */}
+      {/* Tabla Agrupada */}
       <Card className="p-6">
         <div className="relative overflow-x-auto">
           <table className="w-full text-sm text-left text-gray-500">
             <thead className="text-xs text-gray-700 uppercase bg-gray-50">
               <tr>
                 <th scope="col" className="px-6 py-3">
-                  Código
+                  ID Servicio
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  ID Viajero
+                  Fecha de creación
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Hotel
+                  Total Solicitudes
                 </th>
                 <th scope="col" className="px-6 py-3">
-                  Check In
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Check Out
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Habitación
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Total
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Estado
+                  Total Precio de venta
                 </th>
                 <th scope="col" className="px-6 py-3">
                   Acciones
@@ -230,34 +224,113 @@ export default function DashboardModule({
               </tr>
             </thead>
             <tbody>
-              {filteredData.map((item) => (
-                <tr key={item.confirmation_code} className="bg-white border-b">
-                  <td className="px-6 py-4">{item.confirmation_code}</td>
-                  <td className="px-6 py-4">{item.id_viajero}</td>
-                  <td className="px-6 py-4">{item.hotel}</td>
-                  <td className="px-6 py-4">
-                    {format(parseISO(item.check_in), "dd/MM/yyyy", {
-                      locale: es,
-                    })}
-                  </td>
-                  <td className="px-6 py-4">
-                    {format(parseISO(item.check_out), "dd/MM/yyyy", {
-                      locale: es,
-                    })}
-                  </td>
-                  <td className="px-6 py-4">{item.room}</td>
-                  <td className="px-6 py-4">${item.total.toFixed(2)}</td>
-                  <td className="px-6 py-4">{getStatusBadge(item.status)}</td>
-                  <td className="px-6 py-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleEdit(item)}
-                    >
-                      Editar
-                    </Button>
-                  </td>
-                </tr>
+              {groupedData.map((group) => (
+                <Fragment key={group.id_servicio}>
+                  <tr className="bg-white border-b hover:bg-gray-50">
+                    <td className="px-6 py-4 font-medium text-gray-900">
+                      {group.id_servicio}
+                    </td>
+                    <td className="px-6 py-4">
+                      {group.solicitudes[0].created_at.split("T")[0]}
+                    </td>
+                    <td className="px-6 py-4">{group.solicitudes.length}</td>
+                    <td className="px-6 py-4">
+                      $
+                      {group.solicitudes
+                        .reduce((sum, sol) => sum + sol.total, 0)
+                        .toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <Button
+                        variant="ghost"
+                        onClick={() => toggleGroup(group.id_servicio)}
+                      >
+                        {expandedGroups.includes(group.id_servicio) ? (
+                          <ChevronUp className="h-4 w-4 mr-2" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 mr-2" />
+                        )}
+                        {expandedGroups.includes(group.id_servicio)
+                          ? "Ocultar"
+                          : "Ver"}{" "}
+                        Solicitudes
+                      </Button>
+                    </td>
+                  </tr>
+                  {expandedGroups.includes(group.id_servicio) && (
+                    <tr>
+                      <td colSpan={5} className="p-0">
+                        <div className="p-4 bg-gray-50">
+                          <table className="w-full">
+                            <thead className="text-xs text-gray-700">
+                              <tr>
+                                <th className="px-4 py-2">Código</th>
+                                <th className="px-4 py-2">ID Viajero</th>
+                                <th className="px-4 py-2">Hotel</th>
+                                <th className="px-4 py-2">Check In</th>
+                                <th className="px-4 py-2">Check Out</th>
+                                <th className="px-4 py-2">Habitación</th>
+                                <th className="px-4 py-2">Precio de venta</th>
+                                <th className="px-4 py-2">Estado</th>
+                                <th className="px-4 py-2">Acciones</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {group.solicitudes.map((item) => (
+                                <tr
+                                  key={item.confirmation_code}
+                                  className="border-b"
+                                >
+                                  <td className="px-4 py-2">
+                                    {item.confirmation_code}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    {item.id_viajero}
+                                  </td>
+                                  <td className="px-4 py-2">{item.hotel}</td>
+                                  <td className="px-4 py-2">
+                                    {format(
+                                      parseISO(item.check_in),
+                                      "dd/MM/yyyy",
+                                      {
+                                        locale: es,
+                                      }
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    {format(
+                                      parseISO(item.check_out),
+                                      "dd/MM/yyyy",
+                                      {
+                                        locale: es,
+                                      }
+                                    )}
+                                  </td>
+                                  <td className="px-4 py-2">{item.room}</td>
+                                  <td className="px-4 py-2">
+                                    ${item.total.toFixed(2)}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    {getStatusBadge(item.status)}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleEdit(item)}
+                                    >
+                                      Editar
+                                    </Button>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               ))}
             </tbody>
           </table>
