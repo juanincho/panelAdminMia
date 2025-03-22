@@ -22,7 +22,9 @@ export default async function Dashboard() {
         }).then((res) => res.json())
       )
     );
-    console.log(responses);
+    if (responses[0].error || responses[1].error || responses[2].error) {
+      throw new Error("Error al cargar los datos");
+    }
     const [solicitudes, viajeros, impuestos] = responses;
 
     return (
