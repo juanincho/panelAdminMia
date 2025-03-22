@@ -182,18 +182,21 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
     };
 
     try {
-      const response = await fetch("http://localhost:3001/v1/mia/reservas", {
-        method: "POST",
-        headers: {
-          "x-api-key": API_KEY || "",
-          "Content-Type": "application/json",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          Pragma: "no-cache",
-          Expires: "0",
-        },
-        cache: "no-store",
-        body: JSON.stringify(objeto),
-      }).then((res) => res.json());
+      const response = await fetch(
+        "https://mianoktos.vercel.app/v1/mia/reservas",
+        {
+          method: "POST",
+          headers: {
+            "x-api-key": API_KEY || "",
+            "Content-Type": "application/json",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          cache: "no-store",
+          body: JSON.stringify(objeto),
+        }
+      ).then((res) => res.json());
       console.log(response);
     } catch (error) {
       console.log(error);

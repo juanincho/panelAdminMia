@@ -48,19 +48,22 @@ export function TravelerDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const response = await fetch("http://localhost:3001/v1/mia/viajeros", {
-        method: "POST",
-        headers: {
-          "x-api-key": API_KEY || "",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-        body: JSON.stringify({
-          ...formData,
-          telefono: parseInt(formData.telefono),
-        }),
-      });
+      const response = await fetch(
+        "https://mianoktos.vercel.app/v1/mia/viajeros",
+        {
+          method: "POST",
+          headers: {
+            "x-api-key": API_KEY || "",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+          body: JSON.stringify({
+            ...formData,
+            telefono: parseInt(formData.telefono),
+          }),
+        }
+      );
       const json = await response.json();
       console.log(json);
 

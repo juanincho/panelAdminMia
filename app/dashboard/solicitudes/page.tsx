@@ -5,9 +5,9 @@ import { API_KEY } from "../../constants/constantes";
 export default async function Dashboard() {
   try {
     const apiEndpoints = [
-      "http://localhost:3001/v1/mia/solicitud",
-      "http://localhost:3001/v1/mia/viajeros",
-      "http://localhost:3001/v1/mia/impuestos",
+      "https://mianoktos.vercel.app/v1/mia/solicitud",
+      "https://mianoktos.vercel.app/v1/mia/viajeros",
+      "https://mianoktos.vercel.app/v1/mia/impuestos",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>

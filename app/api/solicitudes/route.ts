@@ -2,16 +2,19 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    let response = await fetch("http://localhost:3001/v1/mia/solicitud", {
-      headers: {
-        "x-api-key": API_KEY || "",
-        "Cache-Control": "no-cache",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-      cache: "no-store",
-      next: { revalidate: 0 },
-    });
+    let response = await fetch(
+      "https://mianoktos.vercel.app/v1/mia/solicitud",
+      {
+        headers: {
+          "x-api-key": API_KEY || "",
+          "Cache-Control": "no-cache",
+          Pragma: "no-cache",
+          Expires: "0",
+        },
+        cache: "no-store",
+        next: { revalidate: 0 },
+      }
+    );
 
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);

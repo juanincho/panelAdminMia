@@ -28,15 +28,18 @@ interface Booking {
 
 export default async function ReservationsPage() {
   try {
-    const response = await fetch("http://localhost:3001/v1/mia/reservas", {
-      method: "GET",
-      headers: {
-        "x-api-key": API_KEY || "",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        "Content-Type": "application/json",
-      },
-      cache: "no-store",
-    }).then((res) => res.json());
+    const response = await fetch(
+      "https://mianoktos.vercel.app/v1/mia/reservas",
+      {
+        method: "GET",
+        headers: {
+          "x-api-key": API_KEY || "",
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+          "Content-Type": "application/json",
+        },
+        cache: "no-store",
+      }
+    ).then((res) => res.json());
     console.log(response);
 
     return <ReservationsMain bookings={response.data} />;

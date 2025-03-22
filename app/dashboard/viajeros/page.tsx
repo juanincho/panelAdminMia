@@ -5,8 +5,8 @@ import { API_KEY } from "../../constants/constantes";
 export default async function TravelerDashboard() {
   try {
     const apiEndpoints = [
-      "http://localhost:3001/v1/mia/empresas",
-      "http://localhost:3001/v1/mia/viajeros",
+      "https://mianoktos.vercel.app/v1/mia/empresas",
+      "https://mianoktos.vercel.app/v1/mia/viajeros",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>
