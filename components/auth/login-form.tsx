@@ -1,46 +1,35 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
 
 export function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
-  const supabase = createClientComponentClient();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        throw error;
-      }
-
       toast({
-        title: 'Inicio de sesión exitoso',
-        description: 'Bienvenido al sistema de reservas',
+        title: "Inicio de sesión exitoso",
+        description: "Bienvenido al sistema de reservas",
       });
 
-      router.push('/dashboard');
+      router.push("/dashboard");
       router.refresh();
     } catch (error: any) {
       toast({
-        title: 'Error',
+        title: "Error",
         description: error.message,
-        variant: 'destructive',
+        variant: "destructive",
       });
     } finally {
       setLoading(false);
@@ -51,7 +40,10 @@ export function LoginForm() {
     <form onSubmit={handleLogin} className="mt-8 space-y-6">
       <div className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-gray-700"
+          >
             Correo electrónico
           </label>
           <Input
@@ -65,7 +57,10 @@ export function LoginForm() {
           />
         </div>
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-gray-700"
+          >
             Contraseña
           </label>
           <Input
@@ -79,12 +74,8 @@ export function LoginForm() {
         </div>
       </div>
 
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={loading}
-      >
-        {loading ? 'Iniciando sesión...' : 'Iniciar sesión'}
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Iniciando sesión..." : "Iniciar sesión"}
       </Button>
     </form>
   );
