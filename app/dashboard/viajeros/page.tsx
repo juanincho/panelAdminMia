@@ -22,6 +22,9 @@ export default async function TravelerDashboard() {
       )
     );
     console.log(responses);
+    if (responses[0].error || responses[1].error) {
+      throw new Error("Error al cargar los datos");
+    }
     const [empresas, viajeros] = responses;
 
     return (
