@@ -42,7 +42,7 @@ export function CompanyTable() {
         const json = await response.json();
         console.log(json);
         // Simulated data
-        setCompanies(json);
+        setCompanies(json || []);
       } catch (error) {
         console.error("Error fetching companies:", error);
       }

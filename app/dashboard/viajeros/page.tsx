@@ -26,7 +26,10 @@ export default async function TravelerDashboard() {
 
     return (
       <Suspense fallback={<h1>Cargando...</h1>}>
-        <TravelersPage empresas={empresas} viajeros={viajeros}></TravelersPage>
+        <TravelersPage
+          empresas={empresas || []}
+          viajeros={viajeros || []}
+        ></TravelersPage>
       </Suspense>
     );
   } catch (error) {

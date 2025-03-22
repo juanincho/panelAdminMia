@@ -42,7 +42,7 @@ export default async function ReservationsPage() {
     ).then((res) => res.json());
     console.log(response);
 
-    return <ReservationsMain bookings={response.data} />;
+    return <ReservationsMain bookings={response.data || []} />;
   } catch (error) {
     console.error(error);
     return <h1>Ocurrio un error</h1>;
