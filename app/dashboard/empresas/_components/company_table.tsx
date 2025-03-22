@@ -43,11 +43,11 @@ export function CompanyTable() {
         console.log(json);
         // Simulated data
         if (json.error) {
-          setCompanies([]);
-        } else {
-          setCompanies(json || []);
+          throw new Error("Error fetching companies");
         }
+        setCompanies(json || []);
       } catch (error) {
+        setCompanies([]);
         console.error("Error fetching companies:", error);
       }
     };

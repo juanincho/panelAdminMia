@@ -41,6 +41,9 @@ export default async function ReservationsPage() {
       }
     ).then((res) => res.json());
     console.log(response);
+    if (response.error) {
+      throw new Error("Error al cargar los datos en reservas");
+    }
 
     return <ReservationsMain bookings={response.data || []} />;
   } catch (error) {

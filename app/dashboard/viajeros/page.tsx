@@ -36,6 +36,7 @@ export default async function TravelerDashboard() {
       </Suspense>
     );
   } catch (error) {
+    console.log("Error al cargar los datos en viajeros:", error);
     console.log(error);
     return <h1>Error al cargar los datos :c</h1>;
   }

@@ -37,7 +37,7 @@ export default async function Dashboard() {
       </Suspense>
     );
   } catch (error) {
-    console.log(error);
+    console.log("error en las solicitudes: ", error);
     return (
       <div>
         <h1>Ocurrió un error al obtener los registros.</h1>
