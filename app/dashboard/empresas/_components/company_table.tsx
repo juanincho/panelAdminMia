@@ -27,25 +27,26 @@ export function CompanyTable() {
   useEffect(() => {
     const fetchCompanies = async () => {
       try {
-        const response = await fetch(
-          "https://mianoktos.vercel.app/v1/mia/empresas",
-          {
-            method: "GET",
-            headers: {
-              "x-api-key": API_KEY || "",
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              "Content-Type": "application/json",
-            },
-            cache: "no-store",
-          }
-        );
-        const json = await response.json();
-        console.log(json);
+        // const response = await fetch(
+        //   "https://mianoktos.vercel.app/v1/mia/empresas",
+        //   {
+        //     method: "GET",
+        //     headers: {
+        //       "x-api-key": API_KEY || "",
+        //       "Cache-Control": "no-cache, no-store, must-revalidate",
+        //       "Content-Type": "application/json",
+        //     },
+        //     cache: "no-store",
+        //   }
+        // );
+        // const json = await response.json();
+        // console.log(json);
         // Simulated data
-        if (json.error) {
-          throw new Error("Error fetching companies");
-        }
-        setCompanies(json || []);
+        // if (json.error) {
+        //   throw new Error("Error fetching companies");
+        // }
+        // setCompanies(json || []);
+        setCompanies([]);
       } catch (error) {
         setCompanies([]);
         console.error("Error fetching companies:", error);

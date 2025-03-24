@@ -28,24 +28,25 @@ interface Booking {
 
 export default async function ReservationsPage() {
   try {
-    const response = await fetch(
-      "https://mianoktos.vercel.app/v1/mia/reservas",
-      {
-        method: "GET",
-        headers: {
-          "x-api-key": API_KEY || "",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      }
-    ).then((res) => res.json());
-    console.log(response);
-    if (response.error) {
-      throw new Error("Error al cargar los datos en reservas");
-    }
+    // const response = await fetch(
+    //   "https://mianoktos.vercel.app/v1/mia/reservas",
+    //   {
+    //     method: "GET",
+    //     headers: {
+    //       "x-api-key": API_KEY || "",
+    //       "Cache-Control": "no-cache, no-store, must-revalidate",
+    //       "Content-Type": "application/json",
+    //     },
+    //     cache: "no-store",
+    //   }
+    // ).then((res) => res.json());
+    // console.log(response);
+    // if (response.error) {
+    //   throw new Error("Error al cargar los datos en reservas");
+    // }
+    return <h1>Estamos en mantenimiento...</h1>;
 
-    return <ReservationsMain bookings={response.data || []} />;
+    // return <ReservationsMain bookings={response.data || []} />;
   } catch (error) {
     console.error(error);
     return <h1>Ocurrio un error</h1>;
