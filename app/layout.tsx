@@ -23,6 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 interface NavItem {
+  navShow: boolean;
   title: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -30,66 +31,79 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
+    navShow: true,
     title: "Error 404",
     href: "/_not-found",
     icon: FileText,
   },
   {
+    navShow: true,
     title: "Autenticate",
     href: "/auth/login",
     icon: FileText,
   },
   {
+    navShow: true,
     title: "Autenticate",
     href: "/auth",
     icon: FileText,
   },
   {
+    navShow: true,
     title: "Inicio",
     href: "/",
     icon: FileText,
   },
   {
+    navShow: false,
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
   },
   {
+    navShow: false,
     title: "Solicitudes",
     href: "/dashboard/solicitudes",
     icon: FileText,
   },
   {
+    navShow: false,
     title: "Reservas",
     href: "/dashboard/reservas",
     icon: BookOpen,
   },
   {
+    navShow: false,
     title: "Clientes",
     href: "/dashboard/clients",
     icon: Users,
   },
   {
+    navShow: false,
     title: "Hoteles",
     href: "/dashboard/hotels",
     icon: Building2,
   },
   {
+    navShow: false,
     title: "Pagos",
     href: "/dashboard/payments",
     icon: CreditCard,
   },
   {
+    navShow: false,
     title: "Facturas",
     href: "/dashboard/invoices",
     icon: Receipt,
   },
   {
+    navShow: false,
     title: "Empresas",
     href: "/dashboard/empresas",
     icon: Factory,
   },
   {
+    navShow: false,
     title: "Viajeros",
     href: "/dashboard/viajeros",
     icon: Users,
@@ -241,21 +255,23 @@ export default function DashboardLayout({
               </div>
               <ScrollArea className="h-[calc(100vh-5rem)]">
                 <nav className="flex flex-col gap-2 p-4">
-                  {navItems.map((item) => (
-                    <Link key={item.title} href={item.href}>
-                      <span
-                        className={cn(
-                          "group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
-                          pathname === item.href
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-blue-950 hover:bg-blue-50/50 hover:text-blue-900"
-                        )}
-                      >
-                        <item.icon className="mr-2 h-4 w-4" />
-                        <span>{item.title}</span>
-                      </span>
-                    </Link>
-                  ))}
+                  {navItems
+                    .filter((obj) => !obj.navShow)
+                    .map((item) => (
+                      <Link key={item.title} href={item.href}>
+                        <span
+                          className={cn(
+                            "group flex items-center rounded-md px-3 py-2.5 text-sm font-medium transition-colors",
+                            pathname === item.href
+                              ? "bg-blue-50 text-blue-700"
+                              : "text-blue-950 hover:bg-blue-50/50 hover:text-blue-900"
+                          )}
+                        >
+                          <item.icon className="mr-2 h-4 w-4" />
+                          <span>{item.title}</span>
+                        </span>
+                      </Link>
+                    ))}
                 </nav>
               </ScrollArea>
             </SheetContent>
