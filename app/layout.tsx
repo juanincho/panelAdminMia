@@ -30,6 +30,11 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   {
+    title: "Error 404",
+    href: "/_not-found",
+    icon: FileText,
+  },
+  {
     title: "Autenticate",
     href: "/auth/login",
     icon: FileText,
