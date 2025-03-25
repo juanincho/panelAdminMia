@@ -35,7 +35,7 @@ export default async function TravelerDashboard() {
         ></TravelersPage>
       </Suspense>
     );
-    return <h1>Estamos en mantenimiento...</h1>;
+    // return <h1>Estamos en mantenimiento...</h1>;
   } catch (error) {
     console.log("Error al cargar los datos en viajeros:", error);
     console.log(error);

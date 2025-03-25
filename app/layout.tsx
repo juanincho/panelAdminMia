@@ -80,6 +80,12 @@ const navItems: NavItem[] = [
   },
   {
     navShow: false,
+    title: "Credito",
+    href: "/dashboard/credito",
+    icon: CreditCard,
+  },
+  {
+    navShow: false,
     title: "Hoteles",
     href: "/dashboard/hotels",
     icon: Building2,
