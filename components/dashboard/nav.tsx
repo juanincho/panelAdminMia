@@ -1,47 +1,38 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { User } from '@supabase/auth-helpers-nextjs';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
-import {
-  Calendar,
-  CheckSquare,
-  LayoutDashboard,
-  LogOut,
-} from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { Calendar, CheckSquare, LayoutDashboard, LogOut } from "lucide-react";
 
 interface DashboardNavProps {
-  user: User;
+  user: any;
 }
 
 export function DashboardNav({ user }: DashboardNavProps) {
   const pathname = usePathname();
   const router = useRouter();
-  const supabase = createClientComponentClient();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    router.push('/auth/login');
+    router.push("/auth/login");
     router.refresh();
   };
 
   const navItems = [
     {
-      href: '/dashboard',
-      label: 'Dashboard',
+      href: "/dashboard",
+      label: "Dashboard",
       icon: LayoutDashboard,
     },
     {
-      href: '/dashboard/pending',
-      label: 'Reservas Pendientes',
+      href: "/dashboard/pending",
+      label: "Reservas Pendientes",
       icon: Calendar,
     },
     {
-      href: '/dashboard/completed',
-      label: 'Reservas Completadas',
+      href: "/dashboard/completed",
+      label: "Reservas Completadas",
       icon: CheckSquare,
     },
   ];
@@ -63,8 +54,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
                     href={item.href}
                     className={`inline-flex items-center px-1 pt-1 text-sm font-medium ${
                       pathname === item.href
-                        ? 'border-b-2 border-indigo-500 text-gray-900'
-                        : 'text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                        ? "border-b-2 border-indigo-500 text-gray-900"
+                        : "text-gray-500 hover:border-gray-300 hover:text-gray-700"
                     }`}
                   >
                     <Icon className="w-4 h-4 mr-2" />

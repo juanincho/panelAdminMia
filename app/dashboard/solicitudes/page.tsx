@@ -1,32 +1,45 @@
 import { Suspense } from "react";
-import DashboardModule from "../_dashboard";
-// import { TEST_RESERVATIONS } from "../../constants/mockData.ts";
+import DashboardModule from "./_components/_dashboard";
+import { API_KEY } from "../../constants/constantes";
 
 export default async function Dashboard() {
   try {
-    // Realiza la petición desde el servidor
-    const res = await fetch("http://localhost:3001/v1/mia/solicitud", {
-      headers: {
-        "x-api-key": API_KEY || "",
-        "Cache-Control": "no-cache, no-store, must-revalidate",
-        Pragma: "no-cache",
-        Expires: "0",
-      },
-      cache: "no-store",
-    });
+    const apiEndpoints = [
+      "https://mianoktos.vercel.app/v1/mia/solicitud",
+      "https://mianoktos.vercel.app/v1/mia/viajeros",
+      "https://mianoktos.vercel.app/v1/mia/impuestos",
+    ];
+    const responses = await Promise.all(
+      apiEndpoints.map((endpoint) =>
+        fetch(endpoint, {
+          headers: {
+            "x-api-key": API_KEY || "",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            Pragma: "no-cache",
+            Expires: "0",
+          },
+          cache: "no-store",
+        }).then((res) => res.json())
+      )
+    );
+    if (responses[0].error || responses[1].error || responses[2].error) {
+      throw new Error("Error al cargar los datos");
+    }
+    const [solicitudes, viajeros, impuestos] = responses;
 
-    // Convierte la respuesta a JSON
-    const json = await res.json();
-
-    console.log(json);
+    // return <h1>Estamos en mantenimiento...</h1>;
 
     return (
       <Suspense fallback={<div>Cargando...</div>}>
-        <DashboardModule data={json || []}></DashboardModule>
+        <DashboardModule
+          data={solicitudes || []}
+          viajeros={viajeros || []}
+          impuestos={impuestos || []}
+        ></DashboardModule>
       </Suspense>
     );
   } catch (error) {
-    console.log(error);
+    console.log("error en las solicitudes: ", error);
     return (
       <div>
         <h1>Ocurrió un error al obtener los registros.</h1>
@@ -34,6 +47,3 @@ export default async function Dashboard() {
     );
   }
 }
-
-const API_KEY: string =
-  "nkt-U9TdZU63UENrblg1WI9I1Ln9NcGrOyaCANcpoS2PJT3BlbkFJ1KW2NIGUYF87cuvgUF3Q976fv4fPrnWQroZf0RzXTZTA942H3AMTKFKJHV6cTi8c6dd6tybUD65fybhPJT3BlbkFJ1KW2NIGPrnWQroZf0RzXTZTA942H3AMTKFy15whckAGSSRSTDvsvfHsrtbXhdrT";
