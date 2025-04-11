@@ -125,7 +125,8 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
           (_, index) => ({
             night: index + 1,
             baseCost: costPerNight,
-            taxes: taxFilter.map(({ name, rate, mount }) => ({
+            taxes: taxFilter.map(({ id, name, rate, mount }) => ({
+              id_impuesto: id,
               name,
               rate,
               mount,
@@ -156,6 +157,8 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
       parseISO(item.check_out),
       parseISO(item.check_in)
     );
+
+    console.log(nights);
     const objeto = {
       id_solicitud: item.id_solicitud,
       id_servicio: item.id_servicio,
@@ -165,8 +168,8 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
       id_viajero: item.id_viajero,
       nombre_hotel: item.hotel,
       total: item.total,
-      subtotal: parseFloat((item.total * 0.84).toFixed(2)),
-      impuestos: parseFloat((item.total * 0.16).toFixed(2)),
+      subtotal: parseFloat(item.total * 0.84),
+      impuestos: parseFloat(item.total * 0.16),
       tipo_cuarto: item.room,
       noches: nightsCount,
       costo_subtotal: totalCost,
@@ -174,16 +177,25 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
       costo_impuestos: totalCostImpuestos - totalCost,
       codigo_reservacion_hotel: proveedor.codigo_reservacion_hotel,
       items: nights.map((item_booking) => ({
-        total: item_booking.totalWithTaxes,
-        subtotal: item_booking.baseCost,
-        impuestos: item_booking.totalWithTaxes - item_booking.baseCost,
+        total: totalSalePrice / nightsCount,
+        subtotal: (totalSalePrice / nightsCount) * 0.84,
+        impuestos: (totalSalePrice / nightsCount) * 0.16,
+        costo_total: item_booking.totalWithTaxes,
+        costo_subtotal: item_booking.baseCost,
+        costo_impuestos:
+          item_booking.totalWithTaxes -
+          item_booking.baseCost +
+          item_booking.totalWithTaxes * 0.16,
+        costo_iva: item_booking.totalWithTaxes - item_booking.baseCost,
         taxes: item_booking.taxes,
       })),
     };
 
     try {
+      console.log(objeto);
       const response = await fetch(
         "https://mianoktos.vercel.app/v1/mia/reservas",
+        // "https://mianoktos.vercel.app/v1/mia/reservas",
         {
           method: "POST",
           headers: {
@@ -409,20 +421,20 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                   <TableHead>Costo Base</TableHead>
                   {enabledTaxes
                     .filter((tax) => tax.selected)
-                    .map((tax) => (
-                      <TableHead key={tax.name + tax.rate}>
+                    .map((tax, id) => (
+                      <TableHead key={tax.name + tax.rate + id}>
                         {tax.descripcion}
                       </TableHead>
                     ))}
-                  {customTaxes.map((tax) => (
-                    <TableHead key={tax.name}>{tax.name}</TableHead>
+                  {customTaxes.map((tax, id) => (
+                    <TableHead key={tax.name + id}>{tax.name}</TableHead>
                   ))}
                   <TableHead>Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {nights.map((night) => (
-                  <TableRow key={night.night}>
+                {nights.map((night, id) => (
+                  <TableRow key={night.night + id}>
                     <TableCell>{night.night}</TableCell>
                     <TableCell>
                       <Input
@@ -434,11 +446,9 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                       />
                     </TableCell>
                     {night.taxes.map((tax) => (
-                      <TableCell key={tax.name}>
-                        ${tax.total.toFixed(2)}
-                      </TableCell>
+                      <TableCell key={tax.name}>${tax.total}</TableCell>
                     ))}
-                    <TableCell>${night.totalWithTaxes.toFixed(2)}</TableCell>
+                    <TableCell>${night.totalWithTaxes}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -457,11 +467,9 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
                     <TableCell></TableCell>
                     <TableCell>Markup: </TableCell>
                     <TableCell>
-                      {(
-                        ((totalSalePrice - totalCostImpuestos) /
-                          totalCostImpuestos) *
-                        100
-                      ).toFixed(2)}
+                      {((totalSalePrice - totalCostImpuestos) /
+                        totalCostImpuestos) *
+                        100}
                       %
                     </TableCell>
                   </TableRow>
