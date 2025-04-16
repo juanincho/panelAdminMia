@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -36,11 +36,11 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-fit">
       {/* Sidebar */}
       <div
         className={cn(
-          "relative h-screen border-r bg-white transition-all duration-300",
+          "relative h-fit border-r bg-white transition-all duration-300",
           isOpen ? "w-64" : "w-16"
         )}
       >
@@ -109,7 +109,17 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto">{children}</div>
+      <div className="flex-1 overflow-auto">
+        <Suspense
+          fallback={
+            <>
+              <h1>Cargando tu contenido...</h1>
+            </>
+          }
+        >
+          {children}
+        </Suspense>
+      </div>
     </div>
   );
 }
