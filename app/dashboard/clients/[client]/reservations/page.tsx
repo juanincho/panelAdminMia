@@ -39,6 +39,8 @@ interface Reservation {
   total: string;
   id_usuario_generador: string;
   id_booking: string | null;
+  primer_nombre: string | null;
+  apellido_paterno: string | null;
 }
 
 export default function ReservationsPage({
@@ -127,12 +129,13 @@ export default function ReservationsPage({
             <TableRow>
               <TableHead>ID Solicitud</TableHead>
               <TableHead>Hotel</TableHead>
-              <TableHead>ID Viajero</TableHead>
+              <TableHead>Viajero</TableHead>
               <TableHead>Check In</TableHead>
               <TableHead>Check Out</TableHead>
               <TableHead>Habitación</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Estado</TableHead>
+              <TableHead>Facturar</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,11 +148,11 @@ export default function ReservationsPage({
                   <Link
                     href={`/dashboard/clients/${params.client}/reservations/edit?id=${reservation.id_solicitud}`}
                   >
-                    {reservation.id_solicitud.slice(4, 12)}...
+                    {reservation.id_solicitud.slice(4, 12)}
                   </Link>
                 </TableCell>
                 <TableCell>{reservation.hotel}</TableCell>
-                <TableCell>{reservation.id_viajero.slice(0, 8)}...</TableCell>
+                <TableCell>{`${reservation.primer_nombre} ${reservation.apellido_paterno}`}</TableCell>
                 <TableCell>
                   {format(new Date(reservation.check_in), "dd/MM/yyyy")}
                 </TableCell>
@@ -164,6 +167,9 @@ export default function ReservationsPage({
                   >
                     {reservation.id_booking ? "Completada" : "Pendiente"}
                   </Badge>
+                </TableCell>
+                <TableCell>
+                  <Button>Facturar</Button>
                 </TableCell>
               </TableRow>
             ))}
