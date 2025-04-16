@@ -19,6 +19,7 @@ import {
   Building2,
   CreditCard,
   Receipt,
+  UserRoundCog
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -113,6 +114,12 @@ const navItems: NavItem[] = [
     title: "Viajeros",
     href: "/dashboard/viajeros",
     icon: Users,
+  },
+  {
+    navShow: false,
+    title: "Agentes",
+    href: "/dashboard/agentes",
+    icon: UserRoundCog,
   },
 ];
 
