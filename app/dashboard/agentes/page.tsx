@@ -2,11 +2,9 @@ import { Suspense } from "react";
 import { TravelersPage } from "./_components/traveler_main";
 import { API_KEY } from "../../constants/constantes";
 
-
 export default async function TravelerDashboard() {
-  const endpoint = "http://localhost:3001/v1/mia/agentes/agentes"
+  const endpoint = "https://mianoktos.vercel.app/v1/mia/agentes/agentes";
   try {
-
     const response = await fetch(endpoint, {
       method: "GET",
       headers: {
@@ -27,9 +25,7 @@ export default async function TravelerDashboard() {
 
     return (
       <Suspense fallback={<h1>Cargando...</h1>}>
-        <TravelersPage
-          agentes={agentes || []}
-        ></TravelersPage>
+        <TravelersPage agentes={agentes || []}></TravelersPage>
       </Suspense>
     );
     // return <h1>Estamos en mantenimiento...</h1>;
