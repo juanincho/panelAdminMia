@@ -30,7 +30,8 @@ export default async function ReservationsPage() {
   try {
     const response = await fetch(
       "https://mianoktos.vercel.app/v1/mia/reservas",
-      // "http://localhost:3001/v1/mia/reservas",
+       //"http://localhost:3001/v1/mia/reservas"
+       //http://localhost:5173/v1/mia/reservas",
       {
         method: "GET",
         headers: {
@@ -47,7 +48,7 @@ export default async function ReservationsPage() {
     }
     // return <h1>Estamos en mantenimiento...</h1>;
 
-    return <ReservationsMain bookings={response.data || []} />;
+    return <ReservationsMain bookings={response || []} />;
   } catch (error) {
     console.error(error);
     return <h1>Ocurrio un error</h1>;

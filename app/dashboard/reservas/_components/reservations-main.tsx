@@ -168,7 +168,7 @@ export function ReservationsMain({ bookings }: ReservationsMainProps) {
                     })}
                   </TableCell>
                   <TableCell>{booking.tipo_cuarto}</TableCell>
-                  <TableCell>${booking.total.toFixed(2)}</TableCell>
+                  <TableCell>${Number(booking.total||0).toFixed(2)}</TableCell>
                   <TableCell>{getStatusBadge(booking.estado)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>

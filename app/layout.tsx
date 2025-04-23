@@ -87,7 +87,7 @@ const navItems: NavItem[] = [
   {
     navShow: false,
     title: "Hoteles",
-    href: "/dashboard/hotels",
+    href: "/dashboard/hoteles",
     icon: Building2,
   },
   {
