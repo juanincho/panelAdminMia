@@ -1,5 +1,6 @@
 import { ReservationsMain } from "./_components/reservations-main";
 import { API_KEY } from "../../constants/constantes";
+import { Suspense } from "react";
 
 interface Booking {
   id_booking: string;
@@ -29,8 +30,8 @@ interface Booking {
 export default async function ReservationsPage() {
   try {
     const response = await fetch(
-      "https://mianoktos.vercel.app/v1/mia/reservas",
       // "https://mianoktos.vercel.app/v1/mia/reservas",
+      "http://localhost:3001/v1/mia/reservas",
       {
         method: "GET",
         headers: {
@@ -47,7 +48,17 @@ export default async function ReservationsPage() {
     }
     // return <h1>Estamos en mantenimiento...</h1>;
 
-    return <ReservationsMain bookings={response.data || []} />;
+    return (
+      <Suspense
+        fallback={
+          <>
+            <h1>Estamos cargando...</h1>
+          </>
+        }
+      >
+        <ReservationsMain bookings={response || []} />;
+      </Suspense>
+    );
   } catch (error) {
     console.error(error);
     return <h1>Ocurrio un error</h1>;

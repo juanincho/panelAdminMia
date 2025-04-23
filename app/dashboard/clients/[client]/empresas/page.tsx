@@ -8,155 +8,163 @@ import {
   Edit,
   Eye,
   Loader2,
+  MoreHorizontal,
   Plus,
   Search,
   Trash2,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { fetchViajerosByAgente } from "@/services/agentes";
+import { fetchEmpresasByAgente } from "@/services/agentes";
 import { useParams } from "next/navigation";
 
 // Types
 interface Company {
   id_empresa: string;
   razon_social: string;
-}
-
-interface Traveler {
+  tipo_persona: "fisica" | "moral";
+  nombre_comercial: string;
+  empresa_direccion: string | null;
+  empresa_municipio: string | null;
+  empresa_estado: string | null;
+  empresa_cp: string | null;
+  empresa_colonia: string | null;
+  id_datos_fiscales: string | null;
+  rfc: string | null;
+  calle: string | null;
+  colonia: string | null;
+  estado: string | null;
+  municipio: string | null;
+  codigo_postal_fiscal: number | null;
+  regimen_fiscal: string | null;
+  datos_fiscales_created_at: string | null;
+  datos_fiscales_updated_at: string | null;
   id_agente: string;
-  id_viajero: string;
-  primer_nombre: string;
-  segundo_nombre: string | null;
-  apellido_paterno: string;
-  apellido_materno: string | null;
-  correo: string | null;
-  genero: string | null;
-  fecha_nacimiento: string | null;
-  telefono: string | null;
-  nacionalidad: string | null;
-  numero_pasaporte: string | null;
-  numero_empleado: string | null;
-  empresas: Company[];
+  empresa_agente_created_at: string;
+  empresa_agente_updated_at: string;
 }
 
 interface FilterState {
   search: string;
-  nacionalidad: string;
-  empresa: string;
+  tipoPersona: string;
+  estado: string;
 }
 
 type SortDirection = "asc" | "desc";
 interface SortState {
-  column: keyof Traveler | null;
+  column: keyof Company | null;
   direction: SortDirection;
 }
 
-const createTraveler = async (
-  traveler: Partial<Traveler>
-): Promise<Traveler> => {
+// Mock API functions
+const fetchCompanies = async (): Promise<Company[]> => {
   // Replace with actual API call
-  const response = await fetch("/api/travelers", {
+  const response = await fetch("/api/companies");
+  return response.json();
+};
+
+const createCompany = async (company: Partial<Company>): Promise<Company> => {
+  // Replace with actual API call
+  const response = await fetch("/api/companies", {
     method: "POST",
-    body: JSON.stringify(traveler),
+    body: JSON.stringify(company),
   });
   return response.json();
 };
 
-const updateTraveler = async (traveler: Traveler): Promise<Traveler> => {
+const updateCompany = async (company: Company): Promise<Company> => {
   // Replace with actual API call
-  const response = await fetch(`/api/travelers/${traveler.id_viajero}`, {
+  const response = await fetch(`/api/companies/${company.id_empresa}`, {
     method: "PUT",
-    body: JSON.stringify(traveler),
+    body: JSON.stringify(company),
   });
   return response.json();
 };
 
-const deleteTraveler = async (id: string): Promise<void> => {
+const deleteCompany = async (id: string): Promise<void> => {
   // Replace with actual API call
-  await fetch(`/api/travelers/${id}`, {
+  await fetch(`/api/companies/${id}`, {
     method: "DELETE",
   });
 };
 
-function App() {
+const Page = () => {
   const queryClient = useQueryClient();
   const { client } = useParams();
 
   // Queries and Mutations
-  const { data: travelers = [], isLoading } = useQuery({
-    queryKey: ["travelers", client],
-    queryFn: () =>
-      fetchViajerosByAgente(Array.isArray(client) ? client[0] : client),
+  const { data: companies = [], isLoading } = useQuery({
+    queryKey: ["companies"],
+    queryFn: async () => {
+      try {
+        const response = fetchEmpresasByAgente(client);
+
+        return response;
+      } catch (error) {
+        console.error("Error fetching agent:", error);
+        throw error;
+      }
+    },
   });
 
   const createMutation = useMutation({
-    mutationFn: createTraveler,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
+    mutationFn: createCompany,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: updateTraveler,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
+    mutationFn: updateCompany,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: deleteTraveler,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
+    mutationFn: deleteCompany,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
   });
 
   // State
   const [filters, setFilters] = useState<FilterState>({
     search: "",
-    nacionalidad: "",
-    empresa: "",
+    tipoPersona: "",
+    estado: "",
   });
 
   const [sort, setSort] = useState<SortState>({
-    column: "primer_nombre",
+    column: "razon_social",
     direction: "asc",
   });
 
-  const [selectedTraveler, setSelectedTraveler] = useState<Traveler | null>(
-    null
-  );
+  const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"view" | "edit" | "create">(
     "view"
   );
-  const [formData, setFormData] = useState<Partial<Traveler>>({});
+  const [formData, setFormData] = useState<Partial<Company>>({});
 
   // Computed values
-  const filteredTravelers = useMemo(() => {
-    return travelers.filter((traveler) => {
+  const filteredCompanies = useMemo(() => {
+    return companies.filter((company) => {
       const searchTerm = filters.search.toLowerCase();
-      const fullName = `${traveler.primer_nombre} ${
-        traveler.segundo_nombre || ""
-      } ${traveler.apellido_paterno} ${
-        traveler.apellido_materno || ""
-      }`.toLowerCase();
-
       const matchesSearch =
         !filters.search ||
-        fullName.includes(searchTerm) ||
-        (traveler.correo?.toLowerCase().includes(searchTerm) ?? false) ||
-        (traveler.numero_empleado?.toLowerCase().includes(searchTerm) ?? false);
+        company.razon_social.toLowerCase().includes(searchTerm) ||
+        company.nombre_comercial.toLowerCase().includes(searchTerm) ||
+        (company.rfc?.toLowerCase().includes(searchTerm) ?? false);
 
-      const matchesNacionalidad =
-        !filters.nacionalidad || traveler.nacionalidad === filters.nacionalidad;
+      const matchesTipoPersona =
+        !filters.tipoPersona || company.tipo_persona === filters.tipoPersona;
 
-      const matchesEmpresa =
-        !filters.empresa ||
-        traveler.empresas.some((emp) => emp.id_empresa === filters.empresa);
+      const matchesEstado =
+        !filters.estado || company.empresa_estado === filters.estado;
 
-      return matchesSearch && matchesNacionalidad && matchesEmpresa;
+      return matchesSearch && matchesTipoPersona && matchesEstado;
     });
-  }, [travelers, filters]);
+  }, [companies, filters]);
 
-  const sortedTravelers = useMemo(() => {
-    if (!sort.column) return filteredTravelers;
+  const sortedCompanies = useMemo(() => {
+    if (!sort.column) return filteredCompanies;
 
-    return [...filteredTravelers].sort((a, b) => {
+    return [...filteredCompanies].sort((a, b) => {
       const aValue = a[sort.column!];
       const bValue = b[sort.column!];
 
@@ -167,31 +175,19 @@ function App() {
       const comparison = String(aValue).localeCompare(String(bValue));
       return sort.direction === "asc" ? comparison : -comparison;
     });
-  }, [filteredTravelers, sort]);
+  }, [filteredCompanies, sort]);
 
-  const availableNacionalidades = useMemo(() => {
-    const nacionalidades = new Set(
-      travelers
-        .map((t) => t.nacionalidad)
-        .filter((nacionalidad): nacionalidad is string => !!nacionalidad)
+  const availableEstados = useMemo(() => {
+    const estados = new Set(
+      companies
+        .map((c) => c.empresa_estado)
+        .filter((estado): estado is string => !!estado)
     );
-    return Array.from(nacionalidades).sort();
-  }, [travelers]);
-
-  const availableEmpresas = useMemo(() => {
-    const empresasSet = new Set<Company>();
-    travelers.forEach((traveler) => {
-      traveler.empresas.forEach((empresa) => {
-        empresasSet.add(empresa);
-      });
-    });
-    return Array.from(empresasSet).sort((a, b) =>
-      a.razon_social.localeCompare(b.razon_social)
-    );
-  }, [travelers]);
+    return Array.from(estados).sort();
+  }, [companies]);
 
   // Handlers
-  const handleSort = (column: keyof Traveler) => {
+  const handleSort = (column: keyof Company) => {
     setSort((prev) => ({
       column,
       direction:
@@ -208,17 +204,17 @@ function App() {
 
   const handleOpenModal = (
     mode: "view" | "edit" | "create",
-    traveler?: Traveler
+    company?: Company
   ) => {
     setModalMode(mode);
-    setSelectedTraveler(traveler || null);
-    setFormData(traveler || {});
+    setSelectedCompany(company || null);
+    setFormData(company || {});
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setSelectedTraveler(null);
+    setSelectedCompany(null);
     setFormData({});
   };
 
@@ -228,21 +224,21 @@ function App() {
     try {
       if (modalMode === "create") {
         await createMutation.mutateAsync(formData);
-      } else if (modalMode === "edit" && selectedTraveler) {
-        await updateMutation.mutateAsync({ ...selectedTraveler, ...formData });
+      } else if (modalMode === "edit" && selectedCompany) {
+        await updateMutation.mutateAsync({ ...selectedCompany, ...formData });
       }
       handleCloseModal();
     } catch (error) {
-      console.error("Error saving traveler:", error);
+      console.error("Error saving company:", error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm("¿Estás seguro de que deseas eliminar este viajero?")) {
+    if (window.confirm("¿Estás seguro de que deseas eliminar esta empresa?")) {
       try {
         await deleteMutation.mutateAsync(id);
       } catch (error) {
-        console.error("Error deleting traveler:", error);
+        console.error("Error deleting company:", error);
       }
     }
   };
@@ -257,17 +253,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="h-fit bg-gray-50 p-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Viajeros</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">Empresas</h1>
           <button
             onClick={() => handleOpenModal("create")}
             className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 flex items-center"
           >
             <Plus className="h-4 w-4 mr-2" />
-            Nuevo Viajero
+            Nueva Empresa
           </button>
         </div>
 
@@ -279,7 +275,7 @@ function App() {
               <input
                 type="text"
                 name="search"
-                placeholder="Buscar por nombre, correo o número de empleado..."
+                placeholder="Buscar por nombre o RFC..."
                 value={filters.search}
                 onChange={handleFilterChange}
                 className="pl-10 w-full h-10 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -287,29 +283,26 @@ function App() {
             </div>
 
             <select
-              name="nacionalidad"
-              value={filters.nacionalidad}
+              name="tipoPersona"
+              value={filters.tipoPersona}
               onChange={handleFilterChange}
               className="h-10 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Nacionalidad</option>
-              {availableNacionalidades.map((nacionalidad) => (
-                <option key={nacionalidad} value={nacionalidad}>
-                  {nacionalidad}
-                </option>
-              ))}
+              <option value="">Tipo de Persona</option>
+              <option value="moral">Moral</option>
+              <option value="fisica">Física</option>
             </select>
 
             <select
-              name="empresa"
-              value={filters.empresa}
+              name="estado"
+              value={filters.estado}
               onChange={handleFilterChange}
               className="h-10 rounded-md border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             >
-              <option value="">Empresa</option>
-              {availableEmpresas.map((empresa) => (
-                <option key={empresa.id_empresa} value={empresa.id_empresa}>
-                  {empresa.razon_social}
+              <option value="">Estado</option>
+              {availableEstados.map((estado) => (
+                <option key={estado} value={estado}>
+                  {estado}
                 </option>
               ))}
             </select>
@@ -322,102 +315,90 @@ function App() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  {[
-                    "Nombre",
-                    "Correo",
-                    "Nacionalidad",
-                    "Empresas",
-                    "Acciones",
-                  ].map((header, index) => (
-                    <th
-                      key={header}
-                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                      onClick={() => {
-                        const columns: (keyof Traveler)[] = [
-                          "primer_nombre",
-                          "correo",
-                          "nacionalidad",
-                          "empresas",
-                        ];
-                        if (index < columns.length) handleSort(columns[index]);
-                      }}
-                    >
-                      <div className="flex items-center space-x-1">
-                        <span>{header}</span>
-                        {index < 4 &&
-                          sort.column ===
-                            [
-                              "primer_nombre",
-                              "correo",
-                              "nacionalidad",
-                              "empresas",
-                            ][index] &&
-                          (sort.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          ))}
-                      </div>
-                    </th>
-                  ))}
+                  {["Razón Social", "Tipo", "RFC", "Estado", "Acciones"].map(
+                    (header, index) => (
+                      <th
+                        key={header}
+                        className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        onClick={() => {
+                          const columns: (keyof Company)[] = [
+                            "razon_social",
+                            "tipo_persona",
+                            "rfc",
+                            "empresa_estado",
+                          ];
+                          if (index < columns.length)
+                            handleSort(columns[index]);
+                        }}
+                      >
+                        <div className="flex items-center space-x-1">
+                          <span>{header}</span>
+                          {index < 4 &&
+                            sort.column ===
+                              [
+                                "razon_social",
+                                "tipo_persona",
+                                "rfc",
+                                "empresa_estado",
+                              ][index] &&
+                            (sort.direction === "asc" ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            ))}
+                        </div>
+                      </th>
+                    )
+                  )}
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
-                {sortedTravelers.map((traveler) => (
-                  <tr key={traveler.id_viajero} className="hover:bg-gray-50">
+                {sortedCompanies.map((company) => (
+                  <tr key={company.id_empresa} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {`${traveler.primer_nombre} ${
-                            traveler.segundo_nombre || ""
-                          } ${traveler.apellido_paterno}`}
+                          {company.razon_social}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {traveler.numero_empleado || "—"}
+                          {company.nombre_comercial}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {traveler.correo || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span
                         className={cn(
                           "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                          "bg-blue-100 text-blue-800"
+                          company.tipo_persona === "moral"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
                         )}
                       >
-                        {traveler.nacionalidad || "—"}
+                        {company.tipo_persona === "moral" ? "Moral" : "Física"}
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      <div className="flex flex-wrap gap-1">
-                        {traveler.empresas.map((empresa) => (
-                          <span
-                            key={empresa.id_empresa}
-                            className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 text-gray-800 text-xs"
-                          >
-                            {empresa.razon_social}
-                          </span>
-                        ))}
-                      </div>
+                      {company.rfc || "—"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {company.empresa_estado || "—"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleOpenModal("view", traveler)}
+                          onClick={() => handleOpenModal("view", company)}
                           className="text-gray-400 hover:text-gray-500"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleOpenModal("edit", traveler)}
+                          onClick={() => handleOpenModal("edit", company)}
                           className="text-blue-400 hover:text-blue-500"
                         >
                           <Edit className="h-4 w-4" />
                         </button>
                         <button
-                          onClick={() => handleDelete(traveler.id_viajero)}
+                          onClick={() => handleDelete(company.id_empresa)}
                           className="text-red-400 hover:text-red-500"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -439,10 +420,10 @@ function App() {
             <div className="flex items-center justify-between p-4 border-b">
               <h2 className="text-xl font-semibold">
                 {modalMode === "view"
-                  ? "Detalles del Viajero"
+                  ? "Detalles de la Empresa"
                   : modalMode === "edit"
-                  ? "Editar Viajero"
-                  : "Nuevo Viajero"}
+                  ? "Editar Empresa"
+                  : "Nueva Empresa"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -452,84 +433,60 @@ function App() {
               </button>
             </div>
 
-            {modalMode === "view" && selectedTraveler ? (
+            {modalMode === "view" && selectedCompany ? (
               <div className="p-4 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">
-                      Información Personal
+                      Información General
                     </h3>
                     <dl className="mt-2 space-y-2">
                       <div>
+                        <dt className="text-sm text-gray-500">Razón Social</dt>
+                        <dd className="text-sm font-medium">
+                          {selectedCompany.razon_social}
+                        </dd>
+                      </div>
+                      <div>
                         <dt className="text-sm text-gray-500">
-                          Nombre Completo
+                          Nombre Comercial
                         </dt>
                         <dd className="text-sm font-medium">
-                          {`${selectedTraveler.primer_nombre} ${
-                            selectedTraveler.segundo_nombre || ""
-                          } ${selectedTraveler.apellido_paterno} ${
-                            selectedTraveler.apellido_materno || ""
-                          }`}
+                          {selectedCompany.nombre_comercial}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm text-gray-500">Correo</dt>
+                        <dt className="text-sm text-gray-500">RFC</dt>
                         <dd className="text-sm font-medium">
-                          {selectedTraveler.correo || "—"}
-                        </dd>
-                      </div>
-                      <div>
-                        <dt className="text-sm text-gray-500">Teléfono</dt>
-                        <dd className="text-sm font-medium">
-                          {selectedTraveler.telefono || "—"}
+                          {selectedCompany.rfc || "—"}
                         </dd>
                       </div>
                     </dl>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">
-                      Información Adicional
+                      Dirección
                     </h3>
                     <dl className="mt-2 space-y-2">
                       <div>
-                        <dt className="text-sm text-gray-500">Nacionalidad</dt>
+                        <dt className="text-sm text-gray-500">Dirección</dt>
                         <dd className="text-sm font-medium">
-                          {selectedTraveler.nacionalidad || "—"}
+                          {selectedCompany.empresa_direccion || "—"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm text-gray-500">
-                          Número de Pasaporte
-                        </dt>
+                        <dt className="text-sm text-gray-500">Estado</dt>
                         <dd className="text-sm font-medium">
-                          {selectedTraveler.numero_pasaporte || "—"}
+                          {selectedCompany.empresa_estado || "—"}
                         </dd>
                       </div>
                       <div>
-                        <dt className="text-sm text-gray-500">
-                          Número de Empleado
-                        </dt>
+                        <dt className="text-sm text-gray-500">Municipio</dt>
                         <dd className="text-sm font-medium">
-                          {selectedTraveler.numero_empleado || "—"}
+                          {selectedCompany.empresa_municipio || "—"}
                         </dd>
                       </div>
                     </dl>
-                  </div>
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-500 mb-2">
-                    Empresas Asignadas
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedTraveler.empresas.map((empresa) => (
-                      <span
-                        key={empresa.id_empresa}
-                        className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-sm"
-                      >
-                        {empresa.razon_social}
-                      </span>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -538,16 +495,16 @@ function App() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Primer Nombre
+                      Razón Social
                     </label>
                     <input
                       type="text"
-                      name="primer_nombre"
-                      value={formData.primer_nombre || ""}
+                      name="razon_social"
+                      value={formData.razon_social || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          primer_nombre: e.target.value,
+                          razon_social: e.target.value,
                         })
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -556,33 +513,16 @@ function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Segundo Nombre
+                      Nombre Comercial
                     </label>
                     <input
                       type="text"
-                      name="segundo_nombre"
-                      value={formData.segundo_nombre || ""}
+                      name="nombre_comercial"
+                      value={formData.nombre_comercial || ""}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          segundo_nombre: e.target.value,
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Apellido Paterno
-                    </label>
-                    <input
-                      type="text"
-                      name="apellido_paterno"
-                      value={formData.apellido_paterno || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          apellido_paterno: e.target.value,
+                          nombre_comercial: e.target.value,
                         })
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -591,45 +531,33 @@ function App() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Apellido Materno
+                      Tipo de Persona
                     </label>
-                    <input
-                      type="text"
-                      name="apellido_materno"
-                      value={formData.apellido_materno || ""}
+                    <select
+                      name="tipo_persona"
+                      value={formData.tipo_persona || "moral"}
                       onChange={(e) =>
                         setFormData({
                           ...formData,
-                          apellido_materno: e.target.value,
+                          tipo_persona: e.target.value as "moral" | "fisica",
                         })
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
+                    >
+                      <option value="moral">Moral</option>
+                      <option value="fisica">Física</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      Correo
+                      RFC
                     </label>
                     <input
-                      type="email"
-                      name="correo"
-                      value={formData.correo || ""}
+                      type="text"
+                      name="rfc"
+                      value={formData.rfc || ""}
                       onChange={(e) =>
-                        setFormData({ ...formData, correo: e.target.value })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Teléfono
-                    </label>
-                    <input
-                      type="tel"
-                      name="telefono"
-                      value={formData.telefono || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, telefono: e.target.value })
+                        setFormData({ ...formData, rfc: e.target.value })
                       }
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
@@ -638,21 +566,21 @@ function App() {
 
                 <div className="border-t pt-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-4">
-                    Información Adicional
+                    Dirección
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Nacionalidad
+                        Dirección
                       </label>
                       <input
                         type="text"
-                        name="nacionalidad"
-                        value={formData.nacionalidad || ""}
+                        name="empresa_direccion"
+                        value={formData.empresa_direccion || ""}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            nacionalidad: e.target.value,
+                            empresa_direccion: e.target.value,
                           })
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -660,16 +588,16 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Número de Pasaporte
+                        Estado
                       </label>
                       <input
                         type="text"
-                        name="numero_pasaporte"
-                        value={formData.numero_pasaporte || ""}
+                        name="empresa_estado"
+                        value={formData.empresa_estado || ""}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            numero_pasaporte: e.target.value,
+                            empresa_estado: e.target.value,
                           })
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -677,16 +605,16 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Número de Empleado
+                        Municipio
                       </label>
                       <input
                         type="text"
-                        name="numero_empleado"
-                        value={formData.numero_empleado || ""}
+                        name="empresa_municipio"
+                        value={formData.empresa_municipio || ""}
                         onChange={(e) =>
                           setFormData({
                             ...formData,
-                            numero_empleado: e.target.value,
+                            empresa_municipio: e.target.value,
                           })
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -694,20 +622,20 @@ function App() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Género
+                        Código Postal
                       </label>
-                      <select
-                        name="genero"
-                        value={formData.genero || ""}
+                      <input
+                        type="text"
+                        name="empresa_cp"
+                        value={formData.empresa_cp || ""}
                         onChange={(e) =>
-                          setFormData({ ...formData, genero: e.target.value })
+                          setFormData({
+                            ...formData,
+                            empresa_cp: e.target.value,
+                          })
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      >
-                        <option value="">Seleccionar</option>
-                        <option value="masculino">Masculino</option>
-                        <option value="femenino">Femenino</option>
-                      </select>
+                      />
                     </div>
                   </div>
                 </div>
@@ -734,6 +662,6 @@ function App() {
       )}
     </div>
   );
-}
+};
 
-export default App;
+export default Page;
