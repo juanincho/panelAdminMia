@@ -4,7 +4,7 @@ import { API_KEY } from "../../constants/constantes";
 
 
 export default async function TravelerDashboard() {
-  const endpoint = "http://mianoktos.vercel.app/v1/mia/agentes/agentes"
+  const endpoint = "http://mianoktos.vercel.app/v1/mia/factura/getFacturas"
   try {
 
     const response = await fetch(endpoint, {
@@ -23,18 +23,18 @@ export default async function TravelerDashboard() {
     if (Array.isArray(data) && (data[0]?.error || data[1]?.error)) {
       throw new Error("Error al cargar los datos");
     }
-    const agentes = data.data.users;
+    const facturas = data;
 
     return (
       <Suspense fallback={<h1>Cargando...</h1>}>
         <TravelersPage
-          agentes={agentes || []}
+          facturas={facturas || []}
         ></TravelersPage>
       </Suspense>
     );
     // return <h1>Estamos en mantenimiento...</h1>;
   } catch (error) {
-    console.log("Error al cargar los datos en agentes:", error);
+    console.log("Error al cargar los datos en facturas:", error);
     console.log(error);
     return <h1>Error al cargar los datos :c</h1>;
   }
