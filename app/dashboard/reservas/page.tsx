@@ -31,8 +31,8 @@ export default async function ReservationsPage() {
   try {
     const response = await fetch(
       "https://mianoktos.vercel.app/v1/mia/reservas",
-       //"http://localhost:3001/v1/mia/reservas"
-       //http://localhost:5173/v1/mia/reservas",
+      //"http://localhost:3001/v1/mia/reservas"
+      //https://mianoktos.vercel.app/v1/mia/reservas",
       {
         method: "GET",
         headers: {
