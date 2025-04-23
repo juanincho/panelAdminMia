@@ -2,6 +2,7 @@
 
 import "./globals.css";
 import { AuthProvider } from "./auth/AuthContext";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, useEffect, Suspense } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
@@ -20,7 +21,7 @@ import {
   CreditCard,
   Receipt,
   User,
-  UserRoundCog
+  UserRoundCog,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -105,6 +106,15 @@ const navItems: NavItem[] = [
     icon: UserRoundCog,
   },
 ];
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 export default function DashboardLayout({
   children,
@@ -248,9 +258,11 @@ export default function DashboardLayout({
                 {path}
               </h1>
             </div>
-            <Suspense fallback={<h1>Cargando...</h1>}>
-              <AuthProvider>{children}</AuthProvider>
-            </Suspense>
+            <QueryClientProvider client={queryClient}>
+              <Suspense fallback={<h1>Cargando...</h1>}>
+                <AuthProvider>{children}</AuthProvider>
+              </Suspense>
+            </QueryClientProvider>
           </main>
         </div>
       </body>

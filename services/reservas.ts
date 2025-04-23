@@ -26,10 +26,10 @@ export async function fetchCreateReserva(reserva) {
   }
 }
 
-export const fetchReservations = async (client, callback) => {
+export const fetchReservations = async (client: string, callback) => {
   try {
     // Replace with your actual API endpoint
-    const data = await fetch(`${URL}/mia/reservas/empresa?id=${client}`, {
+    const data = await fetch(`${URL}/mia/reservas/agente?id=${client}`, {
       method: "GET",
       headers: {
         "x-api-key": API_KEY || "",
@@ -38,6 +38,7 @@ export const fetchReservations = async (client, callback) => {
       },
       cache: "no-store",
     }).then((res) => res.json());
+    console.log(data);
     callback(data);
   } catch (error) {
     throw error;

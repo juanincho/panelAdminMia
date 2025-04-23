@@ -6,9 +6,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Receipt, CalendarDays, Users } from "lucide-react";
+import { Receipt, CalendarDays, Users, Building, User } from "lucide-react";
 
 const sidebarNavItems = [
+  {
+    title: "Perfil",
+    href: "/",
+    icon: User,
+  },
   {
     title: "Facturas",
     href: "/invoices",
@@ -23,6 +28,11 @@ const sidebarNavItems = [
     title: "Usuarios",
     href: "/users",
     icon: Users,
+  },
+  {
+    title: "Empresas",
+    href: "/empresas",
+    icon: Building,
   },
 ];
 
