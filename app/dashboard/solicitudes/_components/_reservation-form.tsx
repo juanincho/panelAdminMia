@@ -194,8 +194,7 @@ export function ReservationForm({ item, viajeros }: ReservationFormProps) {
     try {
       console.log(objeto);
       const response = await fetch(
-        "https://mianoktos.vercel.app/v1/mia/reservas",
-        // "https://mianoktos.vercel.app/v1/mia/reservas",
+        "http://mianoktos.vercel.app/v1/mia/reservas",
         {
           method: "POST",
           headers: {

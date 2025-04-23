@@ -9,6 +9,7 @@
 //   createAgente: "/create",
 // };
 const URL = "https://mianoktos.vercel.app";
+//const URL = "http://localhost:3001";
 
 const API_KEY =
   "nkt-U9TdZU63UENrblg1WI9I1Ln9NcGrOyaCANcpoS2PJT3BlbkFJ1KW2NIGUYF87cuvgUF3Q976fv4fPrnWQroZf0RzXTZTA942H3AMTKFKJHV6cTi8c6dd6tybUD65fybhPJT3BlbkFJ1KW2NIGPrnWQroZf0RzXTZTA942H3AMTKFy15whckAGSSRSTDvsvfHsrtbXhdrT";
@@ -466,6 +467,27 @@ export const getEmpresasDatosFiscales = async (agent_id: string) => {
       `${URL}/v1/mia/agentes/empresas-con-datos-fiscales?id_agente=${encodeURIComponent(
         agent_id
       )}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...AUTH,
+        },
+      }
+    );
+    const json = await response.json();
+    console.log(json);
+    return json;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getFacturas = async (agent_id: string) => {
+  try {
+    console.log("En proceso de obtener facturas");
+    const response = await fetch(
+      `${URL}/v1/mia/factura/getFacturas`,
       {
         method: "GET",
         headers: {
