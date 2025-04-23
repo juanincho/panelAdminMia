@@ -178,7 +178,7 @@ const Page = () => {
   }, [filteredCompanies, sort]);
 
   const availableEstados = useMemo(() => {
-    const estados = new Set(
+    const estados = new Set<string>(
       companies
         .map((c) => c.empresa_estado)
         .filter((estado): estado is string => !!estado)
