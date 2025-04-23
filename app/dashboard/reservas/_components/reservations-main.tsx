@@ -63,6 +63,8 @@ export function ReservationsMain({ bookings }: ReservationsMainProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
+  console.log(bookings);
+
   const getStatusBadge = (status: string) => {
     switch (status.toLowerCase()) {
       case "en proceso":
@@ -168,7 +170,7 @@ export function ReservationsMain({ bookings }: ReservationsMainProps) {
                     })}
                   </TableCell>
                   <TableCell>{booking.tipo_cuarto}</TableCell>
-                  <TableCell>${Number(booking.total||0).toFixed(2)}</TableCell>
+                  <TableCell>${booking.total}</TableCell>
                   <TableCell>{getStatusBadge(booking.estado)}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
@@ -198,3 +200,79 @@ export function ReservationsMain({ bookings }: ReservationsMainProps) {
     </div>
   );
 }
+
+const hotelConTarifas = {
+  id_hotel: "H001",
+  nombre: "Hotel Paraíso del Sol",
+  id_cadena: 1,
+  correo: "contacto@paraisodelsol.com",
+  telefono: "555-123-4567",
+  rfc: "HPS123456ABC",
+  razon_social: "Hotel Paraíso del Sol S.A. de C.V.",
+  direccion: "Av. del Mar 123, Zona Hotelera",
+  latitud: "23.2456",
+  longitud: "-106.4100",
+  convenio: "Tarifas especiales para empresas Noktos",
+  descripcion: "Hotel frente al mar con alberca, spa y restaurante.",
+  calificacion: 4.5,
+  tipo_hospedaje: "hotel",
+  cuenta_de_deposito: "1234567890",
+  Estado: "Sinaloa",
+  Ciudad_Zona: "Mazatlán",
+  NoktosQ: 3,
+  NoktosQQ: 5,
+  MenoresEdad: "Menores de 12 años gratis",
+  PaxExtraPersona: "$300 MXN",
+  DesayunoIncluido: "Sí",
+  DesayunoComentarios: "Buffet de 7:00am a 10:30am",
+  DesayunoPrecioPorPersona: "150",
+  Transportacion: "Incluida desde el aeropuerto con previa reservación",
+  TransportacionComentarios: "Reservar con 24h de anticipación",
+  URLImagenHotel: "https://example.com/images/hotel1.jpg",
+  URLImagenHotelQ: "https://example.com/images/hotel1_q.jpg",
+  URLImagenHotelQQ: "https://example.com/images/hotel1_qq.jpg",
+  Activo: 1,
+  Comentarios: "Incluye acceso a gimnasio y spa",
+  Id_Sepomex: 12345,
+  CodigoPostal: "82000",
+  Id_hotel_excel: 56789,
+  Colonia: "Zona Dorada",
+  tipo_negociacion: "Contrato anual",
+  vigencia_convenio: "2025-12-31",
+  tipo_pago: "Transferencia",
+  disponibilidad_precio: "Sujeto a disponibilidad",
+  contacto_convenio: "Laura Jiménez",
+  contacto_recepcion: "Carlos Gómez",
+  impuestos_porcentaje: 16.0,
+  impuestos_moneda: 250.0,
+  tarifas: [
+    {
+      id_tarifa: 101,
+      precio: 1200.0,
+      id_agente: "AG001",
+      id_hotel: "H001",
+      id_tipos_cuartos: 1,
+      costo: 1000.0,
+      incluye_desayuno: 1,
+      precio_desayuno: 150.0,
+      precio_noche_extra: 1100.0,
+      comentario_desayuno: "Desayuno buffet incluido",
+      precio_persona_extra: 300.0,
+      tipo_desayuno: "Buffet",
+    },
+    {
+      id_tarifa: 102,
+      precio: 950.0,
+      id_agente: "AG002",
+      id_hotel: "H001",
+      id_tipos_cuartos: 2,
+      costo: 850.0,
+      incluye_desayuno: 0,
+      precio_desayuno: 0.0,
+      precio_noche_extra: 900.0,
+      comentario_desayuno: "No incluye desayuno",
+      precio_persona_extra: 250.0,
+      tipo_desayuno: "N/A",
+    },
+  ],
+};

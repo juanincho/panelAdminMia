@@ -236,9 +236,12 @@ export default function DashboardModule({
                     <td className="px-6 py-4">{group.solicitudes.length}</td>
                     <td className="px-6 py-4">
                       $
-                      {group.solicitudes
-                        .reduce((sum, sol) => sum + Number(sol.total || 0), 0)
-                        .toFixed(2)
+                      {
+                        group.solicitudes.reduce(
+                          (sum, sol) => sum + sol.total,
+                          0
+                        )
+                        //
                       }
 
                     </td>
@@ -310,7 +313,7 @@ export default function DashboardModule({
                                   </td>
                                   <td className="px-4 py-2">{item.room}</td>
                                   <td className="px-4 py-2">
-                                    ${Number(item.total ||0 ).toFixed(2)}
+                                    {/* ${item.total } */}$
                                   </td>
                                   <td className="px-4 py-2">
                                     {getStatusBadge(item.status)}
