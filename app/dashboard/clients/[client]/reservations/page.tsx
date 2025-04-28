@@ -10,6 +10,8 @@ import {
 import { fetchReservations } from "@/services/reservas";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { fetchPendientesAgent } from "@/hooks/useFetch";
+
 
 // Types
 interface Reservation {
@@ -34,7 +36,7 @@ interface Reservation {
   apellido_paterno: string;
 }
 
-type TabType = "operaciones" | "pagos" | "facturas";
+type TabType = "operaciones" | "pagos" | "facturas" | "cuentas-cobrar";
 
 // Utility Functions
 const formatDate = (dateString: string): string => {
@@ -156,11 +158,10 @@ const OperacionesRow = ({ reservation }: { reservation: Reservation }) => {
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              isProcessed
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+            className={`px-2 py-1 text-xs font-medium rounded-full ${isProcessed
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+              }`}
           >
             {isProcessed ? "Procesada" : "Pendiente"}
           </span>
@@ -229,22 +230,20 @@ const PagosRow = ({ reservation }: { reservation: Reservation }) => {
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              isPendingPayment
-                ? "bg-red-100 text-red-800"
-                : "bg-green-100 text-green-800"
-            }`}
+            className={`px-2 py-1 text-xs font-medium rounded-full ${isPendingPayment
+              ? "bg-red-100 text-red-800"
+              : "bg-green-100 text-green-800"
+              }`}
           >
             {isPendingPayment ? "Pendiente" : "Pagado"}
           </span>
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              isCredit
-                ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
+            className={`px-2 py-1 text-xs font-medium rounded-full ${isCredit
+              ? "bg-blue-100 text-blue-800"
+              : "bg-gray-100 text-gray-800"
+              }`}
           >
             {isCredit ? "Crédito" : "Contado"}
           </span>
@@ -324,11 +323,10 @@ const FacturasRow = ({ reservation }: { reservation: Reservation }) => {
         </td>
         <td className="px-4 py-3 whitespace-nowrap">
           <span
-            className={`px-2 py-1 text-xs font-medium rounded-full ${
-              hasInvoice
-                ? "bg-green-100 text-green-800"
-                : "bg-yellow-100 text-yellow-800"
-            }`}
+            className={`px-2 py-1 text-xs font-medium rounded-full ${hasInvoice
+              ? "bg-green-100 text-green-800"
+              : "bg-yellow-100 text-yellow-800"
+              }`}
           >
             {hasInvoice ? "Facturado" : "Sin Facturar"}
           </span>
@@ -375,10 +373,73 @@ const FacturasRow = ({ reservation }: { reservation: Reservation }) => {
   );
 };
 
+const CuentasRow = ({ cuenta }: { cuenta: any }) => {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <>
+      <tr className="hover:bg-gray-50">
+        <td className="px-4 py-3 whitespace-nowrap">
+          {/* <button
+            onClick={() => setExpanded(!expanded)}
+            className="flex items-center text-gray-900"
+          > */}
+          {/* {expanded ? (
+              <ChevronDown className="w-4 h-4 mr-2" />
+            ) : (
+              <ChevronRight className="w-4 h-4 mr-2" />
+            )} */}
+          {cuenta.concepto}
+          {/* </button> */}
+        </td>
+        <td className="px-4 py-3 whitespace-nowrap">
+          <div className="font-medium">{formatCurrency(cuenta.pago_por_credito)}</div>
+        </td>
+        <td className="px-4 py-3 whitespace-nowrap">
+          {formatCurrency(cuenta.pendiente_por_cobrar)}
+        </td>
+        <td className="px-4 py-3 whitespace-nowrap">
+          {cuenta.estado_solicitud}
+        </td>
+        <td className="px-4 py-3 whitespace-nowrap">
+          {new Date(cuenta.fecha_credito).toLocaleDateString()}
+        </td>
+      </tr>
+      {/* {expanded && (
+        <tr className="bg-gray-50">
+          <td colSpan={7} className="px-4 py-3">
+            <div className="grid grid-cols-3 gap-4 text-sm">
+              <div>
+                <h4 className="font-medium mb-2">Detalles de Facturación</h4>
+                <p>ID de Factura: {reservation.id_factura || "No facturado"}</p>
+                <p>Estado: {hasInvoice ? "Facturado" : "Pendiente"}</p>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Información de Pago</h4>
+                <p>ID de Pago: {reservation.id_pago || "N/A"}</p>
+                <p>Total: {formatCurrency(reservation.total)}</p>
+              </div>
+              <div>
+                <h4 className="font-medium mb-2">Datos del Cliente</h4>
+                <p>
+                  Nombre: {reservation.primer_nombre}{" "}
+                  {reservation.apellido_paterno}
+                </p>
+                <p>ID de Usuario: {reservation.id_usuario_generador}</p>
+              </div>
+            </div>
+          </td>
+        </tr>
+      )} */}
+    </>
+  );
+};
+
 // Main Component
 export default function ReservationManagement() {
   const [activeTab, setActiveTab] = useState<TabType>("operaciones");
   const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [cuentas, setCuentas] = useState([]);
   const [filteredReservations, setFilteredReservations] = useState<
     Reservation[]
   >([]);
@@ -402,6 +463,15 @@ export default function ReservationManagement() {
     } catch (error) {
       console.log(error);
     }
+  }, []);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const pendientesData = await fetchPendientesAgent(client);
+      console.log(pendientesData)
+      setCuentas(pendientesData);
+    };
+    fetchData();
   }, []);
 
   // Filter logic
@@ -511,7 +581,9 @@ export default function ReservationManagement() {
       </div>
     );
   };
+  const fetchCuentas = async () => {
 
+  }
   const renderTable = () => {
     switch (activeTab) {
       case "operaciones":
@@ -619,6 +691,41 @@ export default function ReservationManagement() {
             </tbody>
           </table>
         );
+      case "cuentas-cobrar":
+        return (
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Concepto de pago
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Total
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Restante por pagar
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Estado
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Fecha creado
+                </th>
+                {/* <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Acciones
+                </th> */}
+              </tr>
+            </thead>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {cuentas.map((cuenta) => (
+                <CuentasRow
+                  key={cuenta.id_servicio}
+                  cuenta={cuenta}
+                />
+              ))}
+            </tbody>
+          </table>
+        );
     }
   };
 
@@ -635,33 +742,39 @@ export default function ReservationManagement() {
         <nav className="-mb-px flex space-x-8">
           <button
             onClick={() => setActiveTab("operaciones")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "operaciones"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "operaciones"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Operaciones
           </button>
           <button
             onClick={() => setActiveTab("pagos")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "pagos"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "pagos"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Pagos
           </button>
           <button
             onClick={() => setActiveTab("facturas")}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === "facturas"
-                ? "border-blue-500 text-blue-600"
-                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-            }`}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "facturas"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
           >
             Facturas
+          </button>
+          <button
+            onClick={() => setActiveTab("cuentas-cobrar")}
+            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === "cuentas-cobrar"
+              ? "border-blue-500 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+          >
+            Cuentas por cobrar
           </button>
         </nav>
       </div>
