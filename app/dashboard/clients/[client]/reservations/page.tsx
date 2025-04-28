@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { fetchReservations } from "@/services/reservas";
 import { useParams } from "next/navigation";
+import Link from "next/link";
 
 // Types
 interface Reservation {
@@ -622,7 +623,13 @@ export default function ReservationManagement() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-6 bg-white">
+    <div className="max-w-7xl mx-auto px-4 py-6 bg-white relative">
+      <Link
+        className=" absolute right-4 rounded-sm bg-sky-600 p-2 text-white"
+        href={window.location.href + "/create"}
+      >
+        Crear reservación
+      </Link>
       {/* Tabs */}
       <div className="border-b border-gray-200 mb-6">
         <nav className="-mb-px flex space-x-8">

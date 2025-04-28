@@ -56,13 +56,6 @@ interface SortState {
   direction: SortDirection;
 }
 
-// Mock API functions
-const fetchCompanies = async (): Promise<Company[]> => {
-  // Replace with actual API call
-  const response = await fetch("/api/companies");
-  return response.json();
-};
-
 const createCompany = async (company: Partial<Company>): Promise<Company> => {
   // Replace with actual API call
   const response = await fetch("/api/companies", {
