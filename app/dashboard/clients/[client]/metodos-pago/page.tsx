@@ -56,17 +56,20 @@ const CheckOutForm = ({ setSuccess, setTrigger, cliente }: any) => {
     if (error) {
       setMessage(error.message);
     } else {
-      const response = await fetch(`https://mianoktos.vercel.app/v1/stripe/save-payment-method`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...AUTH,
-        },
-        body: JSON.stringify({
-          paymentMethodId: paymentMethod.id,
-          id_agente: id_agente,
-        }),
-      });
+      const response = await fetch(
+        `https://mianoktos.vercel.app/v1/stripe/save-payment-method`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...AUTH,
+          },
+          body: JSON.stringify({
+            paymentMethodId: paymentMethod.id,
+            id_agente: id_agente,
+          }),
+        }
+      );
 
       const data = await response.json();
       if (data.success) {
@@ -142,7 +145,6 @@ const stripePromise = loadStripe(
 );
 
 const Page = () => {
-
   const { client } = useParams();
   const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
   const [showAddPaymentForm, setShowAddPaymentForm] = useState(false);
@@ -151,7 +153,9 @@ const Page = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const data = await fetchPaymentMethods(client);
+      const data = await fetchPaymentMethods(
+        Array.isArray(client) ? client[0] : client
+      );
       console.log("Payment methods data:", data);
       setPaymentMethods(data);
     };
@@ -174,17 +178,20 @@ const Page = () => {
   const handleDeleteMethod = async (id: string) => {
     console.log("Delete payment method:", id);
     const id_agente = client;
-    const response = await fetch(`https://mianoktos.vercel.app/v1/stripe/delete-payment-method`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...AUTH,
-      },
-      body: JSON.stringify({
-        paymentMethodId: id,
-        id_agente: id_agente,
-      }),
-    });
+    const response = await fetch(
+      `https://mianoktos.vercel.app/v1/stripe/delete-payment-method`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...AUTH,
+        },
+        body: JSON.stringify({
+          paymentMethodId: id,
+          id_agente: id_agente,
+        }),
+      }
+    );
 
     const datos = await response.json();
     if (datos.success) {
@@ -203,10 +210,12 @@ const Page = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Metodos de pago</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">
+            Metodos de pago
+          </h1>
         </div>
-        {showAddPaymentForm ?
-          (<Elements stripe={stripePromise}>
+        {showAddPaymentForm ? (
+          <Elements stripe={stripePromise}>
             <CheckOutForm
               setSuccess={setShowAddPaymentForm}
               setTrigger={setTrigger}
@@ -214,105 +223,95 @@ const Page = () => {
               onCancel={() => setShowAddPaymentForm(false)}
             />
           </Elements>
-          ) :
-          (
-            <div className="w-full bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-xl font-semibold text-gray-800 mb-6">
-                Metodos de pago
-              </h3>
+        ) : (
+          <div className="w-full bg-white rounded-xl shadow-lg p-6">
+            <h3 className="text-xl font-semibold text-gray-800 mb-6">
+              Metodos de pago
+            </h3>
 
-              {paymentMethods.length === 0 ? (
-                <div className="text-center py-8 bg-gray-50 rounded-lg">
-                  <CreditCard
-                    className="mx-auto text-gray-400 mb-3"
-                    size={32}
-                  />
-                  <p className="text-gray-500">
-                    No se han guardado metodos de pago
-                  </p>
-                  <ul className="space-y-3 mb-6">
-                    <li
-                      onClick={handleAddMethod}
-                      className="flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Plus className="text-gray-600" size={20} />
-                        <p className="font-medium text-gray-800">
-                          Agregar nuevo metodo de pago
-                        </p>
-                      </div>
-                    </li>
-                  </ul>
-                </div>
-              ) :
-                (
-                  <>
-                    <ul className="space-y-3 mb-6">
-                      {paymentMethods.length > 0 && (paymentMethods.map((method) => (
-                        <li
-                          key={method.id}
-                          className={"flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100"}
-                            
-                        >
-                          <div className="flex items-center gap-3">
-                            <CreditCard
-                              className={
-                                "text-gray-600"
-                              }
-                              size={20}
-                            />
-                            <div>
-                              <p className="font-medium text-gray-800">
-                                {method.card.brand.toUpperCase()} ••••{" "}
-                                {method.card.last4}
-                              </p>
-                              <p className="text-sm text-gray-500">
-                                Vence {method.card.exp_month}/
-                                {method.card.exp_year}
-                              </p>
-                            </div>
+            {paymentMethods.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <CreditCard className="mx-auto text-gray-400 mb-3" size={32} />
+                <p className="text-gray-500">
+                  No se han guardado metodos de pago
+                </p>
+                <ul className="space-y-3 mb-6">
+                  <li
+                    onClick={handleAddMethod}
+                    className="flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Plus className="text-gray-600" size={20} />
+                      <p className="font-medium text-gray-800">
+                        Agregar nuevo metodo de pago
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </div>
+            ) : (
+              <>
+                <ul className="space-y-3 mb-6">
+                  {paymentMethods.length > 0 &&
+                    paymentMethods.map((method) => (
+                      <li
+                        key={method.id}
+                        className={
+                          "flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100"
+                        }
+                      >
+                        <div className="flex items-center gap-3">
+                          <CreditCard className={"text-gray-600"} size={20} />
+                          <div>
+                            <p className="font-medium text-gray-800">
+                              {method.card.brand.toUpperCase()} ••••{" "}
+                              {method.card.last4}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Vence {method.card.exp_month}/
+                              {method.card.exp_year}
+                            </p>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {/* {selectedMethod === method.id && (
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {/* {selectedMethod === method.id && (
                               <CheckCircle2
                                 className="text-blue-600"
                                 size={20}
                               />
                             )} */}
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteMethod(method.id);
-                              }}
-                              className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors"
-                              aria-label="Delete payment method"
-                            >
-                              <Trash2 size={18} />
-                            </button>
-                          </div>
-                        </li>
-                      )))}
-                      <li
-                        onClick={handleAddMethod}
-                        className="flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Plus className="text-gray-600" size={20} />
-                          <p className="font-medium text-gray-800">
-                            Agregar nuevo metodo de pago
-                          </p>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteMethod(method.id);
+                            }}
+                            className="p-2 text-gray-400 hover:text-red-500 rounded-full hover:bg-red-50 transition-colors"
+                            aria-label="Delete payment method"
+                          >
+                            <Trash2 size={18} />
+                          </button>
                         </div>
                       </li>
-                    </ul>
-                  </>
-                )
-              }
-            </div>
-          )
-        }
+                    ))}
+                  <li
+                    onClick={handleAddMethod}
+                    className="flex items-center justify-between p-4 rounded-lg cursor-pointer transition-colors bg-gray-50 hover:bg-gray-100 border-2 border-dashed border-gray-300"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Plus className="text-gray-600" size={20} />
+                      <p className="font-medium text-gray-800">
+                        Agregar nuevo metodo de pago
+                      </p>
+                    </div>
+                  </li>
+                </ul>
+              </>
+            )}
+          </div>
+        )}
       </div>
     </div>
-  )
+  );
 };
 
 export default Page;
