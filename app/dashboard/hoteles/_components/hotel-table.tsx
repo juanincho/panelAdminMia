@@ -15,8 +15,8 @@ export interface FullHotelData {
   calificacion?: number | null;
   tipo_hospedaje?: string;
   cuenta_de_deposito?: string | null;
-  estado?: string;
-  ciudad_zona?: string;
+  Estado?: string;
+  Ciudad_Zona?: string;
   NoktosQ?: number;
   NoktosQQ?: number;
   MenoresEdad?: string;
@@ -33,8 +33,8 @@ export interface FullHotelData {
   Comentarios?: string | null;
   Id_Sepomex?: number | null;
   CodigoPostal?: string;
-  Id_hotel_excel?: number;
-  Colonia?: string;
+  id_hotel_excel?: number;
+  colonia?: string;
   precio_sencilla?: number;
   precio_doble?: number;
 }
@@ -72,8 +72,8 @@ export function HotelTable({ data, onRowClick }: HotelTableProps) {
             >
               <td className="px-4 py-2">{hotel.nombre}</td>
               <td className="px-4 py-2">{hotel.direccion}</td>
-              <td className="px-4 py-2">{hotel.estado}</td>
-              <td className="px-4 py-2">{hotel.ciudad_zona}</td>
+              <td className="px-4 py-2">{hotel.Estado}</td>
+              <td className="px-4 py-2">{hotel.Ciudad_Zona}</td>
               <td className="px-4 py-2">
                 Sencilla: ${hotel.precio_sencilla || "N/A"} <br />
                 Doble: ${hotel.precio_doble || "N/A"}

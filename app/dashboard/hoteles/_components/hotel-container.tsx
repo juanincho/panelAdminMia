@@ -97,6 +97,7 @@ export function HotelContainer() {
       if (!response.ok) throw new Error("Error al cargar hoteles");
 
       const result = await response.json();
+      console.log(result)
       const hotels = result.hoteles || [];
 
       setHotelData(hotels);

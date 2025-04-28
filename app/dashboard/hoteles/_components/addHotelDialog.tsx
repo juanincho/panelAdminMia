@@ -22,6 +22,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
 
 // Interfaces
 interface CodigoPostalData {
@@ -101,8 +102,9 @@ interface FormData {
   disponibilidad_precio: string;
   contacto_convenio: string;
   contacto_recepcion: string;
-  impuestos_porcentaje: string;
-  impuestos_moneda: string;
+  iva: string;
+  ish: string;
+  otros_impuestos: string;
   menoresEdad: string;
   transportacion: string;
   transportacionComentarios: string;
@@ -110,6 +112,7 @@ interface FormData {
   razon_social: string;
   calificacion: string;
   tipo_hospedaje: string;
+  id_sepomex: string;
   notas: string;
   latitud: string;
   longitud: string;
@@ -129,8 +132,8 @@ interface FormData {
 const buscarCodigoPostal = async (codigo: string) => {
   try {
     const response = await fetch(
-      //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`
-      "https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}",
+      `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
+      //"https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}",
       {
         method: "GET",
         headers: {
@@ -155,8 +158,8 @@ const buscarCodigoPostal = async (codigo: string) => {
 const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
-      //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
-      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      `http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      //`${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
       {
         method: "GET",
         headers: {
@@ -165,7 +168,6 @@ const buscarAgentes = async (nombre: string, correo: string) => {
         },
       }
     );
-    
     if (!response.ok) {
       console.error("Error en la respuesta:", response.status);
       return [];
@@ -215,8 +217,9 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     disponibilidad_precio: "",
     contacto_convenio: "",
     contacto_recepcion: "",
-    impuestos_porcentaje: "",
-    impuestos_moneda: "",
+    iva: "",
+    ish: "",
+    otros_impuestos: "",
     menoresEdad: "",
     transportacion: "",
     transportacionComentarios: "",
@@ -225,6 +228,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     calificacion: "",
     tipo_hospedaje: "hotel",
     notas: "",
+    id_sepomex :"",
     latitud: "",
     longitud: "",
     cuenta_de_deposito: "",
@@ -278,6 +282,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
             estado: primerResultado.d_estado,
             ciudad_zona: primerResultado.d_ciudad,
             municipio: primerResultado.D_mnpio,
+            id_sepomex: primerResultado.id
           }));
         }
       } catch (error) {
@@ -507,15 +512,15 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
         ciudad_zona: formData.ciudad_zona,
         codigoPostal: formData.codigoPostal,
         colonia: formData.colonia,
-        municipio: formData.municipio,
         tipo_hospedaje: formData.tipo_hospedaje || 'hotel',
         cuenta_de_deposito: formData.cuenta_de_deposito || null,
         tipo_pago: formData.tipo_pago || null,
         disponibilidad_precio: formData.disponibilidad_precio || null,
         contacto_convenio: formData.contacto_convenio || null,
         contacto_recepcion: formData.contacto_recepcion || null,
-        impuestos_porcentaje: formData.impuestos_porcentaje ? Number(formData.impuestos_porcentaje) : null,
-        impuestos_moneda: formData.impuestos_moneda ? Number(formData.impuestos_moneda) : null,
+        iva: formData.iva ? Number(formData.iva) : null,
+        ish: formData.ish ? Number(formData.ish) : null,
+        otros_impuestos: formData.otros_impuestos ? Number(formData.otros_impuestos) : null,
         menoresEdad: formData.menoresEdad || null,
         paxExtraPersona: formData.precio_persona_extra || null,
         transportacion: formData.transportacion || null,
@@ -525,7 +530,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
         urlImagenHotelQQ: formData.urlImagenHotelQQ || null,
         calificacion: formData.calificacion ? Number(formData.calificacion) : null,
         activo: formData.activo !== undefined ? formData.activo : 1,
-        notas: formData.notas || null,
+        id_sepomex: formData.id_sepomex,
+        Comentarios: formData.notas || null,
         tarifas: {
           general: {
             costo_q: formatNumber(formData.costo_q) || "0.00",
@@ -631,8 +637,9 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
       disponibilidad_precio: "",
       contacto_convenio: "",
       contacto_recepcion: "",
-      impuestos_porcentaje: "",
-      impuestos_moneda: "",
+      iva: "",
+      ish: "",
+      otros_impuestos: "",
       menoresEdad: "",
       transportacion: "",
       transportacionComentarios: "",
@@ -640,6 +647,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
       razon_social: "",
       calificacion: "",
       tipo_hospedaje: "hotel",
+      id_sepomex: "",
       notas: "",
       latitud: "",
       longitud: "",
@@ -1345,33 +1353,33 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
               </div>
 
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="comentario_pago">Comentario de Pago</Label>
-                <Input 
-                  id="comentario_pago"
-                  value={formData.comentario_pago || ""} 
-                  onChange={(e) => handleChange("comentario_pago", e.target.value)} 
-                  placeholder="Información adicional sobre el pago"
-                />
+              <Label htmlFor="comentario_pago">Comentario de Pago</Label>
+              <Textarea 
+                id="comentario_pago"
+                value={formData.comentario_pago || ""} 
+                onChange={(e) => handleChange("comentario_pago", e.target.value)} 
+                placeholder="Información adicional sobre el pago"
+              />
               </div>
 
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="solicitud_disponibilidad">¿Cómo se solicita la disponibilidad?</Label>
-                <Input 
-                  id="solicitud_disponibilidad"
-                  value={formData.solicitud_disponibilidad || ""} 
-                  onChange={(e) => handleChange("solicitud_disponibilidad", e.target.value)} 
-                  placeholder="Email, teléfono, etc."
-                />
+              <Label htmlFor="disponibilidad_precio">¿Cómo se solicita la disponibilidad?</Label>
+              <Textarea 
+                id="disponibilidad_precio"
+                value={formData.disponibilidad_precio || ""} 
+                onChange={(e) => handleChange("disponibilidad_precio", e.target.value)} 
+                placeholder="Email, teléfono, etc."
+              />
               </div>
 
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="contacto_convenio">Contacto Convenio</Label>
-                <Input 
-                  id="contacto_convenio"
-                  value={formData.contacto_convenio} 
-                  onChange={(e) => handleChange("contacto_convenio", e.target.value)} 
-                  placeholder="Nombre y datos de contacto"
-                />
+              <Label htmlFor="contacto_convenio">Contacto Convenio</Label>
+              <Textarea 
+                id="contacto_convenio"
+                value={formData.contacto_convenio} 
+                onChange={(e) => handleChange("contacto_convenio", e.target.value)} 
+                placeholder="Nombre y datos de contacto"
+              />
               </div>
 
               <div className="flex flex-col space-y-1">
@@ -1385,41 +1393,52 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
               </div>
 
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="contacto_recepcion">Contacto Recepción</Label>
-                <Input 
-                  id="contacto_recepcion"
-                  value={formData.contacto_recepcion} 
-                  onChange={(e) => handleChange("contacto_recepcion", e.target.value)} 
-                  placeholder="Nombre y datos de contacto"
-                />
+              <Label htmlFor="contacto_recepcion">Contacto Recepción</Label>
+              <Textarea 
+                id="contacto_recepcion"
+                value={formData.contacto_recepcion} 
+                onChange={(e) => handleChange("contacto_recepcion", e.target.value)} 
+                placeholder="Nombre y datos de contacto"
+              />
               </div>
 
-              <div className="flex flex-col space-y-1">
-                <Label>Impuestos</Label>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col space-y-1">
-                    <Label htmlFor="impuestos_porcentaje">Impuesto (%)</Label>
-                    <Input 
-                      id="impuestos_porcentaje"
-                      type="number"
-                      value={formData.impuestos_porcentaje} 
-                      onChange={(e) => handleChange("impuestos_porcentaje", e.target.value)} 
-                      placeholder="Ej: 16"
-                    />
-                  </div>
+              <div className="col-span-1 md:col-span-2">
+              <h3 className="text-md font-medium mb-3">Información de Impuestos</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border rounded-lg p-4 bg-gray-50">
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="iva">IVA (%)</Label>
+                  <Input 
+                    id="iva"
+                    value={formData.iva} 
+                    onChange={(e) => handleChange("iva", e.target.value)} 
+                    placeholder="Ej: 16.00"
+                  />
+                  <span className="text-xs text-gray-500">Impuesto al valor agregado</span>
+                </div>
 
-                  <div className="flex flex-col space-y-1">
-                    <Label htmlFor="impuestos_moneda">Impuesto (Moneda)</Label>
-                    <Input 
-                      id="impuestos_moneda"
-                      type="number"
-                      value={formData.impuestos_moneda} 
-                      onChange={(e) => handleChange("impuestos_moneda", e.target.value)} 
-                      placeholder="0.00"
-                    />
-                  </div>
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="ish">ISH</Label>
+                  <Input 
+                    id="ish"
+                    value={formData.ish} 
+                    onChange={(e) => handleChange("ish", e.target.value)} 
+                    placeholder="Ej: 3.00"
+                  />
+                  <span className="text-xs text-gray-500">Impuesto sobre hospedaje</span>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="otros_impuestos">Otros Impuestos</Label>
+                  <Input 
+                    id="otros_impuestos"
+                    value={formData.otros_impuestos} 
+                    onChange={(e) => handleChange("otros_impuestos", e.target.value)} 
+                    placeholder="Ej: 320.00"
+                  />
+                  <span className="text-xs text-gray-500">Impuestos adicionales</span>
                 </div>
               </div>
+            </div>
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="menoresEdad">Política para Menores de Edad</Label>
@@ -1563,12 +1582,12 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
               
               <div className="col-span-1 md:col-span-2 flex flex-col space-y-1">
                 <Label htmlFor="notas">Notas Adicionales</Label>
-                <Input 
-                  id="notas"
-                  value={formData.notas} 
-                  onChange={(e) => handleChange("notas", e.target.value)} 
-                  placeholder="Información adicional relevante"
-                />
+              <Textarea 
+                id="notas"
+                value={formData.notas} 
+                onChange={(e) => handleChange("notas", e.target.value)} 
+                placeholder="Comentario adicionales sobre el hotel"
+              />
               </div>
             </div>
           </TabsContent>
