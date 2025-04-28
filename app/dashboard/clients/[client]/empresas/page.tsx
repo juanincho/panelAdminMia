@@ -61,6 +61,7 @@ interface SortState {
   direction: SortDirection;
 }
 
+
 // Mock API functions
 const fetchCompanies = async (): Promise<Company[]> => {
   // Replace with actual API call
@@ -76,6 +77,7 @@ const fetchCompanies = async (): Promise<Company[]> => {
 //   });
 //   return response.json();
 // };
+
 
 const deleteCompany = async (id: string): Promise<void> => {
   // Replace with actual API call
@@ -216,7 +218,7 @@ const Page = () => {
   }, [filteredCompanies, sort]);
 
   const availableEstados = useMemo(() => {
-    const estados = new Set(
+    const estados = new Set<string>(
       companies
         .map((c) => c.empresa_estado)
         .filter((estado): estado is string => !!estado)

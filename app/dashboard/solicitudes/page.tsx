@@ -8,6 +8,7 @@ export default async function Dashboard() {
       "https://mianoktos.vercel.app/v1/mia/solicitud",
       "https://mianoktos.vercel.app/v1/mia/viajeros",
       "https://mianoktos.vercel.app/v1/mia/impuestos",
+      "https://mianoktos.vercel.app/v1/mia/hoteles",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>
@@ -25,7 +26,7 @@ export default async function Dashboard() {
     if (responses[0].error || responses[1].error || responses[2].error) {
       throw new Error("Error al cargar los datos");
     }
-    const [solicitudes, viajeros, impuestos] = responses;
+    const [solicitudes, viajeros, impuestos, hoteles] = responses;
 
     // return <h1>Estamos en mantenimiento...</h1>;
 
@@ -35,6 +36,7 @@ export default async function Dashboard() {
           data={solicitudes || []}
           viajeros={viajeros || []}
           impuestos={impuestos || []}
+          hoteles={hoteles || []}
         ></DashboardModule>
       </Suspense>
     );

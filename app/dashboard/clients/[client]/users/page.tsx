@@ -354,8 +354,11 @@ function App() {
             >
               <option value="">Nacionalidad</option>
               {availableNacionalidades.map((nacionalidad) => (
-                <option key={nacionalidad} value={nacionalidad}>
-                  {nacionalidad}
+                <option
+                  key={nacionalidad as string}
+                  value={nacionalidad as string}
+                >
+                  {nacionalidad as string}
                 </option>
               ))}
             </select>

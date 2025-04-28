@@ -54,7 +54,9 @@ export function HotelContainer() {
   const [searchTerm, setSearchTerm] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<FullHotelData | null>(null);
+  const [selectedHotel, setSelectedHotel] = useState<FullHotelData | null>(
+    null
+  );
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -83,8 +85,8 @@ export function HotelContainer() {
       }
 
       const url = search
-        ? `http://localhost:5173/v1/mia/hoteles/Consulta-Hoteles-por-termino?${params.toString()}`
-        : `http://localhost:5173/v1/mia/hoteles/Paginacion?${params.toString()}`;
+        ? `https://mianoktos.vercel.app/v1/mia/hoteles/Consulta-Hoteles-por-termino?${params.toString()}`
+        : `https://mianoktos.vercel.app/v1/mia/hoteles/Paginacion?${params.toString()}`;
 
       const response = await fetch(url, {
         method: "GET",
