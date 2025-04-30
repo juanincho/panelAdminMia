@@ -85,12 +85,12 @@ function App() {
   const queryClient = useQueryClient();
   const { client } = useParams();
 
-
-
   // Queries and Mutations
   const fetchCompaniesData = async () => {
     try {
-      const response = await fetchViajerosByAgente(Array.isArray(client) ? client[0] : client);
+      const response = await fetchViajerosByAgente(
+        Array.isArray(client) ? client[0] : client
+      );
       return response;
     } catch (error) {
       console.error("Error fetching travelers:", error);
@@ -98,8 +98,11 @@ function App() {
     }
   };
 
-
-  const { data: travelers = [], isLoading, refetch: refetchCompanies } = useQuery({
+  const {
+    data: travelers = [],
+    isLoading,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ["travelers", client],
     queryFn: fetchCompaniesData, // Usa la función aquí
   });
@@ -121,7 +124,10 @@ function App() {
 
   const createTraveler = async () => {
     try {
-      const responseCompany = await createNewViajero(formData, selectedEmpresas);
+      const responseCompany = await createNewViajero(
+        formData,
+        selectedEmpresas
+      );
       if (!responseCompany.success) {
         throw new Error("No se pudo registrar al viajero");
       }
@@ -129,11 +135,15 @@ function App() {
     } catch (error) {
       console.error("Error creando al nuevo viajero", error);
     }
-  }
+  };
 
   const updateTraveler = async () => {
     try {
-      const responseCompany = await updateViajero(formData, selectedEmpresas, selectedTraveler.id_viajero);
+      const responseCompany = await updateViajero(
+        formData,
+        selectedEmpresas,
+        selectedTraveler.id_viajero
+      );
       if (!responseCompany.success) {
         throw new Error("No se pudo actualizar al viajero");
       }
@@ -141,7 +151,7 @@ function App() {
     } catch (error) {
       console.error("Error actualizando viajero", error);
     }
-  }
+  };
   // State
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -167,9 +177,11 @@ function App() {
   const filteredTravelers = useMemo(() => {
     return travelers.filter((traveler) => {
       const searchTerm = filters.search.toLowerCase();
-      const fullName = `${traveler.primer_nombre} ${traveler.segundo_nombre || ""
-        } ${traveler.apellido_paterno} ${traveler.apellido_materno || ""
-        }`.toLowerCase();
+      const fullName = `${traveler.primer_nombre} ${
+        traveler.segundo_nombre || ""
+      } ${traveler.apellido_paterno} ${
+        traveler.apellido_materno || ""
+      }`.toLowerCase();
 
       const matchesSearch =
         !filters.search ||
@@ -236,14 +248,15 @@ function App() {
     );
   };
 
-
   const fetchData = async () => {
-    const data = await fetchCompaniesAgent(client);
+    const data = await fetchCompaniesAgent(
+      Array.isArray(client) ? client[0] : client
+    );
     setEmpresas(data);
   };
   useEffect(() => {
     fetchData();
-  }, [modalMode])
+  }, [modalMode]);
 
   // Handlers
   const handleSort = (column: keyof Traveler) => {
@@ -269,7 +282,7 @@ function App() {
     fetchData();
     setSelectedTraveler(traveler || null);
     setFormData(traveler || {});
-    setSelectedEmpresas(traveler?.empresas?.map((e) => e.id_empresa) || [])
+    setSelectedEmpresas(traveler?.empresas?.map((e) => e.id_empresa) || []);
     setIsModalOpen(true);
   };
 
@@ -409,12 +422,12 @@ function App() {
                         <span>{header}</span>
                         {index < 4 &&
                           sort.column ===
-                          [
-                            "primer_nombre",
-                            "correo",
-                            "nacionalidad",
-                            "empresas",
-                          ][index] &&
+                            [
+                              "primer_nombre",
+                              "correo",
+                              "nacionalidad",
+                              "empresas",
+                            ][index] &&
                           (sort.direction === "asc" ? (
                             <ChevronUp className="h-4 w-4" />
                           ) : (
@@ -431,8 +444,9 @@ function App() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {`${traveler.primer_nombre} ${traveler.segundo_nombre || ""
-                            } ${traveler.apellido_paterno}`}
+                          {`${traveler.primer_nombre} ${
+                            traveler.segundo_nombre || ""
+                          } ${traveler.apellido_paterno}`}
                         </div>
                         <div className="text-sm text-gray-500">
                           {traveler.numero_empleado || "—"}
@@ -503,8 +517,8 @@ function App() {
                 {modalMode === "view"
                   ? "Detalles del Viajero"
                   : modalMode === "edit"
-                    ? "Editar Viajero"
-                    : "Nuevo Viajero"}
+                  ? "Editar Viajero"
+                  : "Nuevo Viajero"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -527,9 +541,11 @@ function App() {
                           Nombre Completo
                         </dt>
                         <dd className="text-sm font-medium">
-                          {`${selectedTraveler.primer_nombre} ${selectedTraveler.segundo_nombre || ""
-                            } ${selectedTraveler.apellido_paterno} ${selectedTraveler.apellido_materno || ""
-                            }`}
+                          {`${selectedTraveler.primer_nombre} ${
+                            selectedTraveler.segundo_nombre || ""
+                          } ${selectedTraveler.apellido_paterno} ${
+                            selectedTraveler.apellido_materno || ""
+                          }`}
                         </dd>
                       </div>
                       <div>
@@ -694,7 +710,6 @@ function App() {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
-
                 </div>
 
                 <div className="border-t pt-4">
@@ -711,11 +726,16 @@ function App() {
                         name="fecha_nacimiento"
                         defaultValue={
                           formData?.fecha_nacimiento
-                            ? new Date(formData.fecha_nacimiento).toISOString().split('T')[0]
-                            : ''
+                            ? new Date(formData.fecha_nacimiento)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
                         }
                         onChange={(e) =>
-                          setFormData({ ...formData, fecha_nacimiento: e.target.value })
+                          setFormData({
+                            ...formData,
+                            fecha_nacimiento: e.target.value,
+                          })
                         }
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
@@ -729,7 +749,10 @@ function App() {
                         defaultValue={formData?.nacionalidad || ""}
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         onChange={(e) =>
-                          setFormData({ ...formData, nacionalidad: e.target.value })
+                          setFormData({
+                            ...formData,
+                            nacionalidad: e.target.value,
+                          })
                         }
                       >
                         <option value="">Selecciona una nacionalidad</option>
@@ -808,26 +831,35 @@ function App() {
                       </label>
                       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
                         {empresas.map((empresa) => (
-                          <label key={empresa.id_empresa} className="relative flex items-start">
+                          <label
+                            key={empresa.id_empresa}
+                            className="relative flex items-start"
+                          >
                             <div className="flex items-center h-5">
                               <input
                                 type="checkbox"
                                 name="empresa"
                                 value={empresa.id_empresa}
-                                checked={selectedEmpresas.includes(empresa.id_empresa)}
+                                checked={selectedEmpresas.includes(
+                                  empresa.id_empresa
+                                )}
                                 onChange={handleCheckboxChange}
                                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                 required={selectedEmpresas.length === 0} // Solo requiere si no hay ninguno seleccionado
                               />
                             </div>
                             <div className="ml-3 text-sm">
-                              <span className="font-medium text-gray-700">{empresa.razon_social}</span>
+                              <span className="font-medium text-gray-700">
+                                {empresa.razon_social}
+                              </span>
                             </div>
                           </label>
                         ))}
                       </div>
                       {selectedEmpresas.length === 0 && (
-                        <p className="text-red-500 text-sm mt-2">Debes seleccionar al menos una empresa.</p>
+                        <p className="text-red-500 text-sm mt-2">
+                          Debes seleccionar al menos una empresa.
+                        </p>
                       )}
                     </div>
                   </div>

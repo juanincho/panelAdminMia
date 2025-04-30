@@ -23,7 +23,6 @@ import { createNewEmpresa, updateEmpresa } from "@/hooks/useDatabase";
 // Types
 // Definición de tipos para la respuesta de la API
 
-
 interface Company {
   id_empresa: string;
   razon_social: string;
@@ -61,7 +60,6 @@ interface SortState {
   direction: SortDirection;
 }
 
-
 // Mock API functions
 const fetchCompanies = async (): Promise<Company[]> => {
   // Replace with actual API call
@@ -78,7 +76,6 @@ const fetchCompanies = async (): Promise<Company[]> => {
 //   return response.json();
 // };
 
-
 const deleteCompany = async (id: string): Promise<void> => {
   // Replace with actual API call
   await fetch(`/api/companies/${id}`, {
@@ -89,6 +86,7 @@ const deleteCompany = async (id: string): Promise<void> => {
 const Page = () => {
   const queryClient = useQueryClient();
   const { client } = useParams();
+  const clientId = Array.isArray(client) ? client[0] : client;
   // Queries and Mutations
   const fetchCompaniesData = async () => {
     try {
@@ -99,9 +97,13 @@ const Page = () => {
       throw error;
     }
   };
-  
+
   // En tu useQuery:
-  const { data: companies = [], isLoading, refetch: refetchCompanies } = useQuery({
+  const {
+    data: companies = [],
+    isLoading,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ["companies"],
     queryFn: fetchCompaniesData, // Usa la función aquí
   });
@@ -147,26 +149,37 @@ const Page = () => {
     "view"
   );
   const [formData, setFormData] = useState<Partial<Company>>({});
-  const [tipoPersona, setTipoPersona] = useState(selectedCompany?.tipo_persona || 'fisica');
+  const [tipoPersona, setTipoPersona] = useState(
+    selectedCompany?.tipo_persona || "fisica"
+  );
   const [colonias, setColonias] = useState<string[]>([]);
-  const [estado, setEstado] = useState(selectedCompany?.empresa_estado || '');
-  const [municipio, setMunicipio] = useState(selectedCompany?.empresa_municipio || '');
-  const [calle, setCalle] = useState(selectedCompany?.empresa_direccion || '');
-  const [colonia, setColonia] = useState(selectedCompany?.empresa_colonia || '');
-  const [codigoPostal, setCodigoPostal] = useState(selectedCompany?.empresa_cp || '');
-  const [idEmpresa, setIdEmpresa] = useState(selectedCompany?.id_empresa || '');
+  const [estado, setEstado] = useState(selectedCompany?.empresa_estado || "");
+  const [municipio, setMunicipio] = useState(
+    selectedCompany?.empresa_municipio || ""
+  );
+  const [calle, setCalle] = useState(selectedCompany?.empresa_direccion || "");
+  const [colonia, setColonia] = useState(
+    selectedCompany?.empresa_colonia || ""
+  );
+  const [codigoPostal, setCodigoPostal] = useState(
+    selectedCompany?.empresa_cp || ""
+  );
+  const [idEmpresa, setIdEmpresa] = useState(selectedCompany?.id_empresa || "");
 
   useEffect(() => {
     if (codigoPostal.length > 4) {
-      fetch(`https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigoPostal}`, {
-        method: "GET",
-        headers: {
-          "x-api-key": API_KEY || "",
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-          "Content-Type": "application/json",
-        },
-        cache: "no-store",
-      })
+      fetch(
+        `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigoPostal}`,
+        {
+          method: "GET",
+          headers: {
+            "x-api-key": API_KEY || "",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        }
+      )
         .then((res) => res.json())
         .then((data) => {
           if (data.success && data.data.length > 0) {
@@ -177,7 +190,9 @@ const Page = () => {
             setColonias([]);
           }
         })
-        .catch((error) => console.error("Error obteniendo datos de código postal:", error));
+        .catch((error) =>
+          console.error("Error obteniendo datos de código postal:", error)
+        );
     }
   }, [codigoPostal]);
 
@@ -248,12 +263,12 @@ const Page = () => {
   ) => {
     setModalMode(mode);
     setSelectedCompany(company || null);
-    setTipoPersona(company?.tipo_persona || 'fisica');
-    setMunicipio(company?.empresa_municipio || '');
-    setCalle(company?.empresa_direccion || '');
-    setColonia(company?.empresa_colonia || '');
-    setEstado(company?.empresa_estado || '');
-    setCodigoPostal(company?.empresa_cp || '');
+    setTipoPersona(company?.tipo_persona || "fisica");
+    setMunicipio(company?.empresa_municipio || "");
+    setCalle(company?.empresa_direccion || "");
+    setColonia(company?.empresa_colonia || "");
+    setEstado(company?.empresa_estado || "");
+    setCodigoPostal(company?.empresa_cp || "");
     setFormData(company || {});
     setFormData(company || {});
     setIsModalOpen(true);
@@ -262,13 +277,13 @@ const Page = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCompany(null);
-    setTipoPersona('fisica');
+    setTipoPersona("fisica");
     setColonias([]);
-    setMunicipio('');
-    setCalle('');
-    setColonia('');
-    setEstado('');
-    setCodigoPostal('');
+    setMunicipio("");
+    setCalle("");
+    setColonia("");
+    setEstado("");
+    setCodigoPostal("");
     setFormData({});
   };
 
@@ -301,18 +316,20 @@ const Page = () => {
 
   const createCompany = async () => {
     try {
-      const responseCompany = await createNewEmpresa({
-        ...formData,
-        // Asegúrate de que estos campos no sean null si son requeridos
-        empresa_direccion: formData.empresa_direccion || calle,
-        empresa_municipio: formData.empresa_municipio || municipio,
-        empresa_estado: formData.empresa_estado || estado,
-        empresa_cp: formData.empresa_cp || codigoPostal,
-        empresa_colonia: formData.empresa_colonia || colonia,
-        tipo_persona: tipoPersona,
-        razon_social: formData.razon_social || formData.nombre_comercial,
-        // Otros campos que puedan necesitar actualización
-      }, client);
+      const responseCompany = await createNewEmpresa(
+        {
+          ...formData,
+          // Asegúrate de que estos campos no sean null si son requeridos
+          empresa_direccion: formData.empresa_direccion || calle,
+          empresa_municipio: formData.empresa_municipio || municipio,
+          empresa_estado: formData.empresa_estado || estado,
+          empresa_cp: formData.empresa_cp || codigoPostal,
+          empresa_colonia: formData.empresa_colonia || colonia,
+          tipo_persona: tipoPersona,
+          razon_social: formData.razon_social || formData.nombre_comercial,
+        },
+        clientId
+      );
       if (!responseCompany.success) {
         throw new Error("No se pudo registrar a la empresa");
       }
@@ -320,22 +337,26 @@ const Page = () => {
     } catch (error) {
       console.error("Error creando nueva empresa", error);
     }
-  }
+  };
 
   const updateCompany = async () => {
     try {
-      const responseCompany = await updateEmpresa({
-        ...formData,
-        // Asegúrate de que estos campos no sean null si son requeridos
-        empresa_direccion: calle,
-        empresa_municipio: municipio,
-        empresa_estado: estado,
-        empresa_cp: codigoPostal,
-        empresa_colonia: colonia,
-        tipo_persona: tipoPersona,
-        razon_social: formData.razon_social || formData.nombre_comercial,
-        // Otros campos que puedan necesitar actualización
-      }, formData.id_empresa, client);
+      const responseCompany = await updateEmpresa(
+        {
+          ...formData,
+          // Asegúrate de que estos campos no sean null si son requeridos
+          empresa_direccion: calle,
+          empresa_municipio: municipio,
+          empresa_estado: estado,
+          empresa_cp: codigoPostal,
+          empresa_colonia: colonia,
+          tipo_persona: tipoPersona,
+          razon_social: formData.razon_social || formData.nombre_comercial,
+          // Otros campos que puedan necesitar actualización
+        },
+        formData.id_empresa,
+        clientId
+      );
       if (!responseCompany.success) {
         throw new Error("No se pudo registrar a la empresa");
       }
@@ -343,11 +364,13 @@ const Page = () => {
     } catch (error) {
       console.error("Error creando nueva empresa", error);
     }
-  }
+  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -445,12 +468,12 @@ const Page = () => {
                           <span>{header}</span>
                           {index < 4 &&
                             sort.column ===
-                            [
-                              "razon_social",
-                              "tipo_persona",
-                              "rfc",
-                              "empresa_estado",
-                            ][index] &&
+                              [
+                                "razon_social",
+                                "tipo_persona",
+                                "rfc",
+                                "empresa_estado",
+                              ][index] &&
                             (sort.direction === "asc" ? (
                               <ChevronUp className="h-4 w-4" />
                             ) : (
@@ -532,8 +555,8 @@ const Page = () => {
                 {modalMode === "view"
                   ? "Detalles de la Empresa"
                   : modalMode === "edit"
-                    ? "Editar Empresa"
-                    : "Nueva Empresa"}
+                  ? "Editar Empresa"
+                  : "Nueva Empresa"}
               </h2>
               <button
                 onClick={handleCloseModal}
@@ -602,10 +625,11 @@ const Page = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
-
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Tipo de Persona</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Tipo de Persona
+                    </label>
                     <select
                       name="tipo_persona"
                       required
@@ -619,7 +643,9 @@ const Page = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      {tipoPersona === 'fisica' ? 'Nombre de la Persona Física' : 'Nombre Comercial de la Empresa'}
+                      {tipoPersona === "fisica"
+                        ? "Nombre de la Persona Física"
+                        : "Nombre Comercial de la Empresa"}
                     </label>
                     <input
                       type="text"
@@ -631,22 +657,26 @@ const Page = () => {
                     />
                   </div>
 
-                  {tipoPersona === "moral" && <div>
-                    <label className="block text-sm font-medium text-gray-700">Razón Social</label>
-                    <input
-                      type="text"
-                      name="razon_social"
-                      defaultValue={selectedCompany?.razon_social || ''}
-                      onChange={handleInputChange}
-                      required
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
-                  </div>}
-
-
+                  {tipoPersona === "moral" && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Razón Social
+                      </label>
+                      <input
+                        type="text"
+                        name="razon_social"
+                        defaultValue={selectedCompany?.razon_social || ""}
+                        onChange={handleInputChange}
+                        required
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                  )}
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Calle y número</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Calle y número
+                    </label>
                     <input
                       type="text"
                       name="calle"
@@ -657,7 +687,9 @@ const Page = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Código Postal</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Código Postal
+                    </label>
                     <input
                       type="text"
                       name="codigo_postal"
@@ -668,7 +700,9 @@ const Page = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Colonia</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Colonia
+                    </label>
                     <select
                       name="colonia"
                       value={colonia}
@@ -677,13 +711,17 @@ const Page = () => {
                     >
                       <option value="">Seleccione una colonia</option>
                       {colonias.map((colonia, index) => (
-                        <option key={index} value={colonia}>{colonia}</option>
+                        <option key={index} value={colonia}>
+                          {colonia}
+                        </option>
                       ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Estado</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Estado
+                    </label>
                     <input
                       type="text"
                       name="estado"
@@ -694,7 +732,9 @@ const Page = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Municipio</label>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Municipio
+                    </label>
                     <input
                       type="text"
                       name="municipio"
@@ -703,9 +743,6 @@ const Page = () => {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
                     />
                   </div>
-
-
-
                 </div>
                 <div className="flex justify-end space-x-2 pt-4 border-t">
                   <button
