@@ -2,10 +2,11 @@ import { Suspense } from "react";
 import { TravelersPage } from "./_components/traveler_main";
 import { API_KEY } from "../../constants/constantes";
 
-export default async function TravelerDashboard() {
 
-  const endpoint = "https://mianoktos.vercel.app/v1/mia/pagos/allPendientes";
+export default async function TravelerDashboard() {
+  const endpoint = "https://mianoktos.vercel.app/v1/mia/pagos/getAllPagos"
   try {
+
     const response = await fetch(endpoint, {
       method: "GET",
       headers: {
@@ -18,20 +19,23 @@ export default async function TravelerDashboard() {
 
     const data = await response.json();
     console.log(data);
+
     // Verifica si data tiene error (dependiendo de cómo responda tu API)
     if (Array.isArray(data) && (data[0]?.error || data[1]?.error)) {
       throw new Error("Error al cargar los datos");
     }
-    const agentes = data;
+    const facturas = data;
 
     return (
       <Suspense fallback={<h1>Cargando...</h1>}>
-        <TravelersPage agentes={agentes || []}></TravelersPage>
+        <TravelersPage
+          facturas={facturas || []}
+        ></TravelersPage>
       </Suspense>
     );
     // return <h1>Estamos en mantenimiento...</h1>;
   } catch (error) {
-    console.log("Error al cargar los datos en agentes:", error);
+    console.log("Error al cargar los datos en facturas:", error);
     console.log(error);
     return <h1>Error al cargar los datos :c</h1>;
   }
