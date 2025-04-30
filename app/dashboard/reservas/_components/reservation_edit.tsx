@@ -1,17 +1,8 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { useParams } from "next/navigation";
-import {
-  X,
-  Plus,
-  Building2,
-  Calendar,
-  CreditCard,
-  Check,
-  Edit,
-} from "lucide-react";
-
-// Mock imports for UI components (replace with actual imports)
+import { Building2, Calendar, CreditCard, Check, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,62 +25,28 @@ import {
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  fetchCreateReserva,
-  fetchCreateReservaFromSolicitud,
-} from "@/services/reservas";
-import { API_KEY } from "@/services/constant";
+import { fetchReserva } from "@/services/reservas";
 import {
   Hotel,
   NightCost,
   PaymentMethod,
+  ReservationFormProps,
   Room,
   Solicitud,
   Tax,
   Traveler,
 } from "@/app/_types/reservas";
+import { fetchViajeros } from "@/services/viajeros";
+import { ComboBox } from "@/components/SelectInput";
+import { ReservaCompleta } from "@/types/reserva";
 
-interface ReservationFormProps {
-  solicitud: Solicitud;
-  hotels: Hotel[];
-  travelers: Traveler[];
-  onClose: () => void;
-}
-
-const DEFAULT_TAXES = [
-  {
-    id: 1,
-    selected: false,
-    descripcion: "IVA (16%)",
-    name: "IVA",
-    rate: 0.16,
-    mount: 0,
-  },
-  {
-    id: 2,
-    selected: false,
-    descripcion: "ISH (3%)",
-    name: "ISH",
-    rate: 0.03,
-    mount: 0,
-  },
-  {
-    id: 3,
-    selected: false,
-    descripcion: "Saneamiento ($32)",
-    name: "Saneamiento",
-    rate: 0,
-    mount: 32,
-  },
-];
-
-export function ReservationForm({
-  solicitud,
-  hotels,
-  onClose,
-}: ReservationFormProps) {
+export function ReservationForm({ solicitud, hotels }: ReservationFormProps) {
   const [travelers, setTravelers] = useState([]);
   const [activeTab, setActiveTab] = useState("cliente");
+  const [bookingDetails, setBookingDetails] = useState<ReservaCompleta | null>(
+    null
+  );
+
   const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [selectedTraveler, setSelectedTraveler] = useState<string>("");
@@ -102,14 +59,45 @@ export function ReservationForm({
   const [reservationStatus, setReservationStatus] = useState("Confirmada");
   const [hotelReservationCode, setHotelReservationCode] = useState("");
   const [enabledTaxes, setEnabledTaxes] = useState(DEFAULT_TAXES);
-  const [customTaxes, setCustomTaxes] = useState<
-    { name: string; rate: number }[]
-  >([]);
+  // const [loading, setLoading] = useState(false);
+  // const [error, setError] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>({
     type: "spei",
     paymentDate: format(new Date(), "yyyy-MM-dd"),
     comments: "",
   });
+  const { reserva } = useParams();
+
+  //Obtiene los detalles de la reserva
+  useEffect(() => {
+    // setLoading(true);
+    fetchReserva(Array.isArray(reserva) ? reserva[0] : reserva, (data) => {
+      console.log(data);
+      setBookingDetails(data);
+      // setLoading(false);
+    }).catch((err) => {
+      // setError("Error al cargar los detalles de la reservación");
+      // setLoading(false);
+      console.error(err);
+    });
+  }, [reserva]);
+  //Obtiene los viajeros de la reserva
+  useEffect(() => {
+    try {
+      fetchViajeros(Array.isArray(reserva) ? reserva[0] : reserva, (data) => {
+        setTravelers(data);
+      });
+    } catch (error) {
+      console.log(error);
+      setTravelers([]);
+    }
+  }, [reserva]);
+
+  const opciones = hotels.map((hotel) => ({
+    name: hotel.nombre_hotel,
+    value: hotel.id_hotel,
+  }));
+  console.log("opciones", opciones);
 
   // UI state for original hotel display
   const [isChangingHotel, setIsChangingHotel] = useState(false);
@@ -119,36 +107,6 @@ export function ReservationForm({
   const selectedRoomData = selectedHotelData?.tipos_cuartos.find(
     (r) => r.id_tipo_cuarto.toString() === selectedRoom
   );
-
-  useEffect(() => {
-    const fetchViajero = async () => {
-      try {
-        const response = await fetch(
-          `https://mianoktos.vercel.app/v1/mia/viajeros/id?id=${solicitud.id_usuario_generador}`,
-          {
-            headers: {
-              "x-api-key": API_KEY || "",
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              Pragma: "no-cache",
-              Expires: "0",
-            },
-            cache: "no-store",
-          }
-        ).then((res) => res.json());
-        if (response.error) {
-          throw new Error("Error al buscar los viajeros");
-        }
-        console.log(response);
-        setTravelers(response);
-      } catch (error) {
-        console.log(error);
-        setTravelers([]);
-      }
-    };
-    console.log(solicitud);
-    fetchViajero();
-  }, []);
-
   // Initialize form with solicitud data
   useEffect(() => {
     if (solicitud) {
@@ -172,9 +130,9 @@ export function ReservationForm({
       }
 
       // Set other form values from solicitud
-      setSelectedTraveler(solicitud.id_viajero.toString());
-      setCheckIn(solicitud.check_in.split("T")[0]);
-      setCheckOut(solicitud.check_out.split("T")[0]);
+      setSelectedTraveler("");
+      // setCheckIn(solicitud.check_in.split("T")[0]);
+      // setCheckOut(solicitud.check_out.split("T")[0]);
       setTotalSalePrice(solicitud.total);
       setReservationStatus(
         solicitud.status === "complete" ? "Confirmada" : solicitud.status
@@ -186,7 +144,6 @@ export function ReservationForm({
       }
     }
   }, [solicitud, hotels]);
-
   // Calculate nights and costs when relevant data changes
   useEffect(() => {
     if (checkIn && checkOut && selectedRoomData) {
@@ -199,12 +156,10 @@ export function ReservationForm({
       calculateNightlyCosts(nightsCount, roomPrice);
     }
   }, [checkIn, checkOut, selectedRoomData, enabledTaxes]);
-
   // Recalculate when taxes change
   useEffect(() => {
     calculateNightlyCosts(nights.length, totalCost);
   }, [enabledTaxes]);
-
   const calculateNightlyCosts = (nightsCount: number, baseCost: number) => {
     if (nightsCount > 0 && baseCost > 0) {
       const taxFilter = enabledTaxes.filter((tax) => tax.selected);
@@ -238,70 +193,61 @@ export function ReservationForm({
       setTotalCostWithTaxes(totalWithTaxes);
     }
   };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
-    const reservation = {
-      solicitud: {
-        id_solicitud: solicitud.id_solicitud, // Preserve original ID
-        id_servicio: solicitud.id_servicio, // Preserve original service ID
-        confirmation_code: hotelReservationCode || solicitud.confirmation_code,
-        id_viajero: selectedTraveler,
-        hotel: selectedHotelData?.nombre_hotel || originalHotel,
-        check_in: checkIn,
-        check_out: checkOut,
-        room: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
-        total: totalSalePrice,
-        status:
-          reservationStatus === "Confirmada" ? "complete" : reservationStatus,
-        created_at: solicitud.created_at, // Preserve original creation date
-      },
-      estado: reservationStatus,
-      check_in: checkIn,
-      check_out: checkOut,
-      id_viajero: selectedTraveler,
-      nombre_hotel: selectedHotelData?.nombre_hotel || originalHotel,
-      total: totalSalePrice,
-      subtotal: totalSalePrice / 1.16,
-      impuestos: totalSalePrice - totalSalePrice / 1.16,
-      tipo_cuarto: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
-      noches: nightsCount,
-      costo_subtotal: totalCost,
-      costo_total: totalCostWithTaxes,
-      costo_impuestos: totalCostWithTaxes - totalCost,
-      codigo_reservacion_hotel:
-        hotelReservationCode || solicitud.confirmation_code,
-      id_usuario_generador: solicitud.id_usuario_generador,
-      items: nights.map((night) => ({
-        total: totalSalePrice / nightsCount,
-        subtotal: (totalSalePrice / nightsCount) * 0.84,
-        impuestos: (totalSalePrice / nightsCount) * 0.16,
-        costo_total: night.totalWithTaxes,
-        costo_subtotal: night.baseCost,
-        costo_impuestos: night.totalWithTaxes - night.baseCost,
-        costo_iva: night.taxes.find((tax) => tax.name === "IVA")?.total || 0,
-        taxes: night.taxes,
-      })),
-    };
+    // const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
+    // const reservation = {
+    //   solicitud: {
+    //     id_solicitud: solicitud.id_solicitud, // Preserve original ID
+    //     id_servicio: solicitud.id_servicio, // Preserve original service ID
+    //     confirmation_code: hotelReservationCode || solicitud.confirmation_code,
+    //     id_viajero: selectedTraveler,
+    //     hotel: selectedHotelData?.nombre_hotel || originalHotel,
+    //     check_in: checkIn,
+    //     check_out: checkOut,
+    //     room: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
+    //     total: totalSalePrice,
+    //     status:
+    //       reservationStatus === "Confirmada" ? "complete" : reservationStatus,
+    //     created_at: solicitud.created_at, // Preserve original creation date
+    //   },
+    //   estado: reservationStatus,
+    //   check_in: checkIn,
+    //   check_out: checkOut,
+    //   id_viajero: selectedTraveler,
+    //   nombre_hotel: selectedHotelData?.nombre_hotel || originalHotel,
+    //   total: totalSalePrice,
+    //   subtotal: totalSalePrice / 1.16,
+    //   impuestos: totalSalePrice - totalSalePrice / 1.16,
+    //   tipo_cuarto: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
+    //   noches: nightsCount,
+    //   costo_subtotal: totalCost,
+    //   costo_total: totalCostWithTaxes,
+    //   costo_impuestos: totalCostWithTaxes - totalCost,
+    //   codigo_reservacion_hotel:
+    //     hotelReservationCode || solicitud.confirmation_code,
+    //   id_usuario_generador: solicitud.id_usuario_generador,
+    //   items: nights.map((night) => ({
+    //     total: totalSalePrice / nightsCount,
+    //     subtotal: (totalSalePrice / nightsCount) * 0.84,
+    //     impuestos: (totalSalePrice / nightsCount) * 0.16,
+    //     costo_total: night.totalWithTaxes,
+    //     costo_subtotal: night.baseCost,
+    //     costo_impuestos: night.totalWithTaxes - night.baseCost,
+    //     costo_iva: night.taxes.find((tax) => tax.name === "IVA")?.total || 0,
+    //     taxes: night.taxes,
+    //   })),
+    // };
 
-    console.log(reservation);
-    try {
-      const response = await fetchCreateReservaFromSolicitud(reservation);
-      alert("Actualizado con éxito");
-      console.log(response);
-    } catch (error) {
-      alert("Hubo un error");
-    }
-  };
-
-  const addCustomTax = () => {
-    setCustomTaxes([...customTaxes, { name: "", rate: 0 }]);
-  };
-
-  const removeCustomTax = (index: number) => {
-    setCustomTaxes(customTaxes.filter((_, i) => i !== index));
+    // console.log(reservation);
+    // try {
+    //   const response = await fetchCreateReservaFromSolicitud(reservation);
+    //   alert("Actualizado con éxito");
+    //   console.log(response);
+    // } catch (error) {
+    //   alert("Hubo un error");
+    // }
   };
 
   return (
@@ -323,64 +269,13 @@ export function ReservationForm({
 
               {/* Custom hotel selection UI */}
               <div className="rounded-md border border-input bg-background">
-                {/* Original hotel display */}
-                <div className="flex items-center justify-between px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span
-                      className={
-                        isChangingHotel
-                          ? "text-muted-foreground line-through"
-                          : ""
-                      }
-                    >
-                      {originalHotel || "Hotel sin nombre"}
-                    </span>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsChangingHotel(!isChangingHotel)}
-                    className="h-8 px-2"
-                  >
-                    {isChangingHotel ? (
-                      <Check className="h-4 w-4 mr-1" />
-                    ) : (
-                      <Edit className="h-4 w-4 mr-1" />
-                    )}
-                    {isChangingHotel ? "Confirmar" : "Cambiar"}
-                  </Button>
-                </div>
-
-                {/* Hotel selection dropdown */}
-                {isChangingHotel && (
-                  <div className="px-3 py-2 border-t">
-                    <Select
-                      value={selectedHotel}
-                      onValueChange={setSelectedHotel}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar nuevo hotel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hotels.map((hotel) => (
-                          <SelectItem
-                            key={hotel.id_hotel}
-                            value={hotel.id_hotel}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4" />
-                              {hotel.nombre_hotel || "Hotel sin nombre"} -{" "}
-                              {hotel.Ciudad_Zona}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+                <ComboBox
+                  value={bookingDetails?.hospedaje.nombre_hotel || ""}
+                  onSelect={setSelectedHotel}
+                  options={opciones}
+                >
+                  <Building2 className="h-4 w-4" />
+                </ComboBox>
               </div>
             </div>
 
@@ -444,10 +339,7 @@ export function ReservationForm({
                     disabled
                     value={[
                       solicitud.primer_nombre,
-                      solicitud.apellido_paterno,
-                      solicitud.id_viajero.includes("via-")
-                        ? solicitud.id_viajero
-                        : null,
+                      solicitud.apellido_paterno ? solicitud.id_viajero : null,
                     ]
                       .filter((item) => !!item)
                       .join(" ")}
@@ -536,42 +428,7 @@ export function ReservationForm({
                   <span>{tax.descripcion}</span>
                 </Label>
               ))}
-              <Button type="button" variant="outline" onClick={addCustomTax}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Impuesto
-              </Button>
             </div>
-
-            {customTaxes.map((tax, index) => (
-              <div key={index} className="flex gap-4 items-center">
-                <Input
-                  placeholder="Nombre del impuesto"
-                  value={tax.name}
-                  onChange={(e) => {
-                    const newTaxes = [...customTaxes];
-                    newTaxes[index].name = e.target.value;
-                    setCustomTaxes(newTaxes);
-                  }}
-                />
-                <Input
-                  type="number"
-                  placeholder="Tasa (%)"
-                  value={tax.rate}
-                  onChange={(e) => {
-                    const newTaxes = [...customTaxes];
-                    newTaxes[index].rate = Number(e.target.value) / 100;
-                    setCustomTaxes(newTaxes);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => removeCustomTax(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
 
             {nights.length > 0 && (
               <Table>
@@ -712,3 +569,30 @@ export function ReservationForm({
     </form>
   );
 }
+
+const DEFAULT_TAXES = [
+  {
+    id: 1,
+    selected: false,
+    descripcion: "IVA (16%)",
+    name: "IVA",
+    rate: 0.16,
+    mount: 0,
+  },
+  {
+    id: 2,
+    selected: false,
+    descripcion: "ISH (3%)",
+    name: "ISH",
+    rate: 0.03,
+    mount: 0,
+  },
+  {
+    id: 3,
+    selected: false,
+    descripcion: "Saneamiento ($32)",
+    name: "Saneamiento",
+    rate: 0,
+    mount: 32,
+  },
+];
