@@ -393,7 +393,9 @@ export function ReservationForm({
               >
                 <SelectTrigger>
                   <SelectValue
-                    placeholder={solicitud.room || "Seleccionar habitación"}
+                    placeholder={
+                      updateRoom(solicitud.room) || "Seleccionar habitación"
+                    }
                   />
                 </SelectTrigger>
                 <SelectContent>
@@ -711,4 +713,15 @@ export function ReservationForm({
       </DialogFooter>
     </form>
   );
+}
+
+function updateRoom(room: string) {
+  let updated = room;
+  if (updated.toUpperCase() == "SINGLE") {
+    updated = "Sencilla";
+  }
+  if (updated.toUpperCase() == "DOUBLE") {
+    updated = "Doble";
+  }
+  return updated;
 }
