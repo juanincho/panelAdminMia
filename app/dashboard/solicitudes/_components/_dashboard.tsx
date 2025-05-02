@@ -81,6 +81,8 @@ function App({
     servicioId: "",
   });
 
+  console.log(data);
+
   // Extract unique values for filter dropdowns
   const [uniqueHotels, setUniqueHotels] = useState<string[]>([]);
   const [uniqueRooms, setUniqueRooms] = useState<string[]>([]);
@@ -844,8 +846,19 @@ function App({
                       key={item.id_solicitud}
                       className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
                     >
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 flex flex-col text-center gap-2">
                         {item.confirmation_code}
+                        <span
+                          className={`p-1 rounded-full text-xs font-medium ${
+                            item.pendiente_por_cobrar > 0
+                              ? "bg-yellow-300"
+                              : "bg-green-300"
+                          }`}
+                        >
+                          {item.pendiente_por_cobrar > 0
+                            ? "Credito"
+                            : "Contado"}{" "}
+                        </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span
@@ -860,7 +873,10 @@ function App({
                           className="truncate max-w-[120px] inline-block"
                           title={item.id_viajero}
                         >
-                          {item.id_viajero.substring(0, 10)}...
+                          {item.primer_nombre || ""}{" "}
+                          {item.apellido_paterno || ""}{" "}
+                          {item.primer_nombre ||
+                            item.id_viajero.substring(0, 10)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
