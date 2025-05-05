@@ -445,6 +445,7 @@ export function ReservationForm({
                     type="text"
                     disabled
                     value={[
+                      solicitud.nombre_viajero,
                       solicitud.primer_nombre,
                       solicitud.apellido_paterno,
                       solicitud.id_viajero.includes("via-")

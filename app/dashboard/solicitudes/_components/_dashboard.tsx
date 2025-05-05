@@ -874,7 +874,7 @@ function App({
                           className="truncate max-w-[120px] inline-block"
                           title={item.id_viajero}
                         >
-                          {item.primer_nombre || ""}{" "}
+                          {item.nombre_viajero || ""} {item.primer_nombre || ""}{" "}
                           {item.apellido_paterno || ""}{" "}
                           {item.primer_nombre ||
                             item.id_viajero.substring(0, 10)}
