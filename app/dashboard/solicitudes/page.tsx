@@ -1,61 +1,38 @@
 import { Suspense } from "react";
-import DashboardModule from "./_components/_dashboard";
+import DashboardModuleWrapper from "./_components/_dashboardWrapper";
 import { API_KEY } from "../../constants/constantes";
 
 export default async function Dashboard() {
   try {
-    const apiEndpoints = [
-      "https://mianoktos.vercel.app/v1/mia/solicitud",
+    const endpoints = [
       "https://mianoktos.vercel.app/v1/mia/viajeros",
       "https://mianoktos.vercel.app/v1/mia/impuestos",
       "https://mianoktos.vercel.app/v1/mia/hoteles",
     ];
-    const responses = await Promise.all(
-      apiEndpoints.map((endpoint) =>
+
+    const [viajeros, impuestos, hoteles] = await Promise.all(
+      endpoints.map((endpoint) =>
         fetch(endpoint, {
           headers: {
             "x-api-key": API_KEY || "",
-            "Cache-Control": "no-cache, no-store, must-revalidate",
-            Pragma: "no-cache",
-            Expires: "0",
+            "Cache-Control": "no-cache",
           },
           cache: "no-store",
         }).then((res) => res.json())
       )
     );
-    if (responses[0].error || responses[1].error || responses[2].error) {
-      throw new Error("Error al cargar los datos");
-    }
-    const [solicitudes, viajeros, impuestos, hoteles] = responses;
-    console.log(
-      "solicitudes: ",
-      solicitudes
-        .flatMap((s) => s.solicitudes)
-        .filter((s) =>
-          s.hotel.includes("Fiesta Americana Monterrey Pabellón M")
-        )
-      // .filter((s) => s.hotel.includes("F"))
-      // solicitudes.filter((s) => s.hotel.includes("F"))
-    );
-
-    // return <h1>Estamos en mantenimiento...</h1>;
 
     return (
       <Suspense fallback={<div>Cargando...</div>}>
-        <DashboardModule
-          data={solicitudes || []}
-          viajeros={viajeros || []}
-          impuestos={impuestos || []}
-          hoteles={hoteles || []}
-        ></DashboardModule>
+        <DashboardModuleWrapper
+          viajeros={viajeros}
+          impuestos={impuestos}
+          hoteles={hoteles}
+        />
       </Suspense>
     );
   } catch (error) {
-    console.log("error en las solicitudes: ", error);
-    return (
-      <div>
-        <h1>Ocurrió un error al obtener los registros.</h1>
-      </div>
-    );
+    console.log("error en el dashboard: ", error);
+    return <div>Ocurrió un error al obtener los datos.</div>;
   }
 }
