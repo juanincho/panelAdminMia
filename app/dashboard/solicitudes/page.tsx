@@ -27,6 +27,16 @@ export default async function Dashboard() {
       throw new Error("Error al cargar los datos");
     }
     const [solicitudes, viajeros, impuestos, hoteles] = responses;
+    console.log(
+      "solicitudes: ",
+      solicitudes
+        .flatMap((s) => s.solicitudes)
+        .filter((s) =>
+          s.hotel.includes("Fiesta Americana Monterrey Pabellón M")
+        )
+      // .filter((s) => s.hotel.includes("F"))
+      // solicitudes.filter((s) => s.hotel.includes("F"))
+    );
 
     // return <h1>Estamos en mantenimiento...</h1>;
 

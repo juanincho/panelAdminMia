@@ -168,11 +168,13 @@ export default function TravelersTable() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "dd MMM yyyy", { locale: es });
-    } catch (e) {
-      return "Fecha inválida";
-    }
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    const date = new Date(+year, +month - 1, +day);
+    return date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const getFullName = (traveler: Traveler) => {
