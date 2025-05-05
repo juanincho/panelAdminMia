@@ -90,6 +90,7 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const [travelers, setTravelers] = useState([]);
   const [activeTab, setActiveTab] = useState("cliente");
+  const [comments, setComments] = useState("");
   const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [selectedTraveler, setSelectedTraveler] = useState<string>("");
@@ -270,6 +271,7 @@ export function ReservationForm({
       noches: nightsCount,
       costo_subtotal: totalCost,
       costo_total: totalCostWithTaxes,
+      comments: comments,
       costo_impuestos: totalCostWithTaxes - totalCost,
       codigo_reservacion_hotel:
         hotelReservationCode || solicitud.confirmation_code,
@@ -479,20 +481,29 @@ export function ReservationForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Estado de la Reserva</Label>
-              <Select
-                value={reservationStatus}
-                onValueChange={setReservationStatus}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Confirmada">Confirmada</SelectItem>
-                  <SelectItem value="Cancelada">Cancelada</SelectItem>
-                  <SelectItem value="En proceso">En proceso</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Estado de la Reserva</Label>
+                <Select
+                  value={reservationStatus}
+                  onValueChange={setReservationStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Confirmada">Confirmada</SelectItem>
+                    <SelectItem value="Cancelada">Cancelada</SelectItem>
+                    <SelectItem value="En proceso">En proceso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Comentarios de la reserva</Label>
+                <Textarea
+                  onChange={(e) => setComments(e.target.value)}
+                  value={comments}
+                ></Textarea>
+              </div>
             </div>
           </div>
         </TabsContent>
