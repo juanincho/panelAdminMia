@@ -242,6 +242,7 @@ export function ReservationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(selectedHotelData);
 
     const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
     const reservation = {
@@ -263,6 +264,7 @@ export function ReservationForm({
       check_in: checkIn,
       check_out: checkOut,
       id_viajero: selectedTraveler,
+      id_hotel: selectedHotelData.id_hotel,
       nombre_hotel: selectedHotelData?.nombre_hotel || originalHotel,
       total: totalSalePrice,
       subtotal: totalSalePrice / 1.16,
