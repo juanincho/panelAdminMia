@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Tabs,
@@ -139,11 +140,11 @@ export interface FullHotelData {
   tipo_hospedaje?: string;
   cuenta_de_deposito?: string | null;
   Estado?: string;
-  Cuidad_Zona?: string;
+  Ciudad_Zona?: string;
   noktosq?: number;
   noktosqq?: number;
   MenoresEdad?: string;
-  paxextrapersona?: string;
+  paxExtraPersona?: string;
   desayunoincluido?: string;
   desayunocomentarios?: string;
   desayunoprecioporpersona?: string;
@@ -168,11 +169,16 @@ export interface FullHotelData {
   iva?: string;
   ish?: string | null;
   otros_impuestos?: string;
+  otros_impuestos_porcentaje?: string;
   tipo_negociacion?: string;
   disponibilidad_precio?: string;
   comentario_pago?: string;
   vigencia_convenio?: string;
+  comentario_vigencia?: string;
   tipo_pago?: string;
+  mascotas?: string;
+  salones?: string;
+  hay_convenio?: boolean;
 }
 
 interface HotelRate {
@@ -204,21 +210,21 @@ interface HotelRate {
 
 interface FormData {
   Id_hotel_excel?: string;
-  idSepomex ?: number;
+  idSepomex?: number;
   id_cadena: string;
   activo: number;
   nombre: string;
-  correo: string;
-  telefono: string;
   CodigoPostal: string;
   calle: string;
   numero: string;
   Colonia: string;
   Estado: string;
-  Cuidad_Zona: string;
+  Ciudad_Zona: string;
   municipio: string;
   tipo_negociacion: string;
+  hay_convenio: boolean;
   vigencia_convenio: string;
+  comentario_vigencia: string;
   URLImagenHotel: string;
   URLImagenHotelQ: string;
   URLImagenHotelQQ: string;
@@ -228,15 +234,23 @@ interface FormData {
   contacto_recepcion: string;
   iva: string;
   ish: string;
+  otros_impuestos_porcentaje: string;
   otros_impuestos: string;
   MenoresEdad: string;
   Transportacion: string;
   TransportacionComentarios: string;
+  mascotas: string;
+  salones: string;
   rfc: string;
   razon_social: string;
   calificacion: string;
   tipo_hospedaje: string;
   Comentarios: string;
+  notas_datosBasicos: string;
+  notas_tarifasServicios: string;
+  notas_informacionPagos: string;
+  notas_informacion_adicional: string;
+  notas_generales: string;
   latitud: string;
   longitud: string;
   cuenta_de_deposito: string;
@@ -263,21 +277,56 @@ interface DeleteTarifaPreferencialProps {
   id_tarifa_preferencial_doble?: number | null;
 }
 
-// Reemplaza las funciones actuales con estas versiones mejoradas
+const estadosMX = [
+  "AGUASCALIENTES",
+  "BAJA CALIFORNIA",
+  "BAJA CALIFORNIA SUR",
+  "CAMPECHE",
+  "COAHUILA",
+  "COLIMA",
+  "CHIAPAS",
+  "CHIHUAHUA",
+  "CIUDAD DE MEXICO",
+  "DURANGO",
+  "GUANAJUATO",
+  "GUERRERO",
+  "HIDALGO",
+  "JALISCO",
+  "MEXICO",
+  "MICHOACAN",
+  "MORELOS",
+  "NAYARIT",
+  "NUEVO LEON",
+  "OAXACA",
+  "PUEBLA",
+  "QUERETARO",
+  "QUINTANA ROO",
+  "SAN LUIS POTOSI",
+  "SINALOA",
+  "SONORA",
+  "TABASCO",
+  "TAMAULIPAS",
+  "TLAXCALA",
+  "VERACRUZ",
+  "YUCATAN",
+  "ZACATECAS"
+];
+
+// Helper functions for date formatting
 const convertToDateInputFormat = (dateString?: string | null): string => {
   if (!dateString) return '';
   
-  // Si ya está en formato YYYY-MM-DD, devolverlo directamente
+  // If already in format YYYY-MM-DD, return directly
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
     return dateString;
   }
   
-  // Si es una fecha ISO, extraer la parte YYYY-MM-DD
+  // If it's an ISO date, extract the YYYY-MM-DD part
   if (dateString.includes('T')) {
     return dateString.split('T')[0];
   }
   
-  // Si está en formato DD-MM-YYYY, convertirlo
+  // If in format DD-MM-YYYY, convert it
   const parts = dateString.split('-');
   if (parts.length === 3 && parts[0].length === 2) {
     return `${parts[2]}-${parts[1]}-${parts[0]}`;
@@ -289,12 +338,12 @@ const convertToDateInputFormat = (dateString?: string | null): string => {
 const convertToDDMMYYYY = (dateString: string): string => {
   if (!dateString) return '';
   
-  // Si ya está en formato DD-MM-YYYY, devolverlo directamente
+  // If already in format DD-MM-YYYY, return directly
   if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
     return dateString;
   }
   
-  // Si es una fecha ISO o YYYY-MM-DD, convertirla
+  // If it's an ISO date or YYYY-MM-DD, convert it
   const cleanDate = dateString.split('T')[0];
   const parts = cleanDate.split('-');
   if (parts.length === 3) {
@@ -303,11 +352,19 @@ const convertToDDMMYYYY = (dateString: string): string => {
   
   return '';
 };
+
+// Parse notes section from concatenated notes
+const extractNotesSection = (notes: string, section: string): string => {
+  if (!notes) return '';
+  
+  const pattern = new RegExp(`## ${section} ##\\s*([^#]+)`, 'i');
+  const match = notes.match(pattern);
+  return match ? match[1].trim() : '';
+};
+
 // API Functions
 const buscarCodigoPostal = async (CodigoPostal: string) => {
-  
   try {
-    console.log("Veamos si estamos pasado algo", CodigoPostal)
     const response = await fetch(
       `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
       {
@@ -319,15 +376,13 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
       }
     );
     if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      throw new Error(`ERROR ${response.status}: ${response.statusText}`);
     }
     
     const data = await response.json();
-    console.log("revisemos el objeto de colonias: ",data)
-
     return data.success ? data.data : [];
   } catch (error) {
-    console.error("Error al buscar código postal:", error);
+    console.error("ERROR AL BUSCAR CODIGO POSTAL:", error);
     return [];
   }
 };
@@ -346,21 +401,21 @@ const buscarAgentes = async (nombre: string, correo: string) => {
     );
     
     if (!response.ok) {
-      console.error("Error en la respuesta:", response.status);
+      console.error("ERROR EN LA RESPUESTA:", response.status);
       return [];
     }
     
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {
-    console.error("Error al buscar agentes:", error);
+    console.error("ERROR AL BUSCAR AGENTES:", error);
     return [];
   }
 };
 
 // Extract components from direccion (simple parsing)
 const extractDireccionData = (direccion?: string) => {
-  const defaultData = { calle: '', numero: '' };
+  const defaultData = { calle: '', numero: '',municipio:'' };
   if (!direccion) return defaultData;
   
   // Try to parse the address - this is a simple approach, might need adjusting
@@ -399,17 +454,17 @@ export function HotelDialog({
     id_cadena: "",
     activo: 1,
     nombre: "",
-    correo: "",
-    telefono: "",
     CodigoPostal: "",
     calle: "",
     numero: "",
     Colonia: "",
     Estado: "",
-    Cuidad_Zona: "",
+    Ciudad_Zona: "",
     municipio: "",
     tipo_negociacion: "",
+    hay_convenio: true,
     vigencia_convenio: "",
+    comentario_vigencia: "SIN CONVENIO",
     URLImagenHotel: "",
     URLImagenHotelQ: "",
     URLImagenHotelQQ: "",
@@ -420,14 +475,22 @@ export function HotelDialog({
     iva: "",
     ish: "",
     otros_impuestos: "",
+    otros_impuestos_porcentaje: "",
     MenoresEdad: "",
     Transportacion: "",
     TransportacionComentarios: "",
+    mascotas: "",
+    salones: "",
     rfc: "",
     razon_social: "",
     calificacion: "",
     tipo_hospedaje: "hotel",
     Comentarios: "",
+    notas_datosBasicos: "",
+    notas_tarifasServicios: "",
+    notas_informacionPagos: "",
+    notas_informacion_adicional: "",
+    notas_generales: "",
     latitud: "",
     longitud: "",
     cuenta_de_deposito: "",
@@ -452,50 +515,91 @@ export function HotelDialog({
       precio_noche_extra: "",
       precio_persona_extra: "",
     },
-  }
+  };
+  
   const [formData, setFormData] = useState<FormData>(defaultFormData);
-
   const hasFetched = useRef<string | null>(null);
 
+  // Sync breakfast data between single and double rooms
   useEffect(() => {
-    if (open && hotel?.id_hotel && hasFetched.current !== hotel.id_hotel) {
-      fetchHotelRates(hotel.id_hotel);
-      hasFetched.current = hotel.id_hotel;
+    if (mode === "edit" && formData.sencilla) {
+      setFormData(prev => ({
+        ...prev,
+        doble: {
+          ...prev.doble,
+          incluye: prev.sencilla.incluye,
+          tipo_desayuno: prev.sencilla.tipo_desayuno,
+          precio: prev.sencilla.precio,
+          comentarios: prev.sencilla.comentarios
+        }
+      }));
+    }
+  }, [formData.sencilla.incluye, formData.sencilla.tipo_desayuno, formData.sencilla.precio, formData.sencilla.comentarios, mode]);
+
+  // Reset modal data when it's closed and load new data when opened
+  useEffect(() => {
+    // When modal opens for a different hotel, load the data
+    if (open && hotel?.id_hotel) {
+      // Only fetch if we haven't fetched this hotel yet or it's a different hotel
+      if (hasFetched.current !== hotel.id_hotel) {
+        console.log("Fetching new hotel data for ID:", hotel.id_hotel);
+        fetchHotelRates(hotel.id_hotel);
+        hasFetched.current = hotel.id_hotel;
+      }
     }
 
+    // When modal closes, reset all state
     if (!open) {
+      console.log("Modal closed, resetting all state");
       hasFetched.current = null;
       setHotelRates(null);
-      setFormData(defaultFormData);
+      setFormData({...defaultFormData});
       setTarifasPreferenciales([]);
       setMode("view");
       setErrorMessage("");
       setSuccessMessage("");
       setEditingTarifaId(null);
       setSelectedTarifaToDelete(null);
+      setActiveTab("datosBasicos");
+      setColonias([]);
+      setBuscandoCP(false);
     }
   }, [open, hotel?.id_hotel]);
   
+  // Set form data when hotel data changes
   useEffect(() => {
-    if (hotel) {
+    if (hotel && open) {
+      console.log("Setting form data from hotel:", hotel.nombre);
       const direccionData = extractDireccionData(hotel.direccion);
       
+      // Determine if there's a convention based on data
+      const hasConvention = !!hotel.vigencia_convenio && hotel.vigencia_convenio !== "";
+      
+      // Extract notes sections
+      const notasDatosBasicos = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "DATOS BÁSICOS") : "";
+      const notasTarifasServicios = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "TARIFAS Y SERVICIOS") : "";
+      const notasInformacionPagos = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "INFORMACIÓN DE PAGOS") : "";
+      const notasInformacionAdicional = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "INFORMACION ADICIONAL") : "";
+      const rawComentarios = hotel.Comentarios || "";
+      const extractedNotasGenerales = extractNotesSection(rawComentarios, "NOTAS GENERALES");
+      const notasGenerales = extractedNotasGenerales || rawComentarios;
+
       setFormData({
         Id_hotel_excel: hotel.Id_hotel_excel?.toString() || "",
         id_cadena: hotel.id_cadena?.toString() || "",
         activo: hotel.activo ?? 1,
         nombre: hotel.nombre || "",
-        correo: hotel.correo || "",
-        telefono: hotel.telefono || "",
         CodigoPostal: hotel.CodigoPostal || "",
         calle: direccionData.calle,
         numero: direccionData.numero,
         Colonia: hotel.Colonia || "",
         Estado: hotel.Estado || "",
-        Cuidad_Zona: hotel.Cuidad_Zona || "",
+        Ciudad_Zona: hotel.Ciudad_Zona || "",
         municipio: "",
         tipo_negociacion: hotel.tipo_negociacion || "",
-        vigencia_convenio:convertToDDMMYYYY(hotel.vigencia_convenio),
+        hay_convenio: hasConvention,
+        vigencia_convenio: hasConvention ? convertToDateInputFormat(hotel.vigencia_convenio): "",
+        comentario_vigencia: hotel.comentario_vigencia || "SIN CONVENIO",
         URLImagenHotel: hotel.URLImagenHotel || "",
         URLImagenHotelQ: hotel.URLImagenHotelQ || "",
         URLImagenHotelQQ: hotel.URLImagenHotelQQ || "",
@@ -506,14 +610,22 @@ export function HotelDialog({
         iva: hotel.iva || "",
         ish: hotel.ish || "",
         otros_impuestos: hotel.otros_impuestos || "",
+        otros_impuestos_porcentaje: hotel.otros_impuestos_porcentaje || "",
         MenoresEdad: hotel.MenoresEdad || "",
         Transportacion: hotel.Transportacion || "",
         TransportacionComentarios: hotel.TransportacionComentarios || "",
+        mascotas: hotel.mascotas || "",
+        salones: hotel.salones || "",
         rfc: hotel.rfc || "",
         razon_social: hotel.razon_social || "",
         calificacion: hotel.calificacion?.toString() || "",
         tipo_hospedaje: hotel.tipo_hospedaje || "hotel",
         Comentarios: hotel.Comentarios || "",
+        notas_datosBasicos: notasDatosBasicos,
+        notas_tarifasServicios: notasTarifasServicios,
+        notas_informacionPagos: notasInformacionPagos,
+        notas_informacion_adicional: notasInformacionAdicional,
+        notas_generales: notasGenerales,
         latitud: hotel.latitud || "",
         longitud: hotel.longitud || "",
         cuenta_de_deposito: hotel.cuenta_de_deposito || "",
@@ -522,7 +634,7 @@ export function HotelDialog({
         precio_q: hotel.precio_sencilla?.toString() || "",
         costo_qq: hotel.costo_qq || "",
         precio_qq: hotel.precio_doble?.toString() || "",
-        precio_persona_extra: hotel.paxextrapersona || "",
+        precio_persona_extra: hotel.paxExtraPersona || "",
         sencilla: {
           incluye: hotel.desayunoincluido === "SI",
           tipo_desayuno: "",
@@ -536,17 +648,18 @@ export function HotelDialog({
           precio: hotel.desayunoprecioporpersona || "",
           comentarios: hotel.desayunocomentarios || "",
           precio_noche_extra: "",
-          precio_persona_extra: hotel.paxextrapersona || "",
+          precio_persona_extra: hotel.paxExtraPersona || "",
         },
       });
 
+      // Fetch colonias if we have a valid postal code
       if (hotel.CodigoPostal && hotel.CodigoPostal.length === 5) {
         handleCodigoPostalChange(hotel.CodigoPostal);
-
       }
     }
-  }, [hotel]);
+  }, [hotel, open]);
 
+  // Update form data with hotel rates when they're loaded
   useEffect(() => {
     if (!hotelRates || !hotel?.id_hotel) return;
 
@@ -598,11 +711,12 @@ export function HotelDialog({
       });
 
       if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
+        throw new Error(`ERROR ${response.status}: ${response.statusText}`);
       }
 
       const result = await response.json();
-
+      console.log("Tarifas obtenidas:", result);
+      
       if (result.tarifas && Array.isArray(result.tarifas)) {
         const standardRates = result.tarifas.filter((t: TarifaData) => t.id_agente === null);
         const preferentialRates = result.tarifas.filter((t: TarifaData) => t.id_agente !== null);
@@ -738,13 +852,12 @@ export function HotelDialog({
         setTarifasPreferenciales(tarifasArray);
       }
     } catch (error) {
-      console.error("Error al consultar tarifas:", error);
-      setErrorMessage("Error al cargar las tarifas del hotel");
+      console.error("ERROR AL CONSULTAR TARIFAS:", error);
+      setErrorMessage("ERROR AL CARGAR LAS TARIFAS DEL HOTEL");
     } finally {
       setIsFetchingRates(false);
     }
   };
-  
   
   // Handler for código postal search
   const handleCodigoPostalChange = async (codigo: string) => {
@@ -760,14 +873,13 @@ export function HotelDialog({
           const primerResultado = data[0];
           setFormData(prev => ({
             ...prev,
-            Estado: primerResultado.d_estado,
-            Ciudad_Zona: primerResultado.d_ciudad,
-            municipio: primerResultado.D_mnpio,
+            Estado: primerResultado.d_estado.toUpperCase(),
+            municipio: primerResultado.D_mnpio.toUpperCase(),
             idSepomex: primerResultado.id
           }));
         }
       } catch (error) {
-        console.error("Error al buscar código postal:", error);
+        console.error("ERROR AL BUSCAR CODIGO POSTAL:", error);
       } finally {
         setBuscandoCP(false);
       }
@@ -784,14 +896,30 @@ export function HotelDialog({
     if (coloniaSeleccionada) {
       setFormData((prev) => ({
         ...prev,
-        colonia: coloniaSeleccionada.d_asenta,
-        id_sepomex: coloniaSeleccionada.id
+        Colonia: coloniaSeleccionada.d_asenta.toUpperCase(),
+        idSepomex: coloniaSeleccionada.id
       }));
     }
   };
+  
+  // Handle checkbox for convention
+  const handleHayConvenioChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      hay_convenio: checked,
+      // Reset vigencia_convenio if unchecked
+      vigencia_convenio: checked ? prev.vigencia_convenio : "",
+      // Set default comment if unchecked
+      comentario_vigencia: checked ? prev.comentario_vigencia : "SIN CONVENIO"
+    }));
+  };
+  
   // Generic form field change handler
   const handleChange = (field: string, value: any) => {
     if (mode === "view") return;
+
+    // Convert text values to uppercase if they're strings
+    const processedValue = typeof value === 'string' ? value.toUpperCase() : value;
 
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
@@ -799,13 +927,13 @@ export function HotelDialog({
         ...prev,
         [parent]: {
           ...prev[parent as keyof FormData] as object,
-          [child]: value,
+          [child]: processedValue,
         },
       }));
     } else {
       setFormData((prev) => ({
         ...prev,
-        [field]: value,
+        [field]: processedValue,
       }));
     }
   };
@@ -830,7 +958,7 @@ export function HotelDialog({
       newTarifas[index].busqueda.buscando = false;
       setTarifasPreferenciales(newTarifas);
     } catch (error) {
-      console.error("Error al buscar agentes:", error);
+      console.error("ERROR AL BUSCAR AGENTES:", error);
       newTarifas[index].busqueda.buscando = false;
       setTarifasPreferenciales(newTarifas);
     }
@@ -839,7 +967,7 @@ export function HotelDialog({
   // Handle search input change
   const handleSearchInputChange = (index: number, field: 'nombre' | 'correo', value: string) => {
     const newTarifas = [...tarifasPreferenciales];
-    newTarifas[index].busqueda[field] = value;
+    newTarifas[index].busqueda[field] = field === 'nombre' ? value.toUpperCase() : value;
     setTarifasPreferenciales(newTarifas);
   };
 
@@ -847,9 +975,9 @@ export function HotelDialog({
   const handleSelectAgente = (index: number, agente: Agente) => {
     const newTarifas = [...tarifasPreferenciales];
     newTarifas[index].id_agente = agente.id_agente;
-    newTarifas[index].nombre_agente = agente.primer_nombre;
+    newTarifas[index].nombre_agente = agente.primer_nombre.toUpperCase();
     newTarifas[index].correo_agente = agente.correo;
-    newTarifas[index].busqueda.nombre = agente.primer_nombre;
+    newTarifas[index].busqueda.nombre = agente.primer_nombre.toUpperCase();
     newTarifas[index].busqueda.correo = agente.correo;
     newTarifas[index].busqueda.resultados = [];
     setTarifasPreferenciales(newTarifas);
@@ -861,28 +989,39 @@ export function HotelDialog({
     field: string,
     value: any
   ) => {
-    if (mode === "view") return;
+    if (mode === "view" && editingTarifaId !== index) return;
     
     const newTarifas = [...tarifasPreferenciales];
+    
+    // Convert text to uppercase if it's a string
+    const processedValue = typeof value === 'string' && field !== 'busqueda.correo' ? value.toUpperCase() : value;
     
     if (field.includes('.')) {
       const [parent, child] = field.split('.') as [keyof TarifaPreferencial, string];
       if (parent === 'sencilla' || parent === 'doble') {
         newTarifas[index][parent] = {
           ...newTarifas[index][parent],
-          [child]: value
+          [child]: processedValue
         };
+        
+        // Sync breakfast data between single and double rooms
+        if (parent === 'sencilla' && (child === 'incluye' || child === 'tipo_desayuno' || child === 'precio' || child === 'comentarios')) {
+          newTarifas[index].doble = {
+            ...newTarifas[index].doble,
+            [child]: processedValue
+          };
+        }
       } else if (parent === 'busqueda') {
         newTarifas[index].busqueda = {
           ...newTarifas[index].busqueda,
-          [child]: value
+          [child]: processedValue
         };
       }
     } else {
       // For top-level properties
       newTarifas[index] = {
         ...newTarifas[index],
-        [field]: value
+        [field]: processedValue
       };
     }
     
@@ -899,10 +1038,10 @@ export function HotelDialog({
         id_agente: "",
         nombre_agente: "",
         correo_agente: "",
-        costo_q: "",
-        precio_q: "",
-        costo_qq: "",
-        precio_qq: "",
+        costo_q: formData.costo_q || "",
+        precio_q: formData.precio_q || "",
+        costo_qq: formData.costo_qq || "",
+        precio_qq: formData.precio_qq || "",
         sencilla: {
           incluye: false,
           tipo_desayuno: "",
@@ -930,10 +1069,26 @@ export function HotelDialog({
 
   // Remove a preferential rate
   const removeTarifaPreferencial = (index: number) => {
-    if (mode === "view") return;
+    if (mode === "view" && editingTarifaId !== index) return;
     
     const newTarifas = tarifasPreferenciales.filter((_, i) => i !== index);
     setTarifasPreferenciales(newTarifas);
+  };
+  
+  // Concatenate all notes fields
+  const combineNotes = () => {
+    const notesMap = [
+      { section: "DATOS BÁSICOS", content: formData.notas_datosBasicos },
+      { section: "TARIFAS Y SERVICIOS", content: formData.notas_tarifasServicios },
+      { section: "INFORMACIÓN DE PAGOS", content: formData.notas_informacionPagos },
+      { section: "INFORMACION ADICIONAL", content: formData.notas_informacion_adicional },
+      { section: "NOTAS GENERALES", content: formData.notas_generales }
+    ];
+    
+    return notesMap
+      .filter(note => note.content.trim())
+      .map(note => `## ${note.section} ##\n${note.content}`)
+      .join('\n\n');
   };
 
   // Handle delete hotel
@@ -941,7 +1096,7 @@ export function HotelDialog({
     const id_hotel = hotel?.id_hotel;
 
     if (!id_hotel) {
-      setErrorMessage("ID de hotel no encontrado");
+      setErrorMessage("ID DE HOTEL NO ENCONTRADO");
       return;
     }
     
@@ -955,23 +1110,23 @@ export function HotelDialog({
             "x-api-key": API_KEY || "",
             "Content-Type": "application/json",
           },
-          body:JSON.stringify({id_hotel}),
+          body: JSON.stringify({id_hotel}),
         }
       );
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        throw new Error(errorData.message || `ERROR ${response.status}: ${response.statusText}`);
       }
 
-      setSuccessMessage("Hotel eliminado exitosamente");
+      setSuccessMessage("HOTEL ELIMINADO EXITOSAMENTE");
       
       setTimeout(() => {
         onOpenChange(false);
         if (onSuccess) onSuccess();
       }, 1500);
     } catch (error: any) {
-      setErrorMessage(error.message || "Error al eliminar el hotel");
+      setErrorMessage(error.message || "ERROR AL ELIMINAR EL HOTEL");
     } finally {
       setIsLoading(false);
       setDeleteDialogOpen(false);
@@ -981,7 +1136,7 @@ export function HotelDialog({
   // Handle update hotel
   const handleUpdate = async () => {
     if (!hotel?.id_hotel) {
-      setErrorMessage("ID de hotel no encontrado");
+      setErrorMessage("ID DE HOTEL NO ENCONTRADO");
       return;
     }
   
@@ -1002,7 +1157,7 @@ export function HotelDialog({
       );
   
       if (!response.ok) {
-        throw new Error("Error al obtener las tarifas actuales");
+        throw new Error("ERROR AL OBTENER LAS TARIFAS ACTUALES");
       }
   
       const result = await response.json();
@@ -1022,23 +1177,26 @@ export function HotelDialog({
       // Construir la dirección completa
       const direccionCompleta = `${formData.calle || ""},${formData.numero || ""} ,${formData.Colonia}, ${formData.municipio}, ${formData.Estado}, CP ${formData.CodigoPostal}`;
       
+      // Combine all notes fields
+      const combinedNotes = combineNotes();
+      
+      
       // 1. Actualizar información del hotel
       const hotelPayload = {
         id_hotel: hotel.id_hotel,
         Id_hotel_excel: formData.Id_hotel_excel ? Number(formData.Id_hotel_excel) : null,
         tipo_negociacion: formData.tipo_negociacion || null,
-        vigencia_convenio: formData.vigencia_convenio || null,
+        vigencia_convenio: formData.hay_convenio ? convertToDateInputFormat(formData.vigencia_convenio) : null,
+        comentario_vigencia: !formData.hay_convenio ? formData.comentario_vigencia : null,
         nombre: formData.nombre,
         id_cadena: Number(formData.id_cadena),
-        correo: formData.correo || null,
-        telefono: formData.telefono || null,
         rfc: formData.rfc || null,
         razon_social: formData.razon_social || null,
         direccion: direccionCompleta,
         latitud: formData.latitud || null,
         longitud: formData.longitud || null,
         Estado: formData.Estado,
-        Cuidad_Zona: formData.Cuidad_Zona,
+        Ciudad_Zona: formData.Ciudad_Zona,
         CodigoPostal: formData.CodigoPostal,
         Colonia: formData.Colonia,
         municipio: formData.municipio,
@@ -1051,20 +1209,25 @@ export function HotelDialog({
         iva: formData.iva || null,
         ish: formData.ish || null,
         otros_impuestos: formData.otros_impuestos || null,
+        otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje || null,
         MenoresEdad: formData.MenoresEdad || null,
         paxExtraPersona: formData.precio_persona_extra || null,
         Transportacion: formData.Transportacion || null,
         TransportacionComentarios: formData.TransportacionComentarios || null,
+        mascotas: formData.mascotas || null,
+        salones: formData.salones || null,
         URLImagenHotel: formData.URLImagenHotel || null,
         URLImagenHotelQ: formData.URLImagenHotelQ || null,
         URLImagenHotelQQ: formData.URLImagenHotelQQ || null,
         calificacion: formData.calificacion ? Number(formData.calificacion) : null,
         activo: formData.activo !== undefined ? formData.activo : 1,
-        Comentarios: formData.Comentarios || null,
-        idSepomex : formData.idSepomex ? Number(formData.idSepomex): null,
-        comentario_pago: formData.comentario_pago || ""
+        Comentarios: combinedNotes || null,
+        idSepomex: formData.idSepomex ? Number(formData.idSepomex): null,
+        comentario_pago: formData.comentario_pago || null
       };
-  
+      
+      console.log("Actualizando hotel:", hotelPayload);
+      
       const hotelResponse = await fetch(
         `http://localhost:5173/v1/mia/hoteles/Editar-hotel/`,
         {
@@ -1076,10 +1239,10 @@ export function HotelDialog({
           body: JSON.stringify(hotelPayload),
         }
       );
-      console.log("exploremos la response",hotelResponse)
+      
       if (!hotelResponse.ok) {
         const errorData = await hotelResponse.json();
-        throw new Error(errorData.message || `Error ${hotelResponse.status}: ${hotelResponse.statusText}`);
+        throw new Error(errorData.message || `ERROR ${hotelResponse.status}: ${hotelResponse.statusText}`);
       }
   
       // 2. Update standard rates
@@ -1097,7 +1260,7 @@ export function HotelDialog({
         precio: formatNumber(formData.precio_q),
         costo: formatNumber(formData.costo_q),
         incluye_desayuno: formData.sencilla.incluye ? 1 : 0,
-        precio_desayuno: formatNumber(formData.sencilla.precio),
+        precio_desayuno: formData.sencilla.incluye ? null : formatNumber(formData.sencilla.precio),
         precio_noche_extra: formatNumber(formData.sencilla.precio_noche_extra),
         comentario_desayuno: formData.sencilla.comentarios,
         tipo_desayuno: formData.sencilla.tipo_desayuno,
@@ -1112,11 +1275,11 @@ export function HotelDialog({
         precio: formatNumber(formData.precio_qq),
         costo: formatNumber(formData.costo_qq),
         incluye_desayuno: formData.doble.incluye ? 1 : 0,
-        precio_desayuno: formatNumber(formData.doble.precio),
+        precio_desayuno: formData.doble.incluye ? null : formatNumber(formData.doble.precio),
         precio_noche_extra: formatNumber(formData.doble.precio_noche_extra),
         comentario_desayuno: formData.doble.comentarios,
         tipo_desayuno: formData.doble.tipo_desayuno,
-        precio_persona_extra: formatNumber(formData.doble.precio_persona_extra)
+        precio_persona_extra: formatNumber(formData.precio_persona_extra)
       };
   
       // 3. Update preferential rates
@@ -1137,7 +1300,7 @@ export function HotelDialog({
             precio: formatNumber(tarifa.precio_q),
             costo: formatNumber(tarifa.costo_q),
             incluye_desayuno: tarifa.sencilla.incluye ? 1 : 0,
-            precio_desayuno: formatNumber(tarifa.sencilla.precio),
+            precio_desayuno: tarifa.sencilla.incluye ? null : formatNumber(tarifa.sencilla.precio),
             precio_noche_extra: formatNumber(tarifa.sencilla.precio_noche_extra),
             comentario_desayuno: tarifa.sencilla.comentarios,
             tipo_desayuno: tarifa.sencilla.tipo_desayuno,
@@ -1152,7 +1315,7 @@ export function HotelDialog({
             precio: formatNumber(tarifa.precio_qq),
             costo: formatNumber(tarifa.costo_qq),
             incluye_desayuno: tarifa.doble.incluye ? 1 : 0,
-            precio_desayuno: formatNumber(tarifa.doble.precio),
+            precio_desayuno: tarifa.doble.incluye ? null : formatNumber(tarifa.doble.precio),
             precio_noche_extra: formatNumber(tarifa.doble.precio_noche_extra),
             comentario_desayuno: tarifa.doble.comentarios,
             tipo_desayuno: tarifa.doble.tipo_desayuno,
@@ -1179,18 +1342,19 @@ export function HotelDialog({
       const tarifasErrors = tarifasResults.filter(r => !r.ok);
   
       if (tarifasErrors.length > 0) {
-        throw new Error("Error al actualizar algunas tarifas");
+        throw new Error("ERROR AL ACTUALIZAR ALGUNAS TARIFAS");
       }
   
-      setSuccessMessage("Hotel y tarifas actualizados correctamente");
+      setSuccessMessage("HOTEL Y TARIFAS ACTUALIZADOS CORRECTAMENTE");
       setMode("view");
+      setEditingTarifaId(null);
       
       // Refresh data
       if (onSuccess) onSuccess();
       await fetchHotelRates(hotel.id_hotel);
   
     } catch (error: any) {
-      setErrorMessage(error.message || "Error en la actualización");
+      setErrorMessage(error.message || "ERROR EN LA ACTUALIZACION");
     } finally {
       setIsLoading(false);
     }
@@ -1199,7 +1363,7 @@ export function HotelDialog({
   // Handle logical delete of tarifa preferential (updated to handle both IDs)
   const handleDeleteTarifa = async () => {
     if (!selectedTarifaToDelete) {
-      setErrorMessage("IDs de tarifa no encontrados");
+      setErrorMessage("IDS DE TARIFA NO ENCONTRADOS");
       return;
     }
   
@@ -1225,10 +1389,10 @@ export function HotelDialog({
   
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `Error ${response.status}: ${response.statusText}`);
+        throw new Error(errorData.message || `ERROR ${response.status}: ${response.statusText}`);
       }
   
-      setSuccessMessage("Tarifa preferencial inactivada correctamente");
+      setSuccessMessage("TARIFA PREFERENCIAL INACTIVADA CORRECTAMENTE");
       
       // Refresh the hotel rates to reflect the changes
       if (hotel?.id_hotel) {
@@ -1240,7 +1404,7 @@ export function HotelDialog({
       setSelectedTarifaToDelete(null);
       
     } catch (error: any) {
-      setErrorMessage(error.message || "Error al inactivar la tarifa preferencial");
+      setErrorMessage(error.message || "ERROR AL INACTIVAR LA TARIFA PREFERENCIAL");
     } finally {
       setIsLoading(false);
     }
@@ -1261,7 +1425,7 @@ export function HotelDialog({
     const tarifa = tarifasPreferenciales[index];
     
     if (!tarifa.id_tarifa_sencilla && !tarifa.id_tarifa_doble) {
-      setErrorMessage("No se encontraron tarifas preferenciales para eliminar");
+      setErrorMessage("NO SE ENCONTRARON TARIFAS PREFERENCIALES PARA ELIMINAR");
       return;
     }
     
@@ -1282,7 +1446,7 @@ export function HotelDialog({
         <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
           <DialogHeader className="flex flex-row items-center justify-between">
             <DialogTitle className="text-xl font-semibold">
-              {mode === "view" ? "Detalle del hotel" : "Editar hotel"}
+              {mode === "view" ? "DETALLE DEL HOTEL" : "EDITAR HOTEL"}
             </DialogTitle>
             
             {mode === "view" && (
@@ -1292,14 +1456,14 @@ export function HotelDialog({
                   size="sm"
                   onClick={() => setMode("edit")}
                 >
-                  <Pencil size={16} className="mr-1" /> Editar
+                  <Pencil size={16} className="mr-1" /> EDITAR
                 </Button>
                 <Button 
                   variant="destructive" 
                   size="sm"
                   onClick={() => setDeleteDialogOpen(true)}
                 >
-                  <Trash2 size={16} className="mr-1" /> Eliminar
+                  <Trash2 size={16} className="mr-1" /> ELIMINAR
                 </Button>
               </div>
             )}
@@ -1311,7 +1475,7 @@ export function HotelDialog({
                   size="sm"
                   onClick={() => setMode("view")}
                 >
-                  <ArrowLeft size={16} className="mr-1" /> Cancelar
+                  <ArrowLeft size={16} className="mr-1" /> CANCELAR
                 </Button>
                 <Button 
                   variant="default"
@@ -1319,7 +1483,7 @@ export function HotelDialog({
                   onClick={handleUpdate}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Guardando..." : "Guardar cambios"}
+                  {isLoading ? "GUARDANDO..." : "GUARDAR CAMBIOS"}
                 </Button>
               </div>
             )}
@@ -1330,7 +1494,7 @@ export function HotelDialog({
             <div className="flex items-center justify-center p-4">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
               <span className="ml-3">
-                {isLoading ? "Procesando..." : "Cargando tarifas..."}
+                {isLoading ? "PROCESANDO..." : "CARGANDO TARIFAS..."}
               </span>
             </div>
           )}
@@ -1356,295 +1520,367 @@ export function HotelDialog({
           >
             <TabsList className="grid grid-cols-4 mb-6">
               <TabsTrigger value="datosBasicos" className="text-sm">
-                Datos Básicos
+                DATOS BASICOS
               </TabsTrigger>
               <TabsTrigger value="tarifasServicios" className="text-sm">
-                Tarifas y Servicios
+                TARIFAS Y SERVICIOS
               </TabsTrigger>
               <TabsTrigger value="informacionPagos" className="text-sm">
-                Información de Pagos
+                INFORMACION DE PAGOS
               </TabsTrigger>
               <TabsTrigger value="informacionAdicional" className="text-sm">
-                Información Adicional
+                INFORMACION ADICIONAL
               </TabsTrigger>
             </TabsList>
 
             {/* Tab: Datos Básicos */}
             <TabsContent value="datosBasicos" className="space-y-6 min-h-[400px]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Required fields first */}
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="Id_hotel_excel">ID Excel (Seguimiento)</Label>
-                  <Input 
-                    id="Id_hotel_excel"
-                    value={formData.Id_hotel_excel || ""} 
-                    onChange={(e) => handleChange("Id_hotel_excel", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                  />
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="nombre">Nombre <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="nombre">NOMBRE DEL PROVEEDOR <span className="text-red-500">*</span></Label>
                   <Input 
                     id="nombre"
                     value={formData.nombre} 
                     onChange={(e) => handleChange("nombre", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="font-medium" 
                     required 
-                  />
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="correo">Correo Electrónico</Label>
-                  <Input 
-                    id="correo"
-                    type="email"
-                    value={formData.correo} 
-                    onChange={(e) => handleChange("correo", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                  />
-                </div>
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="telefono">Teléfono</Label>
-                  <Input 
-                    id="telefono"
-                    value={formData.telefono} 
-                    onChange={(e) => handleChange("telefono", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="CodigoPostal">Código Postal <span className="text-red-500">*</span></Label>
+                  <Label htmlFor="tipo_negociacion">TIPO DE NEGOCIACION <span className="text-red-500">*</span></Label>
+                  <Input 
+                    id="tipo_negociacion"
+                    value={formData.tipo_negociacion} 
+                    onChange={(e) => handleChange("tipo_negociacion", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="font-medium"
+                    required
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="hay_convenio" className="flex items-center gap-2">
+                    <div className="flex items-center">
+                      <Checkbox 
+                        id="hay_convenio" 
+                        checked={formData.hay_convenio}
+                        onCheckedChange={handleHayConvenioChange}
+                        disabled={mode === "view"}
+                      />
+                      <span className="ml-2 font-medium">¿HAY CONVENIO?</span>
+                    </div>
+                  </Label>
+                </div>
+                
+                {formData.hay_convenio ? (
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="vigencia_convenio">VIGENCIA DEL CONVENIO <span className="text-red-500">*</span></Label>
+                    <Input 
+                      id="vigencia_convenio"
+                      type="date"
+                      value={formData.vigencia_convenio ? convertToDateInputFormat(formData.vigencia_convenio) : ''} 
+                      onChange={(e) => handleChange("vigencia_convenio", convertToDateInputFormat(e.target.value))} 
+                      disabled={mode === "view"}
+                      className="font-medium"
+                      required
+                    />
+                  </div>
+                ) : (
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="comentario_vigencia">COMENTARIO VIGENCIA</Label>
+                    <Input 
+                      id="comentario_vigencia"
+                      value={formData.comentario_vigencia} 
+                      onChange={(e) => handleChange("comentario_vigencia", e.target.value)}
+                      disabled={mode === "view"}
+                      className="font-medium"
+                    />
+                  </div>
+                )}
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="estadoSelect">
+                    ESTADO <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.Estado}
+                    onValueChange={(val) => handleChange("Estado", val.toUpperCase())}
+                    disabled={mode === "view"}
+                    required
+                  >
+                    <SelectTrigger id="estadoSelect" className="font-medium">
+                      <SelectValue placeholder="Selecciona un estado" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white dark:bg-gray-700">
+                      {estadosMX.map((estado) => (
+                        <SelectItem key={estado} value={estado} className="uppercase">
+                          {estado}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="Ciudad_Zona">CIUDAD <span className="text-red-500">*</span></Label>
+                  <Input 
+                    id="Ciudad_Zona"
+                    value={formData.Ciudad_Zona}
+                    onChange={(e) => handleChange("Ciudad_Zona", e.target.value)}
+                    disabled={mode === "view"}
+                    className="font-medium"
+                    required
+                  />
+                </div>
+                
+                {/* Optional fields */}
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="Id_hotel_excel">ID EXCEL (SEGUIMIENTO)</Label>
+                  <Input 
+                    id="Id_hotel_excel"
+                    value={formData.Id_hotel_excel || ""} 
+                    onChange={(e) => handleChange("Id_hotel_excel", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="font-medium"
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="CodigoPostal">CODIGO POSTAL</Label>
                   <Input 
                     id="CodigoPostal"
                     value={formData.CodigoPostal}
                     onChange={(e) => mode === "edit" && handleCodigoPostalChange(e.target.value)}
                     maxLength={5}
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    required
+                    className="font-medium"
                   />
                   {buscandoCP && (
-                    <span className="text-xs text-blue-600">Buscando código postal...</span>
+                    <span className="text-xs text-blue-600">BUSCANDO CODIGO POSTAL...</span>
                   )}
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="calle">Calle</Label>
+                  <Label htmlFor="calle">CALLE</Label>
                   <Input 
                     id="calle"
                     value={formData.calle || ""}
                     onChange={(e) => handleChange("calle", e.target.value)}
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="font-medium"
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="numero">Número</Label>
+                  <Label htmlFor="numero">NUMERO</Label>
                   <Input 
                     id="numero"
                     value={formData.numero || ""}
                     onChange={(e) => handleChange("numero", e.target.value)}
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="font-medium"
                   />
                 </div>
 
-                {mode === "edit" && colonias.length > 0 ? (
-                  <div className="flex flex-col space-y-1">
-                    <Label htmlFor="Colonia">Colonia <span className="text-red-500">*</span></Label>
-                    <Select onValueChange={handleColoniaChange} disabled={currentMode === "view"}>
-                      <SelectTrigger id="Colonia" className={`w-full ${currentMode === "view" ? "bg-gray-100" : ""}`}>
-                        <SelectValue placeholder={formData.Colonia || "Selecciona una Colonia"} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {colonias.map((Colonia) => (
-                          <SelectItem key={Colonia.id} value={Colonia.id.toString()}>
-                            {Colonia.d_asenta}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                ) : (
-                  <div className="flex flex-col space-y-1">
-                    <Label htmlFor="Colonia">Colonia</Label>
-                    <Input 
-                      id="Colonia"
-                      value={formData.Colonia}
-                      onChange={(e) => handleChange("Colonia", e.target.value)}
-                      disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
-                    />
-                  </div>
-                )}
+                {
+  mode === "edit" && colonias.length > 0 ? (
+    <div className="flex flex-col space-y-1">
+      <Label htmlFor="Colonia">COLONIA</Label>
+      <Select 
+        onValueChange={(value) => {
+          // Al seleccionar del dropdown, limpiamos el valor manual
+          handleChange("Colonia", ""); // Resetear input
+          handleColoniaChange(value); // Procesar selección
+        }}
+        value="" // Forzamos a que no haya selección para que siempre muestre el placeholder
+        disabled={currentMode === "view"}
+      >
+        <SelectTrigger id="Colonia" className="w-full font-medium">
+          <SelectValue placeholder={formData.Colonia || "SELECCIONA UNA COLONIA"} />
+        </SelectTrigger>
+        <SelectContent>
+          {colonias.map((colonia) => (
+            <SelectItem 
+              key={colonia.id} 
+              value={colonia.id.toString()}
+              className="uppercase"
+            >
+              {colonia.d_asenta.toUpperCase()}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
+  ) : (
+    <div className="flex flex-col space-y-1">
+      <Label htmlFor="Colonia">COLONIA</Label>
+      <Input 
+        id="Colonia"
+        value={formData.Colonia}
+        onChange={(e) => {
+          // Al escribir manualmente, limpiamos cualquier selección previa
+          handleColoniaChange(""); // Resetear selección
+          handleChange("Colonia", e.target.value); // Guardar valor manual
+        }}
+        disabled={mode === "view"}
+        className="font-medium"
+      />
+    </div>
+  )
+}
 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="Estado">Estado <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="Estado"
-                    value={formData.Estado}
-                    onChange={(e) => handleChange("Estado", e.target.value)}
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="Cuidad_Zona">Ciudad <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="Cuidad_Zona"
-                    value={formData.Cuidad_Zona}
-                    onChange={(e) => handleChange("Cuidad_Zona", e.target.value)}
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="municipio">Municipio</Label>
+                  <Label htmlFor="municipio">MUNICIPIO</Label>
                   <Input 
                     id="municipio"
                     value={formData.municipio}
                     onChange={(e) => handleChange("municipio", e.target.value)}
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="font-medium"
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="tipo_negociacion">Tipo de Negociación</Label>
-                  <Input 
-                    id="tipo_negociacion"
-                    value={formData.tipo_negociacion} 
-                    onChange={(e) => handleChange("tipo_negociacion", e.target.value)} 
+                  <Label htmlFor="disponibilidad_precio">¿COMO SE SOLICITA LA DISPONIBILIDAD?</Label>
+                  <Textarea 
+                    id="disponibilidad_precio"
+                    value={formData.disponibilidad_precio || ""} 
+                    onChange={(e) => handleChange("disponibilidad_precio", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="min-h-[80px] font-medium"
+                    placeholder="EMAIL, TELEFONO, ETC."
                   />
                 </div>
-                
+
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="vigencia_convenio">Vigencia Convenio</Label>
-                  <Input 
-                    id="vigencia_convenio"
-                    type="date"
-                    value={formData.vigencia_convenio ? convertToDateInputFormat(formData.vigencia_convenio) : ''} 
-                    onChange={(e) => handleChange("vigencia_convenio", convertToDDMMYYYY(e.target.value))} 
+                  <Label htmlFor="contacto_convenio">CONTACTOS DE CONVENIO</Label>
+                  <Textarea 
+                    id="contacto_convenio"
+                    value={formData.contacto_convenio} 
+                    onChange={(e) => handleChange("contacto_convenio", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
+                    className="min-h-[80px] font-medium"
+                    placeholder="NOMBRE Y DATOS DE CONTACTO"
+                  />
+                </div>
+
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="contacto_recepcion">CONTACTOS DE RECEPCION</Label>
+                  <Textarea 
+                    id="contacto_recepcion"
+                    value={formData.contacto_recepcion} 
+                    onChange={(e) => handleChange("contacto_recepcion", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[80px] font-medium"
+                    placeholder="NOMBRE Y DATOS DE CONTACTO"
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="URLImagenHotel">Imagen Hotel (URL)</Label>
+                  <Label htmlFor="URLImagenHotel">IMAGEN HOTEL (URL)</Label>
                   <Input 
                     id="URLImagenHotel"
                     value={formData.URLImagenHotel} 
                     onChange={(e) => handleChange("URLImagenHotel", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="font-medium"
+                    placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="URLImagenHotelQ">Imagen Habitación Sencilla (URL)</Label>
+                  <Label htmlFor="URLImagenHotelQ">IMAGEN HABITACION SENCILLA (URL)</Label>
                   <Input 
                     id="URLImagenHotelQ"
                     value={formData.URLImagenHotelQ} 
                     onChange={(e) => handleChange("URLImagenHotelQ", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="font-medium"
+                    placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
                 </div>
                 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="URLImagenHotelQQ">Imagen Habitación Doble (URL)</Label>
+                  <Label htmlFor="URLImagenHotelQQ">IMAGEN HABITACION DOBLE (URL)</Label>
                   <Input 
                     id="URLImagenHotelQQ"
                     value={formData.URLImagenHotelQQ} 
                     onChange={(e) => handleChange("URLImagenHotelQQ", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="https://ejemplo.com/imagen.jpg"
+                    className="font-medium"
+                    placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
                 </div>
-
-                {formData.URLImagenHotel && (
-                  <div className="flex flex-col space-y-1 col-span-2">
-                    <Label>Vista previa de la imagen</Label>
-                    <div className="h-40 bg-gray-100 rounded-md overflow-hidden">
-                    <img
-                        src={getValidImageUrl(hotel.URLImagenHotel)}
-                        alt="Imagen del hotel"
-                        onError={(e) => {
-                          const target = e.currentTarget;
-                          if (target.src !== "https://via.placeholder.com/600x400?text=Sin+imagen") {
-                            target.src = "https://via.placeholder.com/600x400?text=Sin+imagen";
-                          }
-                        }}
-                        className="rounded w-full h-48 object-cover"
-                      />
-                    </div>
-                  </div>
-                )}
+                
+                {/* Notes field for this tab */}
+                <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
+                  <Label htmlFor="notas_datosBasicos">NOTAS DATOS BÁSICOS</Label>
+                  <Textarea 
+                    id="notas_datosBasicos"
+                    value={formData.notas_datosBasicos} 
+                    onChange={(e) => handleChange("notas_datosBasicos", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[100px] font-medium"
+                    placeholder="NOTAS ESPECÍFICAS SOBRE LOS DATOS BÁSICOS"
+                  />
+                </div>
               </div>
             </TabsContent>
 
             {/* Tab: Tarifas y Servicios */}
             <TabsContent value="tarifasServicios" className="space-y-6 min-h-[400px]">
               <div>
-                <h3 className="text-lg font-semibold mb-4">Tarifa General</h3>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <h3 className="text-lg font-semibold mb-4">TARIFA GENERAL</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Required fields first */}
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="costo_q">Costo Q <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="costo_q">COSTO PROVEEDOR HABITACION SENCILLA CON IMPUESTOS <span className="text-red-500">*</span></Label>
                     <Input 
                       id="costo_q"
                       placeholder="0.00" 
                       value={formData.costo_q} 
                       onChange={(e) => handleChange("costo_q", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="font-medium"
                       required 
                     />
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="precio_q">Precio Q <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="precio_q">PRECIO DE VENTA HABITACION SENCILLA CON IMPUESTOS <span className="text-red-500">*</span></Label>
                     <Input 
                       id="precio_q"
                       placeholder="0.00" 
                       value={formData.precio_q} 
                       onChange={(e) => handleChange("precio_q", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="font-medium"
                       required 
                     />
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="costo_qq">Costo QQ <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="costo_qq">COSTO PROVEEDOR HABITACION DOBLE CON IMPUESTOS <span className="text-red-500">*</span></Label>
                     <Input 
                       id="costo_qq"
                       placeholder="0.00" 
                       value={formData.costo_qq} 
                       onChange={(e) => handleChange("costo_qq", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="font-medium"
                       required 
                     />
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="precio_qq">Precio QQ <span className="text-red-500">*</span></Label>
+                    <Label htmlFor="precio_qq">PRECIO DE VENTA HABITACION DOBLE CON IMPUESTOS <span className="text-red-500">*</span></Label>
                     <Input 
                       id="precio_qq"
                       placeholder="0.00" 
                       value={formData.precio_qq} 
                       onChange={(e) => handleChange("precio_qq", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="font-medium"
                       required 
                     />
                   </div>
@@ -1652,43 +1888,79 @@ export function HotelDialog({
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="precio_persona_extra">Precio por persona extra</Label>
+                    <Label htmlFor="precio_persona_extra">COSTO POR PERSONA EXTRA CON IMPUESTOS</Label>
                     <Input 
                       id="precio_persona_extra"
-                      type="number" 
                       placeholder="0.00"
-                      value={formData.precio_persona_extra} 
+                      value={mode === "view" ? formData.doble.precio_persona_extra : formData.precio_persona_extra
+                      }
                       onChange={(e) => handleChange("precio_persona_extra", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
-                    />
-                    <span className="text-xs text-gray-500">Solo aplica para habitación doble</span>
-                  </div>
-                  <div className="flex flex-col space-y-1">
-                    <Label htmlFor="sencilla_precio_noche_extra">Precio noche extra (Sencilla)</Label>
-                    <Input 
-                      id="sencilla_precio_noche_extra"
-                      type="number" 
-                      placeholder="0.00"
-                      value={formData.sencilla.precio_noche_extra} 
-                      onChange={(e) => handleChange("sencilla.precio_noche_extra", e.target.value)} 
-                      disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="font-medium"
                     />
                   </div>
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="doble_precio_noche_extra">Precio noche extra (Doble)</Label>
-                    <Input 
-                      id="doble_precio_noche_extra"
-                      type="number" 
-                      placeholder="0.00"
-                      value={formData.doble.precio_noche_extra} 
-                      onChange={(e) => handleChange("doble.precio_noche_extra", e.target.value)} 
+                    <Label htmlFor="MenoresEdad">MENORES DE EDAD</Label>
+                    <Textarea 
+                      id="MenoresEdad"
+                      value={formData.MenoresEdad} 
+                      onChange={(e) => handleChange("MenoresEdad", e.target.value)} 
                       disabled={mode === "view"}
-                      className={mode === "view" ? "bg-gray-100" : ""}
+                      className="min-h-[80px] font-medium"
+                      placeholder="INFORMACION SOBRE ESTADIA DE MENORES"
                     />
                   </div>
                 </div>
+                  
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="iva">IMPUESTOS (IVA) EN %</Label>
+                    <Input 
+                      id="iva"
+                      value={formData.iva} 
+                      onChange={(e) => handleChange("iva", e.target.value)} 
+                      disabled={mode === "view"}
+                      className="font-medium"
+                      placeholder="EJ: 16.00"
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="ish">IMPUESTOS (ISH) EN %</Label>
+                    <Input 
+                      id="ish"
+                      value={formData.ish} 
+                      onChange={(e) => handleChange("ish", e.target.value)} 
+                      disabled={mode === "view"}
+                      className="font-medium"
+                      placeholder="EJ: 3.00"
+                    />
+                  </div>
+
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="otros_impuestos_porcentaje">IMPUESTOS (OTROS) EN %</Label>
+                    <Input 
+                      id="otros_impuestos_porcentaje"
+                      value={formData.otros_impuestos_porcentaje} 
+                      onChange={(e) => handleChange("otros_impuestos_porcentaje", e.target.value)} 
+                      disabled={mode === "view"}
+                      className="font-medium"
+                      placeholder="EJ: 5.00"
+                    />
+                  </div>
+                  
+                  <div className="flex flex-col space-y-1">
+                    <Label htmlFor="otros_impuestos">IMPUESTOS (OTROS) MONTO</Label>
+                    <Input 
+                      id="otros_impuestos"
+                      value={formData.otros_impuestos} 
+                      onChange={(e) => handleChange("otros_impuestos", e.target.value)} 
+                      disabled={mode === "view"}
+                      className="font-medium"
+                      placeholder="EJ: 100.00"
+                    />
+                  </div>
+                  
+                  
 
                 {/* Opciones de desayuno para habitación sencilla */}
                 <div className="mt-6 border-t pt-4">
@@ -1701,24 +1973,25 @@ export function HotelDialog({
                       disabled={mode === "view"}
                       className="h-4 w-4"
                     />
-                    <Label htmlFor="incluye-sencilla-general">¿Incluye desayuno en habitación sencilla?</Label>
+                    <Label htmlFor="incluye-sencilla-general" className="font-medium">¿INCLUYE DESAYUNO EN HABITACION SENCILLA?</Label>
                   </div>
                   
-                  {formData.sencilla.incluye && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                    <div className="flex flex-col space-y-1">
+                      <Label htmlFor="sencilla_tipo_desayuno">TIPO DE DESAYUNO</Label>
+                      <Input 
+                        id="sencilla_tipo_desayuno"
+                        value={formData.sencilla.tipo_desayuno} 
+                        onChange={(e) => handleChange("sencilla.tipo_desayuno", e.target.value)} 
+                        disabled={mode === "view"}
+                        className="font-medium"
+                        placeholder="CONTINENTAL, AMERICANO, ETC."
+                      />
+                    </div>
+                    
+                    {!formData.sencilla.incluye && (
                       <div className="flex flex-col space-y-1">
-                        <Label htmlFor="sencilla_tipo_desayuno">Tipo de desayuno</Label>
-                        <Input 
-                          id="sencilla_tipo_desayuno"
-                          value={formData.sencilla.tipo_desayuno} 
-                          onChange={(e) => handleChange("sencilla.tipo_desayuno", e.target.value)} 
-                          disabled={mode === "view"}
-                          className={mode === "view" ? "bg-gray-100" : ""}
-                          placeholder="Continental, Americano, etc."
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label htmlFor="sencilla_precio">Precio desayuno</Label>
+                        <Label htmlFor="sencilla_precio">COSTO DEL DESAYUNO CON IMPUESTOS</Label>
                         <Input 
                           id="sencilla_precio"
                           type="number" 
@@ -1726,22 +1999,23 @@ export function HotelDialog({
                           value={formData.sencilla.precio} 
                           onChange={(e) => handleChange("sencilla.precio", e.target.value)} 
                           disabled={mode === "view"}
-                          className={mode === "view" ? "bg-gray-100" : ""}
+                          className="font-medium"
                         />
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label htmlFor="sencilla_comentarios">Comentario</Label>
-                        <Textarea 
-                          id="sencilla_comentarios"
-                          value={formData.sencilla.comentarios} 
-                          onChange={(e) => handleChange("sencilla.comentarios", e.target.value)} 
-                          disabled={mode === "view"}
-                          className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                          placeholder="Detalles adicionales"
-                        />
-                      </div>
+                    )}
+                    
+                    <div className="flex flex-col space-y-1">
+                      <Label htmlFor="sencilla_comentarios">COMENTARIO</Label>
+                      <Textarea 
+                        id="sencilla_comentarios"
+                        value={formData.sencilla.comentarios} 
+                        onChange={(e) => handleChange("sencilla.comentarios", e.target.value)} 
+                        disabled={mode === "view"}
+                        className="min-h-[80px] font-medium"
+                        placeholder="DETALLES ADICIONALES"
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 {/* Opciones de desayuno para habitación doble */}
@@ -1755,24 +2029,25 @@ export function HotelDialog({
                       disabled={mode === "view"}
                       className="h-4 w-4"
                     />
-                    <Label htmlFor="incluye-doble-general">¿Incluye desayuno en habitación doble?</Label>
+                    <Label htmlFor="incluye-doble-general" className="font-medium">¿INCLUYE DESAYUNO EN HABITACION DOBLE?</Label>
                   </div>
                   
-                  {formData.doble.incluye && (
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                    <div className="flex flex-col space-y-1">
+                      <Label htmlFor="doble_tipo_desayuno">TIPO DE DESAYUNO</Label>
+                      <Input 
+                        id="doble_tipo_desayuno"
+                        value={formData.doble.tipo_desayuno} 
+                        onChange={(e) => handleChange("doble.tipo_desayuno", e.target.value)} 
+                        disabled={mode === "view"}
+                        className="font-medium"
+                        placeholder="CONTINENTAL, AMERICANO, ETC."
+                      />
+                    </div>
+                    
+                    {!formData.doble.incluye && (
                       <div className="flex flex-col space-y-1">
-                        <Label htmlFor="doble_tipo_desayuno">Tipo de desayuno</Label>
-                        <Input 
-                          id="doble_tipo_desayuno"
-                          value={formData.doble.tipo_desayuno} 
-                          onChange={(e) => handleChange("doble.tipo_desayuno", e.target.value)} 
-                          disabled={mode === "view"}
-                          className={mode === "view" ? "bg-gray-100" : ""}
-                          placeholder="Continental, Americano, etc."
-                        />
-                      </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label htmlFor="doble_precio">Precio desayuno</Label>
+                        <Label htmlFor="doble_precio">COSTO DEL DESAYUNO CON IMPUESTOS</Label>
                         <Input 
                           id="doble_precio"
                           type="number" 
@@ -1780,29 +2055,30 @@ export function HotelDialog({
                           value={formData.doble.precio} 
                           onChange={(e) => handleChange("doble.precio", e.target.value)} 
                           disabled={mode === "view"}
-                          className={mode === "view" ? "bg-gray-100" : ""}
+                          className="font-medium"
                         />
                       </div>
-                      <div className="flex flex-col space-y-1">
-                        <Label htmlFor="doble_comentarios">Comentario</Label>
-                        <Textarea 
-                          id="doble_comentarios"
-                          value={formData.doble.comentarios} 
-                          onChange={(e) => handleChange("doble.comentarios", e.target.value)} 
-                          disabled={mode === "view"}
-                          className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                          placeholder="Detalles adicionales"
-                        />
-                      </div>
+                    )}
+                    
+                    <div className="flex flex-col space-y-1">
+                      <Label htmlFor="doble_comentarios">COMENTARIO</Label>
+                      <Textarea 
+                        id="doble_comentarios"
+                        value={formData.doble.comentarios} 
+                        onChange={(e) => handleChange("doble.comentarios", e.target.value)} 
+                        disabled={mode === "view"}
+                        className="min-h-[80px] font-medium"
+                        placeholder="DETALLES ADICIONALES"
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
 
               {/* Tarifas preferenciales */}
               <div className="mt-6 border-t pt-4">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold">Tarifas Preferenciales</h3>
+                  <h3 className="text-lg font-semibold">TARIFAS PREFERENCIALES</h3>
                   {mode === "edit" && (
                     <Button 
                       variant="outline" 
@@ -1810,7 +2086,7 @@ export function HotelDialog({
                       onClick={addTarifaPreferencial}
                       className="flex items-center gap-1"
                     >
-                      <Plus size={16} /> Agregar
+                      <Plus size={16} /> AGREGAR
                     </Button>
                   )}
                 </div>
@@ -1818,15 +2094,15 @@ export function HotelDialog({
                 <div className="max-h-[400px] overflow-y-auto pr-2">
                   {tarifasPreferenciales.length === 0 ? (
                     <div className="text-center py-6 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-md">
-                      No hay tarifas preferenciales.
-                      {mode === "edit" && " Agrega una para comenzar."}
+                      NO HAY TARIFAS PREFERENCIALES.
+                      {mode === "edit" && " AGREGA UNA PARA COMENZAR."}
                     </div>
                   ) : (
                     tarifasPreferenciales.map((tarifa, index) => (
                       <div key={index} className="border rounded-md p-4 mb-4 space-y-4">
                         {/* Header de tarifa con botones de edición/eliminación */}
                         <div className="flex justify-between items-center">
-                          <h4 className="font-medium">Tarifa {index + 1}</h4>
+                          <h4 className="font-medium">TARIFA {index + 1}</h4>
                           {mode === "view" && editingTarifaId !== index && (
                             <div className="flex gap-2">
                               <Button 
@@ -1834,7 +2110,7 @@ export function HotelDialog({
                                 size="sm"
                                 onClick={() => startEditingTarifa(index)}
                               >
-                                <Pencil size={16} className="mr-1" /> Editar
+                                <Pencil size={16} className="mr-1" /> EDITAR
                               </Button>
                               {/* Botón para eliminar ambas tarifas en un solo click */}
                               {(tarifa.id_tarifa_sencilla || tarifa.id_tarifa_doble) && (
@@ -1844,7 +2120,7 @@ export function HotelDialog({
                                   className="text-red-500 hover:bg-red-50 hover:text-red-600"
                                   onClick={() => openDeleteTarifaDialog(index)}
                                 >
-                                  <Trash2 size={16} className="mr-1" /> Eliminar Tarifa
+                                  <Trash2 size={16} className="mr-1" /> ELIMINAR TARIFA
                                 </Button>
                               )}
                             </div>
@@ -1856,7 +2132,7 @@ export function HotelDialog({
                                 size="sm"
                                 onClick={cancelEditingTarifa}
                               >
-                                <ArrowLeft size={16} className="mr-1" /> Cancelar
+                                <ArrowLeft size={16} className="mr-1" /> CANCELAR
                               </Button>
                               <Button 
                                 variant="default"
@@ -1864,7 +2140,7 @@ export function HotelDialog({
                                 onClick={() => handleUpdate()}
                                 disabled={isLoading}
                               >
-                                {isLoading ? "Guardando..." : "Guardar cambios"}
+                                {isLoading ? "GUARDANDO..." : "GUARDAR CAMBIOS"}
                               </Button>
                               {/* Botón para eliminar ambas tarifas en un solo click (en modo edición) */}
                               {(tarifa.id_tarifa_sencilla || tarifa.id_tarifa_doble) && (
@@ -1874,7 +2150,7 @@ export function HotelDialog({
                                   className="text-red-500 hover:bg-red-50 hover:text-red-600"
                                   onClick={() => openDeleteTarifaDialog(index)}
                                 >
-                                  <Trash2 size={16} className="mr-1" /> Eliminar Tarifa
+                                  <Trash2 size={16} className="mr-1" /> ELIMINAR TARIFA
                                 </Button>
                               )}
                             </div>
@@ -1885,24 +2161,26 @@ export function HotelDialog({
                         {(mode === "edit" || editingTarifaId === index) ? (
                           <div className="grid grid-cols-1 gap-4">
                             <div className="relative">
-                              <Label className="mb-2 block">Buscar Agente</Label>
+                              <Label className="mb-2 block">BUSCAR AGENTE</Label>
                               <div className="flex gap-2 items-start">
                                 <div className="flex-1">
-                                  <Label htmlFor={`nombre-agente-${index}`} className="sr-only">Nombre del agente</Label>
+                                  <Label htmlFor={`nombre-agente-${index}`} className="sr-only">NOMBRE DEL AGENTE</Label>
                                   <Input
                                     id={`nombre-agente-${index}`}
-                                    placeholder="Nombre del agente"
+                                    placeholder="NOMBRE DEL AGENTE"
                                     value={tarifa.busqueda.nombre}
                                     onChange={(e) => handleSearchInputChange(index, 'nombre', e.target.value)}
+                                    className="font-medium"
                                   />
                                 </div>
                                 <div className="flex-1">
-                                  <Label htmlFor={`correo-agente-${index}`} className="sr-only">Correo del agente</Label>
+                                  <Label htmlFor={`correo-agente-${index}`} className="sr-only">CORREO DEL AGENTE</Label>
                                   <Input
                                     id={`correo-agente-${index}`}
-                                    placeholder="Correo del agente"
+                                    placeholder="CORREO DEL AGENTE"
                                     value={tarifa.busqueda.correo}
                                     onChange={(e) => handleSearchInputChange(index, 'correo', e.target.value)}
+                                    className="font-medium"
                                   />
                                 </div>
                                 <Button 
@@ -1924,7 +2202,7 @@ export function HotelDialog({
                                       className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                                       onClick={() => handleSelectAgente(index, agente)}
                                     >
-                                      <div className="font-medium">{agente.primer_nombre}</div>
+                                      <div className="font-medium">{agente.primer_nombre.toUpperCase()}</div>
                                       <div className="text-sm text-gray-500 dark:text-gray-400">{agente.correo}</div>
                                     </div>
                                   ))}
@@ -1932,66 +2210,66 @@ export function HotelDialog({
                               )}
                               
                               {tarifa.busqueda.buscando && (
-                                <div className="text-sm text-blue-500 mt-1">Buscando agentes...</div>
+                                <div className="text-sm text-blue-500 mt-1">BUSCANDO AGENTES...</div>
                               )}
                             </div>
                           </div>
                         ) : (
-                          <div className="text-sm p-2 rounded border border-gray-200 bg-gray-50">
-                            <span className="font-semibold">Agente:</span> {tarifa.nombre_agente || "No especificado"} {tarifa.correo_agente ? `(${tarifa.correo_agente})` : ""}
+                          <div className="text-sm p-2 rounded border border-gray-200 bg-gray-50 font-medium">
+                            <span className="font-semibold">AGENTE:</span> {tarifa.nombre_agente || "NO ESPECIFICADO"} {tarifa.correo_agente ? `(${tarifa.correo_agente})` : ""}
                           </div>
                         )}
                         
                         {tarifa.id_agente && (mode === "edit" || editingTarifaId === index) && (
-                          <div className="text-sm bg-blue-50 dark:bg-blue-900 p-2 rounded border border-blue-200 dark:border-blue-800">
-                            <span className="font-semibold">Agente seleccionado:</span> {tarifa.nombre_agente} ({tarifa.correo_agente})
+                          <div className="text-sm bg-blue-50 dark:bg-blue-900 p-2 rounded border border-blue-200 dark:border-blue-800 font-medium">
+                            <span className="font-semibold">AGENTE SELECCIONADO:</span> {tarifa.nombre_agente} ({tarifa.correo_agente})
                           </div>
                         )}
 
                         {/* Tarifas */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`costo_q_${index}`}>Costo Q</Label>
+                            <Label htmlFor={`costo_q_${index}`}>COSTO PROVEEDOR HABITACION SENCILLA</Label>
                             <Input
                               id={`costo_q_${index}`}
                               placeholder="0.00"
                               value={tarifa.costo_q}
                               onChange={(e) => handleTarifaPreferencialChange(index, "costo_q", e.target.value)}
                               disabled={mode === "view" && editingTarifaId !== index}
-                              className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                              className="font-medium"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`precio_q_${index}`}>Precio Q</Label>
+                            <Label htmlFor={`precio_q_${index}`}>PRECIO DE VENTA HABITACION SENCILLA</Label>
                             <Input
                               id={`precio_q_${index}`}
                               placeholder="0.00"
                               value={tarifa.precio_q}
                               onChange={(e) => handleTarifaPreferencialChange(index, "precio_q", e.target.value)}
                               disabled={mode === "view" && editingTarifaId !== index}
-                              className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                              className="font-medium"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`costo_qq_${index}`}>Costo QQ</Label>
+                            <Label htmlFor={`costo_qq_${index}`}>COSTO PROVEEDOR HABITACION DOBLE</Label>
                             <Input
                               id={`costo_qq_${index}`}
                               placeholder="0.00"
                               value={tarifa.costo_qq}
                               onChange={(e) => handleTarifaPreferencialChange(index, "costo_qq", e.target.value)}
                               disabled={mode === "view" && editingTarifaId !== index}
-                              className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                              className="font-medium"
                             />
                           </div>
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`precio_qq_${index}`}>Precio QQ</Label>
+                            <Label htmlFor={`precio_qq_${index}`}>PRECIO DE VENTA HABITACION DOBLE</Label>
                             <Input
                               id={`precio_qq_${index}`}
                               placeholder="0.00"
                               value={tarifa.precio_qq}
                               onChange={(e) => handleTarifaPreferencialChange(index, "precio_qq", e.target.value)}
                               disabled={mode === "view" && editingTarifaId !== index}
-                              className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                              className="font-medium"
                             />
                           </div>
                         </div>
@@ -2009,26 +2287,27 @@ export function HotelDialog({
                               disabled={mode === "view" && editingTarifaId !== index}
                               className="h-4 w-4"
                             />
-                            <Label htmlFor={`pref-sencilla-${index}`}>¿Incluye desayuno en habitación sencilla?</Label>
+                            <Label htmlFor={`pref-sencilla-${index}`} className="font-medium">¿INCLUYE DESAYUNO EN HABITACION SENCILLA?</Label>
                           </div>
                           
-                          {tarifa.sencilla.incluye && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                            <div className="flex flex-col space-y-1">
+                              <Label htmlFor={`sencilla_tipo_desayuno_${index}`}>TIPO DE DESAYUNO</Label>
+                              <Input
+                                id={`sencilla_tipo_desayuno_${index}`}
+                                value={tarifa.sencilla.tipo_desayuno}
+                                onChange={(e) =>
+                                  handleTarifaPreferencialChange(index, "sencilla.tipo_desayuno", e.target.value)
+                                }
+                                disabled={mode === "view" && editingTarifaId !== index}
+                                className="font-medium"
+                                placeholder="CONTINENTAL, AMERICANO, ETC."
+                              />
+                            </div>
+                            
+                            {!tarifa.sencilla.incluye && (
                               <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`sencilla_tipo_desayuno_${index}`}>Tipo de desayuno</Label>
-                                <Input
-                                  id={`sencilla_tipo_desayuno_${index}`}
-                                  value={tarifa.sencilla.tipo_desayuno}
-                                  onChange={(e) =>
-                                    handleTarifaPreferencialChange(index, "sencilla.tipo_desayuno", e.target.value)
-                                  }
-                                  disabled={mode === "view" && editingTarifaId !== index}
-                                  className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
-                                  placeholder="Continental, Americano, etc."
-                                />
-                              </div>
-                              <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`sencilla_precio_${index}`}>Precio desayuno</Label>
+                                <Label htmlFor={`sencilla_precio_${index}`}>COSTO DEL DESAYUNO CON IMPUESTOS</Label>
                                 <Input
                                   id={`sencilla_precio_${index}`}
                                   type="number"
@@ -2038,24 +2317,25 @@ export function HotelDialog({
                                     handleTarifaPreferencialChange(index, "sencilla.precio", e.target.value)
                                   }
                                   disabled={mode === "view" && editingTarifaId !== index}
-                                  className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                                  className="font-medium"
                                 />
                               </div>
-                              <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`sencilla_comentarios_${index}`}>Comentario</Label>
-                                <Textarea
-                                  id={`sencilla_comentarios_${index}`}
-                                  value={tarifa.sencilla.comentarios}
-                                  onChange={(e) =>
-                                    handleTarifaPreferencialChange(index, "sencilla.comentarios", e.target.value)
-                                  }
-                                  disabled={mode === "view" && editingTarifaId !== index}
-                                  className={`min-h-[80px] ${mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}`}
-                                  placeholder="Detalles adicionales"
-                                />
-                              </div>
+                            )}
+                            
+                            <div className="flex flex-col space-y-1">
+                              <Label htmlFor={`sencilla_comentarios_${index}`}>COMENTARIO</Label>
+                              <Textarea
+                                id={`sencilla_comentarios_${index}`}
+                                value={tarifa.sencilla.comentarios}
+                                onChange={(e) =>
+                                  handleTarifaPreferencialChange(index, "sencilla.comentarios", e.target.value)
+                                }
+                                disabled={mode === "view" && editingTarifaId !== index}
+                                className="min-h-[80px] font-medium"
+                                placeholder="DETALLES ADICIONALES"
+                              />
                             </div>
-                          )}
+                          </div>
                         </div>
 
                         {/* Opciones de desayuno para habitación doble (tarifa preferencial) */}
@@ -2071,26 +2351,27 @@ export function HotelDialog({
                               disabled={mode === "view" && editingTarifaId !== index}
                               className="h-4 w-4"
                             />
-                            <Label htmlFor={`pref-doble-${index}`}>¿Incluye desayuno en habitación doble?</Label>
+                            <Label htmlFor={`pref-doble-${index}`} className="font-medium">¿INCLUYE DESAYUNO EN HABITACION DOBLE?</Label>
                           </div>
                           
-                          {tarifa.doble.incluye && (
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
+                            <div className="flex flex-col space-y-1">
+                              <Label htmlFor={`doble_tipo_desayuno_${index}`}>TIPO DE DESAYUNO</Label>
+                              <Input
+                                id={`doble_tipo_desayuno_${index}`}
+                                value={tarifa.doble.tipo_desayuno}
+                                onChange={(e) =>
+                                  handleTarifaPreferencialChange(index, "doble.tipo_desayuno", e.target.value)
+                                }
+                                disabled={mode === "view" && editingTarifaId !== index}
+                                className="font-medium"
+                                placeholder="CONTINENTAL, AMERICANO, ETC."
+                              />
+                            </div>
+                            
+                            {!tarifa.doble.incluye && (
                               <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`doble_tipo_desayuno_${index}`}>Tipo de desayuno</Label>
-                                <Input
-                                  id={`doble_tipo_desayuno_${index}`}
-                                  value={tarifa.doble.tipo_desayuno}
-                                  onChange={(e) =>
-                                    handleTarifaPreferencialChange(index, "doble.tipo_desayuno", e.target.value)
-                                  }
-                                  disabled={mode === "view" && editingTarifaId !== index}
-                                  className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
-                                  placeholder="Continental, Americano, etc."
-                                />
-                              </div>
-                              <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`doble_precio_${index}`}>Precio desayuno</Label>
+                                <Label htmlFor={`doble_precio_${index}`}>COSTO DEL DESAYUNO CON IMPUESTOS</Label>
                                 <Input
                                   id={`doble_precio_${index}`}
                                   type="number"
@@ -2100,24 +2381,25 @@ export function HotelDialog({
                                     handleTarifaPreferencialChange(index, "doble.precio", e.target.value)
                                   }
                                   disabled={mode === "view" && editingTarifaId !== index}
-                                  className={mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}
+                                  className="font-medium"
                                 />
                               </div>
-                              <div className="flex flex-col space-y-1">
-                                <Label htmlFor={`doble_comentarios_${index}`}>Comentario</Label>
-                                <Textarea
-                                  id={`doble_comentarios_${index}`}
-                                  value={tarifa.doble.comentarios}
-                                  onChange={(e) =>
-                                    handleTarifaPreferencialChange(index, "doble.comentarios", e.target.value)
-                                  }
-                                  disabled={mode === "view" && editingTarifaId !== index}
-                                  className={`min-h-[80px] ${mode === "view" && editingTarifaId !== index ? "bg-gray-100" : ""}`}
-                                  placeholder="Detalles adicionales"
-                                />
-                              </div>
+                            )}
+                            
+                            <div className="flex flex-col space-y-1">
+                              <Label htmlFor={`doble_comentarios_${index}`}>COMENTARIO</Label>
+                              <Textarea
+                                id={`doble_comentarios_${index}`}
+                                value={tarifa.doble.comentarios}
+                                onChange={(e) =>
+                                  handleTarifaPreferencialChange(index, "doble.comentarios", e.target.value)
+                                }
+                                disabled={mode === "view" && editingTarifaId !== index}
+                                className="min-h-[80px] font-medium"
+                                placeholder="DETALLES ADICIONALES"
+                              />
                             </div>
-                          )}
+                          </div>
                         </div>
                         
                         {/* Botones de acción específicos para tarifas */}
@@ -2129,13 +2411,26 @@ export function HotelDialog({
                               onClick={() => removeTarifaPreferencial(index)}
                               size="sm"
                             >
-                              <Trash2 size={16} className="mr-1" /> Eliminar
+                              <Trash2 size={16} className="mr-1" /> ELIMINAR
                             </Button>
                           )}
                         </div>
                       </div>
                     ))
                   )}
+                </div>
+                
+                {/* Notes field for this tab */}
+                <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
+                  <Label htmlFor="notas_tarifasServicios">NOTAS TARIFAS Y SERVICIOS</Label>
+                  <Textarea 
+                    id="notas_tarifasServicios"
+                    value={formData.notas_tarifasServicios} 
+                    onChange={(e) => handleChange("notas_tarifasServicios", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[100px] font-medium"
+                    placeholder="NOTAS ESPECÍFICAS SOBRE TARIFAS Y SERVICIOS"
+                  />
                 </div>
               </div>
             </TabsContent>
@@ -2144,161 +2439,43 @@ export function HotelDialog({
             <TabsContent value="informacionPagos" className="space-y-6 min-h-[400px]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="tipo_pago">Tipo de Pago</Label>
+                  <Label htmlFor="tipo_pago">PROVEEDOR: A CREDITO O PREPAGO</Label>
                   <Select 
                     value={formData.tipo_pago} 
                     onValueChange={(value) => handleChange("tipo_pago", value)}
                     disabled={mode === "view"}
                   >
-                    <SelectTrigger id="tipo_pago" className={mode === "view" ? "bg-gray-100" : ""}>
-                      <SelectValue placeholder="Selecciona el tipo de pago" />
+                    <SelectTrigger id="tipo_pago" className="font-medium">
+                      <SelectValue placeholder="SELECCIONA EL TIPO DE PAGO" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tarjeta">Tarjeta</SelectItem>
-                      <SelectItem value="transferencia">Transferencia</SelectItem>
-                      <SelectItem value="credito">Crédito</SelectItem>
+                      <SelectItem value="CREDITO" className="uppercase">CREDITO</SelectItem>
+                      <SelectItem value="PREPAGO" className="uppercase">PREPAGO</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="comentario_pago">Comentario de Pago</Label>
+                  <Label htmlFor="comentario_pago">DETALLES TIPO DE PAGO</Label>
                   <Textarea 
                     id="comentario_pago"
                     value={formData.comentario_pago || ""} 
                     onChange={(e) => handleChange("comentario_pago", e.target.value)} 
                     disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Información adicional sobre el pago"
+                    className="min-h-[80px] font-medium"
+                    placeholder="INFORMACION ADICIONAL SOBRE EL PAGO"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="disponibilidad_precio">¿Cómo se solicita la disponibilidad?</Label>
-                  <Textarea 
-                    id="disponibilidad_precio"
-                    value={formData.disponibilidad_precio || ""} 
-                    onChange={(e) => handleChange("disponibilidad_precio", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Email, teléfono, etc."
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="contacto_convenio">Contacto Convenio</Label>
-                  <Textarea 
-                    id="contacto_convenio"
-                    value={formData.contacto_convenio} 
-                    onChange={(e) => handleChange("contacto_convenio", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Nombre y datos de contacto"
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="cuenta_de_deposito">Cuenta de Depósito</Label>
+                  <Label htmlFor="razon_social">RAZON SOCIAL</Label>
                   <Input 
-                    id="cuenta_de_deposito"
-                    value={formData.cuenta_de_deposito || ""} 
-                    onChange={(e) => handleChange("cuenta_de_deposito", e.target.value)} 
+                    id="razon_social"
+                    value={formData.razon_social} 
+                    onChange={(e) => handleChange("razon_social", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Datos para realizar depósitos"
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="contacto_recepcion">Contacto Recepción</Label>
-                  <Textarea 
-                    id="contacto_recepcion"
-                    value={formData.contacto_recepcion} 
-                    onChange={(e) => handleChange("contacto_recepcion", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Nombre y datos de contacto"
-                  />
-                </div>
-
-                {/* Sección de impuestos separada y mejorada */}
-                <div className="col-span-1 md:col-span-2">
-                  <h3 className="text-md font-medium mb-3">Información de Impuestos</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border rounded-lg p-4 bg-gray-50">
-                    <div className="flex flex-col space-y-1">
-                      <Label htmlFor="iva">IVA (%)</Label>
-                      <Input 
-                        id="iva"
-                        value={formData.iva} 
-                        onChange={(e) => handleChange("iva", e.target.value)} 
-                        disabled={mode === "view"}
-                        className={mode === "view" ? "bg-gray-100" : ""}
-                        placeholder="Ej: 16.00"
-                      />
-                      <span className="text-xs text-gray-500">Impuesto al valor agregado</span>
-                    </div>
-
-                    <div className="flex flex-col space-y-1">
-                      <Label htmlFor="ish">ISH</Label>
-                      <Input 
-                        id="ish"
-                        value={formData.ish} 
-                        onChange={(e) => handleChange("ish", e.target.value)} 
-                        disabled={mode === "view"}
-                        className={mode === "view" ? "bg-gray-100" : ""}
-                        placeholder="Ej: 3.00"
-                      />
-                      <span className="text-xs text-gray-500">Impuesto sobre hospedaje</span>
-                    </div>
-
-                    <div className="flex flex-col space-y-1">
-                      <Label htmlFor="otros_impuestos">Otros Impuestos</Label>
-                      <Input 
-                        id="otros_impuestos"
-                        value={formData.otros_impuestos} 
-                        onChange={(e) => handleChange("otros_impuestos", e.target.value)} 
-                        disabled={mode === "view"}
-                        className={mode === "view" ? "bg-gray-100" : ""}
-                        placeholder="Ej: 320.00"
-                      />
-                      <span className="text-xs text-gray-500">Impuestos adicionales</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="MenoresEdad">Política para Menores de Edad</Label>
-                  <Textarea 
-                    id="menoresEdad"
-                    value={formData.MenoresEdad} 
-                    onChange={(e) => handleChange("MenoresEdad", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Información sobre estadía de menores"
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="transportacion">Transportación</Label>
-                  <Input 
-                    id="transportacion"
-                    value={formData.Transportacion} 
-                    onChange={(e) => handleChange("Transportacion", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Detalles de transportación"
-                  />
-                </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="TransportacionComentarios">Comentarios sobre Transportación</Label>
-                  <Textarea 
-                    id="TransportacionComentarios"
-                    value={formData.TransportacionComentarios} 
-                    onChange={(e) => handleChange("TransportacionComentarios", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={`min-h-[80px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Información adicional"
+                    className="font-medium"
+                    placeholder="NOMBRE LEGAL DE LA EMPRESA"
                   />
                 </div>
 
@@ -2309,20 +2486,21 @@ export function HotelDialog({
                     value={formData.rfc} 
                     onChange={(e) => handleChange("rfc", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Registro Federal de Contribuyentes"
+                    className="font-medium"
+                    placeholder="REGISTRO FEDERAL DE CONTRIBUYENTES"
                   />
                 </div>
-
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="razon_social">Razón Social</Label>
-                  <Input 
-                    id="razon_social"
-                    value={formData.razon_social} 
-                    onChange={(e) => handleChange("razon_social", e.target.value)} 
+                
+                {/* Notes field for this tab */}
+                <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
+                  <Label htmlFor="notas_informacionPagos">NOTAS INFORMACIÓN DE PAGOS</Label>
+                  <Textarea 
+                    id="notas_informacionPagos"
+                    value={formData.notas_informacionPagos} 
+                    onChange={(e) => handleChange("notas_informacionPagos", e.target.value)} 
                     disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Nombre legal de la empresa"
+                    className="min-h-[100px] font-medium"
+                    placeholder="NOTAS ESPECÍFICAS SOBRE INFORMACIÓN DE PAGOS"
                   />
                 </div>
               </div>
@@ -2332,108 +2510,62 @@ export function HotelDialog({
             <TabsContent value="informacionAdicional" className="space-y-6 min-h-[400px]">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="id_cadena">Cadena Hotelera <span className="text-red-500">*</span></Label>
-                  <Input 
-                    id="id_cadena"
-                    value={formData.id_cadena} 
-                    onChange={(e) => handleChange("id_cadena", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    required
-                    placeholder="ID de la cadena hotelera"
-                  />
-                </div>
-                
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="tipo_hospedaje">Tipo de Hospedaje</Label>
-                  <Select 
-                    value={formData.tipo_hospedaje} 
-                    onValueChange={(value) => handleChange("tipo_hospedaje", value)}
-                    disabled={mode === "view"}
-                  >
-                    <SelectTrigger id="tipo_hospedaje" className={mode === "view" ? "bg-gray-100" : ""}>
-                      <SelectValue placeholder="Selecciona el tipo de hospedaje" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hotel">Hotel</SelectItem>
-                      <SelectItem value="motel">Motel</SelectItem>
-                      <SelectItem value="resort">Resort</SelectItem>
-                      <SelectItem value="hostal">Hostal</SelectItem>
-                      <SelectItem value="apartamento">Apartamento</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="longitud">Longitud</Label>
-                  <Input 
-                    id="longitud"
-                    value={formData.longitud} 
-                    onChange={(e) => handleChange("longitud", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Ej: -99.1332"
-                  />
-                </div>
-                
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="latitud">Latitud</Label>
-                  <Input 
-                    id="latitud"
-                    value={formData.latitud} 
-                    onChange={(e) => handleChange("latitud", e.target.value)} 
-                    disabled={mode === "view"}
-                    className={mode === "view" ? "bg-gray-100" : ""}
-                    placeholder="Ej: 19.4326"
-                  />
-                </div>
-                
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="calificacion">Calificación</Label>
-                  <Select 
-                    value={formData.calificacion} 
-                    onValueChange={(value) => handleChange("calificacion", value)}
-                    disabled={mode === "view"}
-                  >
-                    <SelectTrigger id="calificacion" className={mode === "view" ? "bg-gray-100" : ""}>
-                      <SelectValue placeholder="Selecciona calificación" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">1 Estrella</SelectItem>
-                      <SelectItem value="2">2 Estrellas</SelectItem>
-                      <SelectItem value="3">3 Estrellas</SelectItem>
-                      <SelectItem value="4">4 Estrellas</SelectItem>
-                      <SelectItem value="5">5 Estrellas</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex flex-col space-y-1">
-                  <Label htmlFor="activo">Estatus</Label>
-                  <Select 
-                    value={formData.activo.toString()} 
-                    onValueChange={(value) => handleChange("activo", parseInt(value))}
-                    disabled={mode === "view"}
-                  >
-                    <SelectTrigger id="activo" className={mode === "view" ? "bg-gray-100" : ""}>
-                      <SelectValue placeholder="Selecciona estado" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1">Activo</SelectItem>
-                      <SelectItem value="0">Inactivo</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="col-span-1 md:col-span-2 flex flex-col space-y-1">
-                  <Label htmlFor="Comentarios">Comentarios Adicionales</Label>
+                  <Label htmlFor="mascotas">MASCOTAS</Label>
                   <Textarea 
-                    id="Comentarios"
-                    value={formData.Comentarios} 
-                    onChange={(e) => handleChange("Comentarios", e.target.value)} 
+                    id="mascotas"
+                    value={formData.mascotas || ""} 
+                    onChange={(e) => handleChange("mascotas", e.target.value)} 
                     disabled={mode === "view"}
-                    className={`min-h-[120px] ${mode === "view" ? "bg-gray-100" : ""}`}
-                    placeholder="Información adicional relevante"
+                    className="min-h-[100px] font-medium"
+                    placeholder="POLITICAS PARA MASCOTAS"
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="salones">SALONES</Label>
+                  <Textarea 
+                    id="salones"
+                    value={formData.salones || ""} 
+                    onChange={(e) => handleChange("salones", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[100px] font-medium"
+                    placeholder="INFORMACION SOBRE SALONES DISPONIBLES"
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="Transportacion">TRANSPORTACION</Label>
+                  <Textarea 
+                    id="Transportacion"
+                    value={formData.Transportacion} 
+                    onChange={(e) => handleChange("Transportacion", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[100px] font-medium"
+                    placeholder="DETALLES DE TRANSPORTACION"
+                  />
+                </div>
+                
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="notas_informacion_adicional">NOTA INFORMACION ADICIONAL</Label>
+                  <Textarea 
+                    id="notas_informacion_adicional"
+                    value={formData.notas_informacion_adicional} 
+                    onChange={(e) => handleChange("notas_informacion_adicional", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[100px] font-medium"
+                    placeholder="INFORMACION ADICIONAL"
+                  />
+                </div>
+                
+                <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
+                  <Label htmlFor="notas_generales">NOTAS GENERALES</Label>
+                  <Textarea 
+                    id="notas_generales"
+                    value={formData.notas_generales} 
+                    onChange={(e) => handleChange("notas_generales", e.target.value)} 
+                    disabled={mode === "view"}
+                    className="min-h-[120px] font-medium"
+                    placeholder="INFORMACIÓN GENERAL ADICIONAL"
                   />
                 </div>
               </div>
@@ -2446,13 +2578,13 @@ export function HotelDialog({
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>¿ESTAS SEGURO?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el hotel <strong>{hotel.nombre}</strong> y todos sus datos asociados.
+              ESTA ACCION NO SE PUEDE DESHACER. SE ELIMINARA PERMANENTEMENTE EL HOTEL <strong>{hotel.nombre?.toUpperCase()}</strong> Y TODOS SUS DATOS ASOCIADOS.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>CANCELAR</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isLoading}
@@ -2461,10 +2593,10 @@ export function HotelDialog({
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin -ml-1 mr-3 h-4 w-4 text-white border-b-2 rounded-full"></div>
-                  <span>Eliminando...</span>
+                  <span>ELIMINANDO...</span>
                 </div>
               ) : (
-                "Eliminar"
+                "ELIMINAR"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -2475,14 +2607,14 @@ export function HotelDialog({
       <AlertDialog open={deleteTarifaDialogOpen} onOpenChange={setDeleteTarifaDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Inactivar tarifa preferencial?</AlertDialogTitle>
+            <AlertDialogTitle>¿INACTIVAR TARIFA PREFERENCIAL?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción marcará ambas tarifas preferenciales (sencilla y doble) como inactivas en el sistema. 
-              Se realizará una eliminación lógica de la tarifa preferencial.
+              ESTA ACCION MARCARA AMBAS TARIFAS PREFERENCIALES (SENCILLA Y DOBLE) COMO INACTIVAS EN EL SISTEMA. 
+              SE REALIZARA UNA ELIMINACION LOGICA DE LA TARIFA PREFERENCIAL.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isLoading}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel disabled={isLoading}>CANCELAR</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteTarifa}
               disabled={isLoading}
@@ -2491,10 +2623,10 @@ export function HotelDialog({
               {isLoading ? (
                 <div className="flex items-center">
                   <div className="animate-spin -ml-1 mr-3 h-4 w-4 text-white border-b-2 rounded-full"></div>
-                  <span>Inactivando...</span>
+                  <span>INACTIVANDO...</span>
                 </div>
               ) : (
-                "Inactivar Tarifa Preferencial"
+                "INACTIVAR TARIFA PREFERENCIAL"
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
