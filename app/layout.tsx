@@ -22,6 +22,7 @@ import {
   Receipt,
   User,
   UserRoundCog,
+  Clock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -80,6 +81,12 @@ const navItems: NavItem[] = [
     title: "Pagos",
     href: "/dashboard/payments",
     icon: CreditCard,
+  },
+  {
+    navShow: false,
+    title: "Cuentas por cobrar",
+    href: "/dashboard/cuentas-cobrar",
+    icon: Clock,
   },
   {
     navShow: false,

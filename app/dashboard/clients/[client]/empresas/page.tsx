@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -17,12 +17,16 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchEmpresasByAgente } from "@/services/agentes";
 import { useParams } from "next/navigation";
+import { API_KEY } from "@/services/constant";
+import { createNewEmpresa, updateEmpresa } from "@/hooks/useDatabase";
 
 // Types
+// Definición de tipos para la respuesta de la API
+
 interface Company {
   id_empresa: string;
   razon_social: string;
-  tipo_persona: "fisica" | "moral";
+  tipo_persona: string;
   nombre_comercial: string;
   empresa_direccion: string | null;
   empresa_municipio: string | null;
@@ -63,23 +67,14 @@ const fetchCompanies = async (): Promise<Company[]> => {
   return response.json();
 };
 
-const createCompany = async (company: Partial<Company>): Promise<Company> => {
-  // Replace with actual API call
-  const response = await fetch("/api/companies", {
-    method: "POST",
-    body: JSON.stringify(company),
-  });
-  return response.json();
-};
-
-const updateCompany = async (company: Company): Promise<Company> => {
-  // Replace with actual API call
-  const response = await fetch(`/api/companies/${company.id_empresa}`, {
-    method: "PUT",
-    body: JSON.stringify(company),
-  });
-  return response.json();
-};
+// const updateCompany = async (company: Company): Promise<Company> => {
+//   // Replace with actual API call
+//   const response = await fetch(`/api/companies/${company.id_empresa}`, {
+//     method: "PUT",
+//     body: JSON.stringify(company),
+//   });
+//   return response.json();
+// };
 
 const deleteCompany = async (id: string): Promise<void> => {
   // Replace with actual API call
@@ -91,31 +86,45 @@ const deleteCompany = async (id: string): Promise<void> => {
 const Page = () => {
   const queryClient = useQueryClient();
   const { client } = useParams();
-
+  const clientId = Array.isArray(client) ? client[0] : client;
   // Queries and Mutations
-  const { data: companies = [], isLoading } = useQuery({
+  const fetchCompaniesData = async () => {
+    try {
+      const response = await fetchEmpresasByAgente(client);
+      return response;
+    } catch (error) {
+      console.error("Error fetching empresas:", error);
+      throw error;
+    }
+  };
+
+  // En tu useQuery:
+  const {
+    data: companies = [],
+    isLoading,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ["companies"],
-    queryFn: async () => {
-      try {
-        const response = fetchEmpresasByAgente(client);
-
-        return response;
-      } catch (error) {
-        console.error("Error fetching agent:", error);
-        throw error;
-      }
-    },
+    queryFn: fetchCompaniesData, // Usa la función aquí
   });
 
-  const createMutation = useMutation({
-    mutationFn: createCompany,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
-  });
+  // Hook de mutación mejorado
+  // const createMutation = useMutation<Company, Error, Partial<Company>>({
+  //   mutationFn: createCompany,
+  //   onSuccess: (newCompany) => {
+  //     queryClient.invalidateQueries({ queryKey: ["companies"] });
+  //     // Puedes hacer más cosas con newCompany si necesitas
+  //   },
+  //   onError: (error) => {
+  //     console.error("Error en la mutación:", error.message);
+  //     // Aquí podrías mostrar una notificación al usuario
+  //   }
+  // });
 
-  const updateMutation = useMutation({
-    mutationFn: updateCompany,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
-  });
+  // const updateMutation = useMutation({
+  //   mutationFn: updateCompany,
+  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["companies"] }),
+  // });
 
   const deleteMutation = useMutation({
     mutationFn: deleteCompany,
@@ -140,6 +149,52 @@ const Page = () => {
     "view"
   );
   const [formData, setFormData] = useState<Partial<Company>>({});
+  const [tipoPersona, setTipoPersona] = useState(
+    selectedCompany?.tipo_persona || "fisica"
+  );
+  const [colonias, setColonias] = useState<string[]>([]);
+  const [estado, setEstado] = useState(selectedCompany?.empresa_estado || "");
+  const [municipio, setMunicipio] = useState(
+    selectedCompany?.empresa_municipio || ""
+  );
+  const [calle, setCalle] = useState(selectedCompany?.empresa_direccion || "");
+  const [colonia, setColonia] = useState(
+    selectedCompany?.empresa_colonia || ""
+  );
+  const [codigoPostal, setCodigoPostal] = useState(
+    selectedCompany?.empresa_cp || ""
+  );
+  const [idEmpresa, setIdEmpresa] = useState(selectedCompany?.id_empresa || "");
+
+  useEffect(() => {
+    if (codigoPostal.length > 4) {
+      fetch(
+        `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigoPostal}`,
+        {
+          method: "GET",
+          headers: {
+            "x-api-key": API_KEY || "",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json",
+          },
+          cache: "no-store",
+        }
+      )
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && data.data.length > 0) {
+            setColonias(data.data.map((item: any) => item.d_asenta)); // Extraer colonias
+            setMunicipio(data.data[0].D_mnpio);
+            setEstado(data.data[0].d_estado);
+          } else {
+            setColonias([]);
+          }
+        })
+        .catch((error) =>
+          console.error("Error obteniendo datos de código postal:", error)
+        );
+    }
+  }, [codigoPostal]);
 
   // Computed values
   const filteredCompanies = useMemo(() => {
@@ -178,7 +233,7 @@ const Page = () => {
   }, [filteredCompanies, sort]);
 
   const availableEstados = useMemo(() => {
-    const estados = new Set(
+    const estados = new Set<string>(
       companies
         .map((c) => c.empresa_estado)
         .filter((estado): estado is string => !!estado)
@@ -208,6 +263,13 @@ const Page = () => {
   ) => {
     setModalMode(mode);
     setSelectedCompany(company || null);
+    setTipoPersona(company?.tipo_persona || "fisica");
+    setMunicipio(company?.empresa_municipio || "");
+    setCalle(company?.empresa_direccion || "");
+    setColonia(company?.empresa_colonia || "");
+    setEstado(company?.empresa_estado || "");
+    setCodigoPostal(company?.empresa_cp || "");
+    setFormData(company || {});
     setFormData(company || {});
     setIsModalOpen(true);
   };
@@ -215,6 +277,13 @@ const Page = () => {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setSelectedCompany(null);
+    setTipoPersona("fisica");
+    setColonias([]);
+    setMunicipio("");
+    setCalle("");
+    setColonia("");
+    setEstado("");
+    setCodigoPostal("");
     setFormData({});
   };
 
@@ -223,9 +292,11 @@ const Page = () => {
 
     try {
       if (modalMode === "create") {
-        await createMutation.mutateAsync(formData);
+        await createCompany();
+        await refetchCompanies();
       } else if (modalMode === "edit" && selectedCompany) {
-        await updateMutation.mutateAsync({ ...selectedCompany, ...formData });
+        await updateCompany();
+        await refetchCompanies();
       }
       handleCloseModal();
     } catch (error) {
@@ -241,6 +312,68 @@ const Page = () => {
         console.error("Error deleting company:", error);
       }
     }
+  };
+
+  const createCompany = async () => {
+    try {
+      const responseCompany = await createNewEmpresa(
+        {
+          ...formData,
+          // Asegúrate de que estos campos no sean null si son requeridos
+          empresa_direccion: formData.empresa_direccion || calle,
+          empresa_municipio: formData.empresa_municipio || municipio,
+          empresa_estado: formData.empresa_estado || estado,
+          empresa_cp: formData.empresa_cp || codigoPostal,
+          empresa_colonia: formData.empresa_colonia || colonia,
+          tipo_persona: tipoPersona,
+          razon_social: formData.razon_social || formData.nombre_comercial,
+        },
+        clientId
+      );
+      if (!responseCompany.success) {
+        throw new Error("No se pudo registrar a la empresa");
+      }
+      console.log(responseCompany);
+    } catch (error) {
+      console.error("Error creando nueva empresa", error);
+    }
+  };
+
+  const updateCompany = async () => {
+    try {
+      const responseCompany = await updateEmpresa(
+        {
+          ...formData,
+          // Asegúrate de que estos campos no sean null si son requeridos
+          empresa_direccion: calle,
+          empresa_municipio: municipio,
+          empresa_estado: estado,
+          empresa_cp: codigoPostal,
+          empresa_colonia: colonia,
+          tipo_persona: tipoPersona,
+          razon_social: formData.razon_social || formData.nombre_comercial,
+          // Otros campos que puedan necesitar actualización
+        },
+        formData.id_empresa,
+        clientId
+      );
+      if (!responseCompany.success) {
+        throw new Error("No se pudo registrar a la empresa");
+      }
+      console.log(responseCompany);
+    } catch (error) {
+      console.error("Error creando nueva empresa", error);
+    }
+  };
+
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   // Loading state
@@ -492,154 +625,125 @@ const Page = () => {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="p-4 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Razón Social
-                    </label>
-                    <input
-                      type="text"
-                      name="razon_social"
-                      value={formData.razon_social || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          razon_social: e.target.value,
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Nombre Comercial
-                    </label>
-                    <input
-                      type="text"
-                      name="nombre_comercial"
-                      value={formData.nombre_comercial || ""}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          nombre_comercial: e.target.value,
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      required
-                    />
-                  </div>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
                       Tipo de Persona
                     </label>
                     <select
                       name="tipo_persona"
-                      value={formData.tipo_persona || "moral"}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          tipo_persona: e.target.value as "moral" | "fisica",
-                        })
-                      }
+                      required
+                      value={tipoPersona}
+                      onChange={(e) => setTipoPersona(e.target.value)}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     >
-                      <option value="moral">Moral</option>
-                      <option value="fisica">Física</option>
+                      <option value="fisica">Persona Física</option>
+                      <option value="moral">Persona Moral</option>
                     </select>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">
-                      RFC
+                      {tipoPersona === "fisica"
+                        ? "Nombre de la Persona Física"
+                        : "Nombre Comercial de la Empresa"}
                     </label>
                     <input
                       type="text"
-                      name="rfc"
-                      value={formData.rfc || ""}
-                      onChange={(e) =>
-                        setFormData({ ...formData, rfc: e.target.value })
-                      }
+                      name="nombre_comercial"
+                      defaultValue={selectedCompany?.nombre_comercial}
+                      onChange={handleInputChange}
+                      required
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
-                </div>
 
-                <div className="border-t pt-4">
-                  <h3 className="text-sm font-medium text-gray-700 mb-4">
-                    Dirección
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {tipoPersona === "moral" && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Dirección
+                        Razón Social
                       </label>
                       <input
                         type="text"
-                        name="empresa_direccion"
-                        value={formData.empresa_direccion || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            empresa_direccion: e.target.value,
-                          })
-                        }
+                        name="razon_social"
+                        defaultValue={selectedCompany?.razon_social || ""}
+                        onChange={handleInputChange}
+                        required
                         className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                       />
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Estado
-                      </label>
-                      <input
-                        type="text"
-                        name="empresa_estado"
-                        value={formData.empresa_estado || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            empresa_estado: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Municipio
-                      </label>
-                      <input
-                        type="text"
-                        name="empresa_municipio"
-                        value={formData.empresa_municipio || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            empresa_municipio: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Código Postal
-                      </label>
-                      <input
-                        type="text"
-                        name="empresa_cp"
-                        value={formData.empresa_cp || ""}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            empresa_cp: e.target.value,
-                          })
-                        }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Calle y número
+                    </label>
+                    <input
+                      type="text"
+                      name="calle"
+                      value={calle}
+                      onChange={(e) => setCalle(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Código Postal
+                    </label>
+                    <input
+                      type="text"
+                      name="codigo_postal"
+                      value={codigoPostal}
+                      onChange={(e) => setCodigoPostal(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Colonia
+                    </label>
+                    <select
+                      name="colonia"
+                      value={colonia}
+                      onChange={(e) => setColonia(e.target.value)}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    >
+                      <option value="">Seleccione una colonia</option>
+                      {colonias.map((colonia, index) => (
+                        <option key={index} value={colonia}>
+                          {colonia}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Estado
+                    </label>
+                    <input
+                      type="text"
+                      name="estado"
+                      value={estado}
+                      readOnly
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Municipio
+                    </label>
+                    <input
+                      type="text"
+                      name="municipio"
+                      value={municipio}
+                      readOnly
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 bg-gray-100"
+                    />
                   </div>
                 </div>
-
                 <div className="flex justify-end space-x-2 pt-4 border-t">
                   <button
                     type="button"

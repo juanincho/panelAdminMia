@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Building2, User, PencilIcon, Save, CreditCard } from "lucide-react";
 import { fetchAgenteById } from "@/services/agentes";
+import { createNewEmpresa, updateViajero } from "@/hooks/useDatabase";
 
 interface Company {
   id_empresa: string;
@@ -85,27 +86,63 @@ export default function AgentDetailsCard(props) {
   }
 
   const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof Agent
   ) => {
-    setFormData((prev) => ({
-      ...prev!,
-      [field]: e.target.value,
-    }));
+    setFormData((prev) => {
+      if (!prev) return prev;
+
+      // Manejo especial para campos booleanos (como checkboxes)
+      if (field === "tiene_credito_consolidado") {
+        return {
+          ...prev,
+          [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
+        };
+      }
+
+      // Manejo especial para campos numéricos
+      if (field === "monto_credito") {
+        return {
+          ...prev,
+          [field]: Number(e.target.value),
+        };
+      }
+
+      // Para todos los demás campos (strings)
+      return {
+        ...prev,
+        [field]: e.target.value !== "" ? e.target.value : null,
+      };
+    });
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     console.log(formData);
+    try {
+      const responseCompany = await updateViajero(
+        formData,
+        formData.empresas.map((company) => company.id_empresa),
+        agent.id_viajero
+      );
+      if (!responseCompany.success) {
+        throw new Error("No se pudo actualizar al viajero");
+      }
+      console.log(responseCompany);
+    } catch (error) {
+      console.error("Error actualizando viajero", error);
+    }
     setIsEditing(false);
   };
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "dd MMM yyyy", { locale: es });
-    } catch {
-      return "Fecha inválida";
-    }
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    const date = new Date(+year, +month - 1, +day);
+    return date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const getFullName = (agent: Agent) => {
@@ -144,18 +181,20 @@ export default function AgentDetailsCard(props) {
             <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
               <User className="h-6 w-6 text-blue-600" />
             </div>
+
             <div>
               <h2 className="text-xl font-semibold">{getFullName(agent)}</h2>
+              <p className="text-sm text-gray-500">Correo: {agent.correo}</p>
               <p className="text-sm text-gray-500">ID: {agent.id_viajero}</p>
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="correo">Correo</Label>
+            <Label htmlFor="numero_empleado">Número de empleado</Label>
             <Input
-              id="correo"
-              value={agent.correo || ""}
-              onChange={(e) => handleInputChange(e, "correo")}
+              id="numero_empleado"
+              value={formData?.numero_empleado || ""}
+              onChange={(e) => handleInputChange(e, "numero_empleado")}
               disabled={!isEditing}
             />
           </div>
@@ -164,7 +203,7 @@ export default function AgentDetailsCard(props) {
             <Label htmlFor="telefono">Teléfono</Label>
             <Input
               id="telefono"
-              value={agent.telefono || ""}
+              value={formData?.telefono || ""}
               onChange={(e) => handleInputChange(e, "telefono")}
               disabled={!isEditing}
             />
@@ -172,19 +211,37 @@ export default function AgentDetailsCard(props) {
 
           <div className="space-y-2">
             <Label htmlFor="nacionalidad">Nacionalidad</Label>
-            <Input
-              id="nacionalidad"
-              value={agent.nacionalidad || ""}
+            <select
+              name="nacionalidad"
+              defaultValue={formData?.nacionalidad || ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(e) => handleInputChange(e, "nacionalidad")}
               disabled={!isEditing}
-            />
+            >
+              <option value="">Selecciona una nacionalidad</option>
+              <option value="MX">Mexicana</option>
+              <option value="US">Estadounidense</option>
+              <option value="CA">Canadiense</option>
+              <option value="ES">Española</option>
+              <option value="AR">Argentina</option>
+              <option value="BR">Brasileña</option>
+              <option value="FR">Francesa</option>
+              <option value="DE">Alemana</option>
+              <option value="IT">Italiana</option>
+              <option value="JP">Japonesa</option>
+              <option value="CN">China</option>
+              <option value="IN">India</option>
+              <option value="UK">Británica</option>
+              <option value="AU">Australiana</option>
+              <option value="CL">Chilena</option>
+            </select>
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="numero_pasaporte">Número de Pasaporte</Label>
             <Input
               id="numero_pasaporte"
-              value={agent.numero_pasaporte || ""}
+              value={formData?.numero_pasaporte || ""}
               onChange={(e) => handleInputChange(e, "numero_pasaporte")}
               disabled={!isEditing}
             />
@@ -192,14 +249,14 @@ export default function AgentDetailsCard(props) {
         </div>
 
         {/* Información de Crédito */}
-        <div className="border-t pt-4">
+        {/* <div className="border-t pt-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
               <CreditCard className="h-5 w-5 text-blue-500" />
               <h3 className="text-lg font-semibold">Crédito Consolidado</h3>
             </div>
             <Switch
-              checked={agent.tiene_credito_consolidado}
+              checked={formData.tiene_credito_consolidado}
               onCheckedChange={(checked) =>
                 setFormData((prev) => ({
                   ...prev!,
@@ -210,13 +267,13 @@ export default function AgentDetailsCard(props) {
               disabled={!isEditing}
             />
           </div>
-          {Boolean(agent.tiene_credito_consolidado) && (
+          {Boolean(formData.tiene_credito_consolidado) && (
             <div className="space-y-2">
               <Label htmlFor="monto_credito">Monto de Crédito</Label>
               <Input
                 id="monto_credito"
                 type="number"
-                value={agent.monto_credito}
+                value={formData.monto_credito}
                 onChange={(e) =>
                   setFormData((prev) => ({
                     ...prev!,
@@ -228,7 +285,7 @@ export default function AgentDetailsCard(props) {
               />
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Empresas Asociadas */}
         <div className="border-t pt-4">

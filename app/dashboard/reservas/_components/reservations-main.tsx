@@ -1,278 +1,583 @@
 "use client";
 
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { Search, MoreHorizontal, Eye, Edit } from "lucide-react";
+import { fetchReservationsAll } from "@/services/reservas";
+import Link from "next/link";
 
-interface Booking {
-  id_booking: string;
-  id_servicio: string | null;
+// Types
+interface Reservation {
+  id_servicio: string;
+  created_at: string;
+  is_credito: boolean | null;
+  id_solicitud: string;
+  confirmation_code: string;
+  hotel: string;
   check_in: string;
   check_out: string;
-  total: number;
-  subtotal: number;
-  impuestos: number;
-  estado: string;
-  fecha_pago_proveedor: string | null;
-  costo_total: number | null;
-  costo_subtotal: number | null;
-  costo_impuestos: number | null;
-  fecha_limite_cancelacion: string;
-  created_at: string;
-  updated_at: string;
-  nombre_hotel: string;
-  cadena_hotel: string;
-  tipo_cuarto: string;
-  noches: string;
-  is_rembolsable: string;
-  monto_penalizacion: string;
-  fecha_limite_pago: string;
+  room: string;
+  total: string;
+  id_usuario_generador: string;
+  id_booking: string | null;
+  codigo_reservacion_hotel: string | null;
+  id_pago: string;
+  pendiente_por_cobrar: number;
+  monto_a_credito: string;
+  id_factura: string | null;
+  primer_nombre: string | null;
+  apellido_paterno: string | null;
 }
 
-interface ReservationsMainProps {
-  bookings: Booking[];
-}
+type ReservationStatus =
+  | "pending"
+  | "confirmed"
+  | "completed"
+  | "cancelled"
+  | "all";
 
-export function ReservationsMain({ bookings }: ReservationsMainProps) {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-
-  console.log(bookings);
-
-  const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "en proceso":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-yellow-100 text-yellow-800 border-yellow-200"
-          >
-            Pendiente
-          </Badge>
-        );
-      case "completada":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-green-100 text-green-800 border-green-200"
-          >
-            Completada
-          </Badge>
-        );
-      case "cancelada":
-        return (
-          <Badge
-            variant="outline"
-            className="bg-red-100 text-red-800 border-red-200"
-          >
-            Cancelada
-          </Badge>
-        );
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
+interface FilterOptions {
+  searchTerm: string;
+  statusFilter: ReservationStatus;
+  dateRangeFilter: {
+    startDate: Date | null;
+    endDate: Date | null;
   };
+  priceRangeFilter: {
+    min: number | null;
+    max: number | null;
+  };
+}
 
-  const filteredBookings = bookings.filter((booking) => {
-    const matchesSearch =
-      booking.nombre_hotel.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      booking.id_booking.toLowerCase().includes(searchTerm.toLowerCase());
+// Status Badge Component
+const StatusBadge: React.FC<{ status: ReservationStatus }> = ({ status }) => {
+  switch (status) {
+    case "pending":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+          <span className="w-2 h-2 mr-1.5 rounded-full bg-yellow-600" />
+          Pendiente
+        </span>
+      );
+    case "confirmed":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <span className="w-2 h-2 mr-1.5 rounded-full bg-blue-600" />
+          Confirmada
+        </span>
+      );
+    case "completed":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+          <span className="w-2 h-2 mr-1.5 rounded-full bg-green-600" />
+          Completada
+        </span>
+      );
+    case "cancelled":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="w-2 h-2 mr-1.5 rounded-full bg-red-600" />
+          Cancelada
+        </span>
+      );
+    default:
+      return null;
+  }
+};
 
-    const matchesStatus =
-      statusFilter === "all" || booking.estado.toLowerCase() === statusFilter;
+// Loader Component
+const Loader: React.FC = () => (
+  <div className="flex items-center justify-center min-h-[200px]">
+    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+    <span className="ml-3 text-gray-700">Cargando reservaciones...</span>
+  </div>
+);
 
-    return matchesSearch && matchesStatus;
+export function ReservationsMain() {
+  const [reservations, setReservations] = useState<Reservation[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({
+    searchTerm: "",
+    statusFilter: "all",
+    dateRangeFilter: {
+      startDate: null,
+      endDate: null,
+    },
+    priceRangeFilter: {
+      min: null,
+      max: null,
+    },
+  });
+  const [isAdvancedFiltersOpen, setIsAdvancedFiltersOpen] = useState(false);
+  const [localDateRange, setLocalDateRange] = useState({
+    start: "",
+    end: "",
+  });
+  const [localPriceRange, setLocalPriceRange] = useState({
+    min: "",
+    max: "",
   });
 
+  useEffect(() => {
+    setLoading(true);
+    fetchReservationsAll((data) => {
+      setReservations(data);
+      setLoading(false);
+    }).catch((err) => {
+      setError("Error al cargar las reservaciones");
+      setLoading(false);
+      console.error(err);
+    });
+  }, []);
+
+  const getReservationStatus = (
+    reservation: Reservation
+  ): ReservationStatus => {
+    if (reservation.pendiente_por_cobrar > 0) return "pending";
+    if (reservation.id_booking) return "confirmed";
+    return "completed";
+  };
+
+  const formatCurrency = (value: string) => {
+    return new Intl.NumberFormat("es-MX", {
+      style: "currency",
+      currency: "MXN",
+    }).format(parseFloat(value));
+  };
+
+  const calculateNights = (checkIn: string, checkOut: string) => {
+    const checkInDate = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+    const diffTime = Math.abs(checkOutDate.getTime() - checkInDate.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const handleFilterChange = (newFilters: Partial<FilterOptions>) => {
+    setFilterOptions((prev) => ({
+      ...prev,
+      ...newFilters,
+    }));
+  };
+
+  const applyFilters = (reservations: Reservation[]): Reservation[] => {
+    return reservations.filter((reservation) => {
+      // Search term filter
+      const searchLower = filterOptions.searchTerm.toLowerCase();
+      const matchesSearch =
+        !filterOptions.searchTerm ||
+        reservation.hotel.toLowerCase().includes(searchLower) ||
+        reservation.confirmation_code.toLowerCase().includes(searchLower) ||
+        `${reservation.primer_nombre} ${reservation.apellido_paterno}`
+          .toLowerCase()
+          .includes(searchLower);
+
+      // Status filter
+      const status = getReservationStatus(reservation);
+      const matchesStatus =
+        filterOptions.statusFilter === "all" ||
+        status === filterOptions.statusFilter;
+
+      // Date range filter
+      const checkIn = new Date(reservation.check_in);
+      const checkOut = new Date(reservation.check_out);
+      const matchesDateRange =
+        (!filterOptions.dateRangeFilter.startDate ||
+          checkIn >= filterOptions.dateRangeFilter.startDate) &&
+        (!filterOptions.dateRangeFilter.endDate ||
+          checkOut <= filterOptions.dateRangeFilter.endDate);
+
+      // Price range filter
+      const price = parseFloat(reservation.total);
+      const matchesPriceRange =
+        (filterOptions.priceRangeFilter.min === null ||
+          price >= filterOptions.priceRangeFilter.min) &&
+        (filterOptions.priceRangeFilter.max === null ||
+          price <= filterOptions.priceRangeFilter.max);
+
+      return (
+        matchesSearch && matchesStatus && matchesDateRange && matchesPriceRange
+      );
+    });
+  };
+
+  const filteredReservations = applyFilters(reservations);
+
   return (
-    <div className="space-y-8">
-      <Card>
-        <div className="p-6 space-y-4">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-1 items-center space-x-2">
-              <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por hotel o código..."
-                  className="pl-8"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+    <div className="min-h-screen">
+      <main className="max-w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className="p-6">
+            <div className="space-y-4">
+              {/* Basic Filters */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div className="relative">
+                  <input
+                    type="text"
+                    className="w-full pl-10 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Buscar por hotel, código o viajero..."
+                    value={filterOptions.searchTerm}
+                    onChange={(e) =>
+                      handleFilterChange({ searchTerm: e.target.value })
+                    }
+                  />
+                  <span className="absolute left-3 top-2.5 text-gray-400">
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                      />
+                    </svg>
+                  </span>
+                </div>
+
+                <select
+                  className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  value={filterOptions.statusFilter}
+                  onChange={(e) =>
+                    handleFilterChange({
+                      statusFilter: e.target.value as ReservationStatus,
+                    })
+                  }
+                >
+                  <option value="all">Todos los estados</option>
+                  <option value="pending">Pendientes</option>
+                  <option value="confirmed">Confirmadas</option>
+                  <option value="completed">Completadas</option>
+                  <option value="cancelled">Canceladas</option>
+                </select>
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filtrar por estado" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos los estados</SelectItem>
-                  <SelectItem value="en proceso">Pendientes</SelectItem>
-                  <SelectItem value="completada">Completadas</SelectItem>
-                  <SelectItem value="cancelada">Canceladas</SelectItem>
-                </SelectContent>
-              </Select>
+
+              {/* Advanced Filters Toggle */}
+              <div>
+                <button
+                  onClick={() =>
+                    setIsAdvancedFiltersOpen(!isAdvancedFiltersOpen)
+                  }
+                  className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                >
+                  {isAdvancedFiltersOpen
+                    ? "Ocultar filtros avanzados"
+                    : "Mostrar filtros avanzados"}
+                  <span
+                    className={`ml-2 transition-transform duration-200 ${
+                      isAdvancedFiltersOpen ? "rotate-180" : ""
+                    }`}
+                  >
+                    ▼
+                  </span>
+                </button>
+              </div>
+
+              {/* Advanced Filters */}
+              {isAdvancedFiltersOpen && (
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rango de fechas
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <input
+                          type="date"
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          value={localDateRange.start}
+                          onChange={(e) => {
+                            setLocalDateRange((prev) => ({
+                              ...prev,
+                              start: e.target.value,
+                            }));
+                            handleFilterChange({
+                              dateRangeFilter: {
+                                ...filterOptions.dateRangeFilter,
+                                startDate: e.target.value
+                                  ? new Date(e.target.value)
+                                  : null,
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <input
+                          type="date"
+                          className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          value={localDateRange.end}
+                          onChange={(e) => {
+                            setLocalDateRange((prev) => ({
+                              ...prev,
+                              end: e.target.value,
+                            }));
+                            handleFilterChange({
+                              dateRangeFilter: {
+                                ...filterOptions.dateRangeFilter,
+                                endDate: e.target.value
+                                  ? new Date(e.target.value)
+                                  : null,
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Rango de precio
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Mínimo"
+                          value={localPriceRange.min}
+                          onChange={(e) => {
+                            setLocalPriceRange((prev) => ({
+                              ...prev,
+                              min: e.target.value,
+                            }));
+                            handleFilterChange({
+                              priceRangeFilter: {
+                                ...filterOptions.priceRangeFilter,
+                                min: e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : null,
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                      <div className="relative">
+                        <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">
+                          $
+                        </span>
+                        <input
+                          type="number"
+                          className="w-full pl-8 pr-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          placeholder="Máximo"
+                          value={localPriceRange.max}
+                          onChange={(e) => {
+                            setLocalPriceRange((prev) => ({
+                              ...prev,
+                              max: e.target.value,
+                            }));
+                            handleFilterChange({
+                              priceRangeFilter: {
+                                ...filterOptions.priceRangeFilter,
+                                max: e.target.value
+                                  ? parseFloat(e.target.value)
+                                  : null,
+                              },
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Hotel</TableHead>
-                <TableHead>Código</TableHead>
-                <TableHead>Check-in</TableHead>
-                <TableHead>Check-out</TableHead>
-                <TableHead>Habitación</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBookings.map((booking) => (
-                <TableRow key={booking.id_booking}>
-                  <TableCell className="font-medium">
-                    {booking.nombre_hotel}
-                  </TableCell>
-                  <TableCell>{booking.id_booking}</TableCell>
-                  <TableCell>
-                    {format(new Date(booking.check_in), "dd MMM yyyy", {
-                      locale: es,
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {format(new Date(booking.check_out), "dd MMM yyyy", {
-                      locale: es,
-                    })}
-                  </TableCell>
-                  <TableCell>{booking.tipo_cuarto}</TableCell>
-                  <TableCell>${booking.total}</TableCell>
-                  <TableCell>{getStatusBadge(booking.estado)}</TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Eye className="mr-2 h-4 w-4" />
-                          Ver detalles
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Editar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          {/* Results Table */}
+          {loading ? (
+            <Loader />
+          ) : error ? (
+            <div className="p-6 bg-red-50 border-t border-red-200">
+              <p className="text-red-700">{error}</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Hotel
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Código
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Viajero
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Check-in / Check-out
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Habitación
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Total
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Estado de pago
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Detalles
+                    </th>
+                    <th scope="col" className="relative px-6 py-3">
+                      <span className="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredReservations.length === 0 ? (
+                    <tr>
+                      <td
+                        colSpan={9}
+                        className="px-6 py-4 text-center text-sm text-gray-500"
+                      >
+                        No se encontraron reservaciones con los filtros
+                        actuales.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredReservations.map((reservation) => (
+                      <tr
+                        key={reservation.id_servicio}
+                        className="hover:bg-gray-50"
+                      >
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {reservation.hotel}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {reservation.codigo_reservacion_hotel}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {reservation.primer_nombre &&
+                          reservation.apellido_paterno
+                            ? `${reservation.primer_nombre} ${reservation.apellido_paterno}`
+                            : "Sin información"}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="flex flex-col">
+                            <span>
+                              {format(
+                                new Date(reservation.check_in),
+                                "dd MMM yyyy",
+                                { locale: es }
+                              )}
+                            </span>
+                            <span className="text-xs text-gray-400">al</span>
+                            <span>
+                              {format(
+                                new Date(reservation.check_out),
+                                "dd MMM yyyy",
+                                { locale: es }
+                              )}
+                            </span>
+                            <span className="text-xs text-gray-500 mt-1">
+                              {calculateNights(
+                                reservation.check_in,
+                                reservation.check_out
+                              )}{" "}
+                              noche(s)
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
+                          {reservation.room}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {formatCurrency(reservation.total)}
+                          {reservation.pendiente_por_cobrar > 0 && (
+                            <div className="text-xs text-amber-600 mt-1">
+                              Pendiente:{" "}
+                              {formatCurrency(
+                                reservation.pendiente_por_cobrar.toString()
+                              )}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <StatusBadge
+                            status={getReservationStatus(reservation)}
+                          />
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          <div className="flex flex-col space-y-1 text-xs">
+                            <div>
+                              <span className="font-medium">ID servicio:</span>{" "}
+                              {reservation.id_servicio.substring(0, 8)}...
+                            </div>
+                            {reservation.id_booking && (
+                              <div>
+                                <span className="font-medium">ID booking:</span>{" "}
+                                {reservation.id_booking}
+                              </div>
+                            )}
+                            {reservation.codigo_reservacion_hotel && (
+                              <div>
+                                <span className="font-medium">
+                                  Código hotel:
+                                </span>{" "}
+                                {reservation.codigo_reservacion_hotel}
+                              </div>
+                            )}
+                            {reservation.is_credito && (
+                              <div className="text-blue-600">A crédito</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <div className="flex space-x-2">
+                            <Link
+                              href={
+                                window.location.href +
+                                "/" +
+                                reservation.id_booking
+                              }
+                              className="inline-flex items-center px-2.5 py-1.5 border border-transparent text-xs font-medium rounded text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                            >
+                              Ver / Editar
+                            </Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
-      </Card>
+      </main>
     </div>
   );
 }
-
-const hotelConTarifas = {
-  id_hotel: "H001",
-  nombre: "Hotel Paraíso del Sol",
-  id_cadena: 1,
-  correo: "contacto@paraisodelsol.com",
-  telefono: "555-123-4567",
-  rfc: "HPS123456ABC",
-  razon_social: "Hotel Paraíso del Sol S.A. de C.V.",
-  direccion: "Av. del Mar 123, Zona Hotelera",
-  latitud: "23.2456",
-  longitud: "-106.4100",
-  convenio: "Tarifas especiales para empresas Noktos",
-  descripcion: "Hotel frente al mar con alberca, spa y restaurante.",
-  calificacion: 4.5,
-  tipo_hospedaje: "hotel",
-  cuenta_de_deposito: "1234567890",
-  Estado: "Sinaloa",
-  Ciudad_Zona: "Mazatlán",
-  NoktosQ: 3,
-  NoktosQQ: 5,
-  MenoresEdad: "Menores de 12 años gratis",
-  PaxExtraPersona: "$300 MXN",
-  DesayunoIncluido: "Sí",
-  DesayunoComentarios: "Buffet de 7:00am a 10:30am",
-  DesayunoPrecioPorPersona: "150",
-  Transportacion: "Incluida desde el aeropuerto con previa reservación",
-  TransportacionComentarios: "Reservar con 24h de anticipación",
-  URLImagenHotel: "https://example.com/images/hotel1.jpg",
-  URLImagenHotelQ: "https://example.com/images/hotel1_q.jpg",
-  URLImagenHotelQQ: "https://example.com/images/hotel1_qq.jpg",
-  Activo: 1,
-  Comentarios: "Incluye acceso a gimnasio y spa",
-  Id_Sepomex: 12345,
-  CodigoPostal: "82000",
-  Id_hotel_excel: 56789,
-  Colonia: "Zona Dorada",
-  tipo_negociacion: "Contrato anual",
-  vigencia_convenio: "2025-12-31",
-  tipo_pago: "Transferencia",
-  disponibilidad_precio: "Sujeto a disponibilidad",
-  contacto_convenio: "Laura Jiménez",
-  contacto_recepcion: "Carlos Gómez",
-  impuestos_porcentaje: 16.0,
-  impuestos_moneda: 250.0,
-  tarifas: [
-    {
-      id_tarifa: 101,
-      precio: 1200.0,
-      id_agente: "AG001",
-      id_hotel: "H001",
-      id_tipos_cuartos: 1,
-      costo: 1000.0,
-      incluye_desayuno: 1,
-      precio_desayuno: 150.0,
-      precio_noche_extra: 1100.0,
-      comentario_desayuno: "Desayuno buffet incluido",
-      precio_persona_extra: 300.0,
-      tipo_desayuno: "Buffet",
-    },
-    {
-      id_tarifa: 102,
-      precio: 950.0,
-      id_agente: "AG002",
-      id_hotel: "H001",
-      id_tipos_cuartos: 2,
-      costo: 850.0,
-      incluye_desayuno: 0,
-      precio_desayuno: 0.0,
-      precio_noche_extra: 900.0,
-      comentario_desayuno: "No incluye desayuno",
-      precio_persona_extra: 250.0,
-      tipo_desayuno: "N/A",
-    },
-  ],
-};

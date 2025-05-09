@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { URL_VERCEL } from "@/app/constants/constantes";
 
 import {
   Tabs,
@@ -366,7 +367,7 @@ const extractNotesSection = (notes: string, section: string): string => {
 const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
-      `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
+      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
       {
         method: "GET",
         headers: {
@@ -390,7 +391,7 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
 const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
-      `http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
       {
         method: "GET",
         headers: {
@@ -703,7 +704,7 @@ export function HotelDialog({
   const fetchHotelRates = async (idHotel: string) => {
     try {
       setIsFetchingRates(true);
-      const response = await fetch(`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`, {
+      const response = await fetch(`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`, {
         method: "GET",
         headers: {
           "x-api-key": API_KEY,
@@ -1103,7 +1104,7 @@ export function HotelDialog({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`,
+        `${URL_VERCEL}hoteles/Eliminar-hotel/`,
         {
           method: "PATCH",
           headers: {
@@ -1147,7 +1148,7 @@ export function HotelDialog({
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         {
           method: "GET",
           headers: {
@@ -1229,7 +1230,7 @@ export function HotelDialog({
       console.log("Actualizando hotel:", hotelPayload);
       
       const hotelResponse = await fetch(
-        `http://localhost:5173/v1/mia/hoteles/Editar-hotel/`,
+       `${URL_VERCEL}hoteles/Editar-hotel/`,
         {
           method: "PATCH",
           headers: {
@@ -1328,7 +1329,7 @@ export function HotelDialog({
       const allTarifasPayloads = [sencillaPayload, doblePayload, ...tarifasPreferencialesPayloads];
       
       const tarifasPromises = allTarifasPayloads.map(payload => 
-        fetch(`http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`, {
+        fetch(`${URL_VERCEL}hoteles/Actualiza-tarifa`, {
           method: "PATCH",
           headers: {
             "x-api-key": API_KEY,
@@ -1373,7 +1374,7 @@ export function HotelDialog({
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        `http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`,
+        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
         {
           method: "PATCH",
           headers: {

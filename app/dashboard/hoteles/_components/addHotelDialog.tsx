@@ -140,8 +140,8 @@ interface FormData {
 const buscarCodigoPostal = async (codigo: string) => {
   try {
     const response = await fetch(
-      `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
-      //"https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}",
+      //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
+      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
       {
         method: "GET",
         headers: {
@@ -166,8 +166,8 @@ const buscarCodigoPostal = async (codigo: string) => {
 const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
-      `http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
-      //`${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
       {
         method: "GET",
         headers: {
@@ -691,7 +691,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
       };
 
       const response = await fetch(
-        "http://localhost:5173/v1/mia/hoteles/Agregar-hotel/",
+        `${URL_VERCEL}hoteles/Agregar-hotel/`,
         {
           method: "POST",
           headers: {

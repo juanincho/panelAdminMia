@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   ChevronDown,
@@ -16,6 +16,8 @@ import {
 import { cn } from "@/lib/utils";
 import { fetchViajerosByAgente } from "@/services/agentes";
 import { useParams } from "next/navigation";
+import { fetchCompaniesAgent } from "@/hooks/useFetch";
+import { createNewViajero, updateViajero } from "@/hooks/useDatabase";
 
 // Types
 interface Company {
@@ -84,27 +86,72 @@ function App() {
   const { client } = useParams();
 
   // Queries and Mutations
-  const { data: travelers = [], isLoading } = useQuery({
+  const fetchCompaniesData = async () => {
+    try {
+      const response = await fetchViajerosByAgente(
+        Array.isArray(client) ? client[0] : client
+      );
+      return response;
+    } catch (error) {
+      console.error("Error fetching travelers:", error);
+      throw error;
+    }
+  };
+
+  const {
+    data: travelers = [],
+    isLoading,
+    refetch: refetchCompanies,
+  } = useQuery({
     queryKey: ["travelers", client],
-    queryFn: () =>
-      fetchViajerosByAgente(Array.isArray(client) ? client[0] : client),
+    queryFn: fetchCompaniesData, // Usa la función aquí
   });
 
-  const createMutation = useMutation({
-    mutationFn: createTraveler,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
-  });
+  // const createMutation = useMutation({
+  //   mutationFn: createTraveler,
+  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
+  // });
 
-  const updateMutation = useMutation({
-    mutationFn: updateTraveler,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
-  });
+  // const updateMutation = useMutation({
+  //   mutationFn: updateTraveler,
+  //   onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
+  // });
 
   const deleteMutation = useMutation({
     mutationFn: deleteTraveler,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["travelers"] }),
   });
 
+  const createTraveler = async () => {
+    try {
+      const responseCompany = await createNewViajero(
+        formData,
+        selectedEmpresas
+      );
+      if (!responseCompany.success) {
+        throw new Error("No se pudo registrar al viajero");
+      }
+      console.log(responseCompany);
+    } catch (error) {
+      console.error("Error creando al nuevo viajero", error);
+    }
+  };
+
+  const updateTraveler = async () => {
+    try {
+      const responseCompany = await updateViajero(
+        formData,
+        selectedEmpresas,
+        selectedTraveler.id_viajero
+      );
+      if (!responseCompany.success) {
+        throw new Error("No se pudo actualizar al viajero");
+      }
+      console.log(responseCompany);
+    } catch (error) {
+      console.error("Error actualizando viajero", error);
+    }
+  };
   // State
   const [filters, setFilters] = useState<FilterState>({
     search: "",
@@ -190,6 +237,27 @@ function App() {
     );
   }, [travelers]);
 
+  const [empresas, setEmpresas] = useState<Company[]>([]);
+  const [selectedEmpresas, setSelectedEmpresas] = useState(
+    selectedTraveler?.empresas?.map((e) => e.id_empresa) || []
+  );
+  const handleCheckboxChange = (event: any) => {
+    const { value, checked } = event.target;
+    setSelectedEmpresas((prev) =>
+      checked ? [...prev, value] : prev.filter((id) => id !== value)
+    );
+  };
+
+  const fetchData = async () => {
+    const data = await fetchCompaniesAgent(
+      Array.isArray(client) ? client[0] : client
+    );
+    setEmpresas(data);
+  };
+  useEffect(() => {
+    fetchData();
+  }, [modalMode]);
+
   // Handlers
   const handleSort = (column: keyof Traveler) => {
     setSort((prev) => ({
@@ -211,8 +279,10 @@ function App() {
     traveler?: Traveler
   ) => {
     setModalMode(mode);
+    fetchData();
     setSelectedTraveler(traveler || null);
     setFormData(traveler || {});
+    setSelectedEmpresas(traveler?.empresas?.map((e) => e.id_empresa) || []);
     setIsModalOpen(true);
   };
 
@@ -220,6 +290,7 @@ function App() {
     setIsModalOpen(false);
     setSelectedTraveler(null);
     setFormData({});
+    setSelectedEmpresas([]);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -227,13 +298,15 @@ function App() {
 
     try {
       if (modalMode === "create") {
-        await createMutation.mutateAsync(formData);
-      } else if (modalMode === "edit" && selectedTraveler) {
-        await updateMutation.mutateAsync({ ...selectedTraveler, ...formData });
+        await createTraveler();
+        await refetchCompanies();
+      } else if (modalMode === "edit" && selectedEmpresas) {
+        await updateTraveler();
+        await refetchCompanies();
       }
       handleCloseModal();
     } catch (error) {
-      console.error("Error saving traveler:", error);
+      console.error("Error saving company:", error);
     }
   };
 
@@ -294,8 +367,11 @@ function App() {
             >
               <option value="">Nacionalidad</option>
               {availableNacionalidades.map((nacionalidad) => (
-                <option key={nacionalidad} value={nacionalidad}>
-                  {nacionalidad}
+                <option
+                  key={nacionalidad as string}
+                  value={nacionalidad as string}
+                >
+                  {nacionalidad as string}
                 </option>
               ))}
             </select>
@@ -643,20 +719,59 @@ function App() {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
-                        Nacionalidad
+                        Fecha de nacimiento
                       </label>
                       <input
-                        type="text"
+                        type="date"
+                        name="fecha_nacimiento"
+                        defaultValue={
+                          formData?.fecha_nacimiento
+                            ? new Date(formData.fecha_nacimiento)
+                                .toISOString()
+                                .split("T")[0]
+                            : ""
+                        }
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            fecha_nacimiento: e.target.value,
+                          })
+                        }
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700">
+                        Nacionalidad
+                      </label>
+                      <select
                         name="nacionalidad"
-                        value={formData.nacionalidad || ""}
+                        defaultValue={formData?.nacionalidad || ""}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                         onChange={(e) =>
                           setFormData({
                             ...formData,
                             nacionalidad: e.target.value,
                           })
                         }
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
+                      >
+                        <option value="">Selecciona una nacionalidad</option>
+                        <option value="MX">Mexicana</option>
+                        <option value="US">Estadounidense</option>
+                        <option value="CA">Canadiense</option>
+                        <option value="ES">Española</option>
+                        <option value="AR">Argentina</option>
+                        <option value="BR">Brasileña</option>
+                        <option value="FR">Francesa</option>
+                        <option value="DE">Alemana</option>
+                        <option value="IT">Italiana</option>
+                        <option value="JP">Japonesa</option>
+                        <option value="CN">China</option>
+                        <option value="IN">India</option>
+                        <option value="UK">Británica</option>
+                        <option value="AU">Australiana</option>
+                        <option value="CL">Chilena</option>
+                      </select>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700">
@@ -708,6 +823,44 @@ function App() {
                         <option value="masculino">Masculino</option>
                         <option value="femenino">Femenino</option>
                       </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Empresas <span className="text-red-500">*</span>
+                      </label>
+                      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
+                        {empresas.map((empresa) => (
+                          <label
+                            key={empresa.id_empresa}
+                            className="relative flex items-start"
+                          >
+                            <div className="flex items-center h-5">
+                              <input
+                                type="checkbox"
+                                name="empresa"
+                                value={empresa.id_empresa}
+                                checked={selectedEmpresas.includes(
+                                  empresa.id_empresa
+                                )}
+                                onChange={handleCheckboxChange}
+                                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                required={selectedEmpresas.length === 0} // Solo requiere si no hay ninguno seleccionado
+                              />
+                            </div>
+                            <div className="ml-3 text-sm">
+                              <span className="font-medium text-gray-700">
+                                {empresa.razon_social}
+                              </span>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                      {selectedEmpresas.length === 0 && (
+                        <p className="text-red-500 text-sm mt-2">
+                          Debes seleccionar al menos una empresa.
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
