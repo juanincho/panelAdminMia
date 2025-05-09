@@ -797,6 +797,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
   };
 
   return (
+
+
     <Dialog open={open} onOpenChange={(isOpen) => {
       if (!isOpen) {
         setSuccessMessage("");
@@ -906,6 +908,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                     id="comentario_vigencia"
                     value={formData.comentario_vigencia} 
                     onChange={(e) => handleChange("comentario_vigencia", e.target.value.toUpperCase())}
+                    disabled
                   />
                 </div>
               )}
@@ -1575,8 +1578,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                     <SelectValue placeholder="SELECCIONA EL TIPO DE PAGO" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="credito">CREDITO</SelectItem>
-                    <SelectItem value="prepago">PREPAGO</SelectItem>
+                    <SelectItem value="CREDITO">CREDITO</SelectItem>
+                    <SelectItem value="PREPAGO">PREPAGO</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

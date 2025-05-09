@@ -1220,7 +1220,7 @@ export function HotelDialog({
         URLImagenHotelQ: formData.URLImagenHotelQ || null,
         URLImagenHotelQQ: formData.URLImagenHotelQQ || null,
         calificacion: formData.calificacion ? Number(formData.calificacion) : null,
-        activo: formData.activo !== undefined ? formData.activo : 1,
+        Activo: 1,
         Comentarios: combinedNotes || null,
         idSepomex: formData.idSepomex ? Number(formData.idSepomex): null,
         comentario_pago: formData.comentario_pago || null
@@ -1544,6 +1544,9 @@ export function HotelDialog({
                     value={formData.nombre} 
                     onChange={(e) => handleChange("nombre", e.target.value)} 
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
+                  
+
                     className="font-medium" 
                     required 
                   />
@@ -1556,6 +1559,7 @@ export function HotelDialog({
                     value={formData.tipo_negociacion} 
                     onChange={(e) => handleChange("tipo_negociacion", e.target.value)} 
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     required
                   />
@@ -1569,6 +1573,7 @@ export function HotelDialog({
                         checked={formData.hay_convenio}
                         onCheckedChange={handleHayConvenioChange}
                         disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       />
                       <span className="ml-2 font-medium">¿HAY CONVENIO?</span>
                     </div>
@@ -1584,6 +1589,7 @@ export function HotelDialog({
                       value={formData.vigencia_convenio ? convertToDateInputFormat(formData.vigencia_convenio) : ''} 
                       onChange={(e) => handleChange("vigencia_convenio", convertToDateInputFormat(e.target.value))} 
                       disabled={mode === "view"}
+                      style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       required
                     />
@@ -1595,7 +1601,7 @@ export function HotelDialog({
                       id="comentario_vigencia"
                       value={formData.comentario_vigencia} 
                       onChange={(e) => handleChange("comentario_vigencia", e.target.value)}
-                      disabled={mode === "view"}
+                      disabled={mode === "view" || mode =="edit"}
                       className="font-medium"
                     />
                   </div>
@@ -1631,6 +1637,7 @@ export function HotelDialog({
                     value={formData.Ciudad_Zona}
                     onChange={(e) => handleChange("Ciudad_Zona", e.target.value)}
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     required
                   />
@@ -1644,6 +1651,7 @@ export function HotelDialog({
                     value={formData.Id_hotel_excel || ""} 
                     onChange={(e) => handleChange("Id_hotel_excel", e.target.value)} 
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                   />
                 </div>
@@ -1656,6 +1664,7 @@ export function HotelDialog({
                     onChange={(e) => mode === "edit" && handleCodigoPostalChange(e.target.value)}
                     maxLength={5}
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                   />
                   {buscandoCP && (
@@ -1670,6 +1679,7 @@ export function HotelDialog({
                     value={formData.calle || ""}
                     onChange={(e) => handleChange("calle", e.target.value)}
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                   />
                 </div>
@@ -1681,6 +1691,7 @@ export function HotelDialog({
                     value={formData.numero || ""}
                     onChange={(e) => handleChange("numero", e.target.value)}
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                   />
                 </div>
@@ -1726,6 +1737,7 @@ export function HotelDialog({
           handleChange("Colonia", e.target.value); // Guardar valor manual
         }}
         disabled={mode === "view"}
+        style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
         className="font-medium"
       />
     </div>
@@ -1739,6 +1751,7 @@ export function HotelDialog({
                     value={formData.municipio}
                     onChange={(e) => handleChange("municipio", e.target.value)}
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                   />
                 </div>
@@ -1750,6 +1763,7 @@ export function HotelDialog({
                     value={formData.disponibilidad_precio || ""} 
                     onChange={(e) => handleChange("disponibilidad_precio", e.target.value)} 
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[80px] font-medium"
                     placeholder="EMAIL, TELEFONO, ETC."
                   />
@@ -1762,6 +1776,7 @@ export function HotelDialog({
                     value={formData.contacto_convenio} 
                     onChange={(e) => handleChange("contacto_convenio", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[80px] font-medium"
                     placeholder="NOMBRE Y DATOS DE CONTACTO"
                   />
@@ -1774,6 +1789,7 @@ export function HotelDialog({
                     value={formData.contacto_recepcion} 
                     onChange={(e) => handleChange("contacto_recepcion", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[80px] font-medium"
                     placeholder="NOMBRE Y DATOS DE CONTACTO"
                   />
@@ -1786,6 +1802,7 @@ export function HotelDialog({
                     value={formData.URLImagenHotel} 
                     onChange={(e) => handleChange("URLImagenHotel", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
@@ -1798,6 +1815,7 @@ export function HotelDialog({
                     value={formData.URLImagenHotelQ} 
                     onChange={(e) => handleChange("URLImagenHotelQ", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
@@ -1810,6 +1828,7 @@ export function HotelDialog({
                     value={formData.URLImagenHotelQQ} 
                     onChange={(e) => handleChange("URLImagenHotelQQ", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                   />
@@ -1823,6 +1842,7 @@ export function HotelDialog({
                     value={formData.notas_datosBasicos} 
                     onChange={(e) => handleChange("notas_datosBasicos", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="NOTAS ESPECÍFICAS SOBRE LOS DATOS BÁSICOS"
                   />
@@ -1844,6 +1864,7 @@ export function HotelDialog({
                       value={formData.costo_q} 
                       onChange={(e) => handleChange("costo_q", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       required 
                     />
@@ -1856,6 +1877,7 @@ export function HotelDialog({
                       value={formData.precio_q} 
                       onChange={(e) => handleChange("precio_q", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       required 
                     />
@@ -1868,6 +1890,7 @@ export function HotelDialog({
                       value={formData.costo_qq} 
                       onChange={(e) => handleChange("costo_qq", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       required 
                     />
@@ -1880,6 +1903,7 @@ export function HotelDialog({
                       value={formData.precio_qq} 
                       onChange={(e) => handleChange("precio_qq", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       required 
                     />
@@ -1892,10 +1916,10 @@ export function HotelDialog({
                     <Input 
                       id="precio_persona_extra"
                       placeholder="0.00"
-                      value={mode === "view" ? formData.doble.precio_persona_extra : formData.precio_persona_extra
-                      }
+                      value={formData.doble.precio_persona_extra}
                       onChange={(e) => handleChange("precio_persona_extra", e.target.value)} 
                       disabled={mode === "view"}
+                      style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                     />
                   </div>
@@ -1906,6 +1930,7 @@ export function HotelDialog({
                       value={formData.MenoresEdad} 
                       onChange={(e) => handleChange("MenoresEdad", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="min-h-[80px] font-medium"
                       placeholder="INFORMACION SOBRE ESTADIA DE MENORES"
                     />
@@ -1919,6 +1944,7 @@ export function HotelDialog({
                       value={formData.iva} 
                       onChange={(e) => handleChange("iva", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       placeholder="EJ: 16.00"
                     />
@@ -1931,6 +1957,7 @@ export function HotelDialog({
                       value={formData.ish} 
                       onChange={(e) => handleChange("ish", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       placeholder="EJ: 3.00"
                     />
@@ -1943,6 +1970,7 @@ export function HotelDialog({
                       value={formData.otros_impuestos_porcentaje} 
                       onChange={(e) => handleChange("otros_impuestos_porcentaje", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       placeholder="EJ: 5.00"
                     />
@@ -1955,6 +1983,7 @@ export function HotelDialog({
                       value={formData.otros_impuestos} 
                       onChange={(e) => handleChange("otros_impuestos", e.target.value)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"
                       placeholder="EJ: 100.00"
                     />
@@ -1971,6 +2000,7 @@ export function HotelDialog({
                       checked={formData.sencilla.incluye} 
                       onChange={(e) => handleChange("sencilla.incluye", e.target.checked)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="h-4 w-4"
                     />
                     <Label htmlFor="incluye-sencilla-general" className="font-medium">¿INCLUYE DESAYUNO EN HABITACION SENCILLA?</Label>
@@ -1984,6 +2014,7 @@ export function HotelDialog({
                         value={formData.sencilla.tipo_desayuno} 
                         onChange={(e) => handleChange("sencilla.tipo_desayuno", e.target.value)} 
                         disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                         className="font-medium"
                         placeholder="CONTINENTAL, AMERICANO, ETC."
                       />
@@ -1999,6 +2030,7 @@ export function HotelDialog({
                           value={formData.sencilla.precio} 
                           onChange={(e) => handleChange("sencilla.precio", e.target.value)} 
                           disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                           className="font-medium"
                         />
                       </div>
@@ -2011,6 +2043,7 @@ export function HotelDialog({
                         value={formData.sencilla.comentarios} 
                         onChange={(e) => handleChange("sencilla.comentarios", e.target.value)} 
                         disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                         className="min-h-[80px] font-medium"
                         placeholder="DETALLES ADICIONALES"
                       />
@@ -2027,6 +2060,7 @@ export function HotelDialog({
                       checked={formData.doble.incluye} 
                       onChange={(e) => handleChange("doble.incluye", e.target.checked)} 
                       disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="h-4 w-4"
                     />
                     <Label htmlFor="incluye-doble-general" className="font-medium">¿INCLUYE DESAYUNO EN HABITACION DOBLE?</Label>
@@ -2040,6 +2074,7 @@ export function HotelDialog({
                         value={formData.doble.tipo_desayuno} 
                         onChange={(e) => handleChange("doble.tipo_desayuno", e.target.value)} 
                         disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                         className="font-medium"
                         placeholder="CONTINENTAL, AMERICANO, ETC."
                       />
@@ -2055,6 +2090,7 @@ export function HotelDialog({
                           value={formData.doble.precio} 
                           onChange={(e) => handleChange("doble.precio", e.target.value)} 
                           disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                           className="font-medium"
                         />
                       </div>
@@ -2067,6 +2103,7 @@ export function HotelDialog({
                         value={formData.doble.comentarios} 
                         onChange={(e) => handleChange("doble.comentarios", e.target.value)} 
                         disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                         className="min-h-[80px] font-medium"
                         placeholder="DETALLES ADICIONALES"
                       />
@@ -2428,6 +2465,7 @@ export function HotelDialog({
                     value={formData.notas_tarifasServicios} 
                     onChange={(e) => handleChange("notas_tarifasServicios", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="NOTAS ESPECÍFICAS SOBRE TARIFAS Y SERVICIOS"
                   />
@@ -2462,6 +2500,7 @@ export function HotelDialog({
                     value={formData.comentario_pago || ""} 
                     onChange={(e) => handleChange("comentario_pago", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[80px] font-medium"
                     placeholder="INFORMACION ADICIONAL SOBRE EL PAGO"
                   />
@@ -2474,6 +2513,7 @@ export function HotelDialog({
                     value={formData.razon_social} 
                     onChange={(e) => handleChange("razon_social", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     placeholder="NOMBRE LEGAL DE LA EMPRESA"
                   />
@@ -2486,6 +2526,7 @@ export function HotelDialog({
                     value={formData.rfc} 
                     onChange={(e) => handleChange("rfc", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="font-medium"
                     placeholder="REGISTRO FEDERAL DE CONTRIBUYENTES"
                   />
@@ -2499,6 +2540,7 @@ export function HotelDialog({
                     value={formData.notas_informacionPagos} 
                     onChange={(e) => handleChange("notas_informacionPagos", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="NOTAS ESPECÍFICAS SOBRE INFORMACIÓN DE PAGOS"
                   />
@@ -2516,6 +2558,7 @@ export function HotelDialog({
                     value={formData.mascotas || ""} 
                     onChange={(e) => handleChange("mascotas", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="POLITICAS PARA MASCOTAS"
                   />
@@ -2528,6 +2571,7 @@ export function HotelDialog({
                     value={formData.salones || ""} 
                     onChange={(e) => handleChange("salones", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="INFORMACION SOBRE SALONES DISPONIBLES"
                   />
@@ -2540,6 +2584,7 @@ export function HotelDialog({
                     value={formData.Transportacion} 
                     onChange={(e) => handleChange("Transportacion", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="DETALLES DE TRANSPORTACION"
                   />
@@ -2552,6 +2597,7 @@ export function HotelDialog({
                     value={formData.notas_informacion_adicional} 
                     onChange={(e) => handleChange("notas_informacion_adicional", e.target.value)} 
                     disabled={mode === "view"}
+style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[100px] font-medium"
                     placeholder="INFORMACION ADICIONAL"
                   />
@@ -2564,6 +2610,7 @@ export function HotelDialog({
                     value={formData.notas_generales} 
                     onChange={(e) => handleChange("notas_generales", e.target.value)} 
                     disabled={mode === "view"}
+                    style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                     className="min-h-[120px] font-medium"
                     placeholder="INFORMACIÓN GENERAL ADICIONAL"
                   />
