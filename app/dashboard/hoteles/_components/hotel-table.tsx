@@ -117,23 +117,24 @@ export function HotelTable({ data, onRowClick }: HotelTableProps) {
     return `${day}-${month}-${year}`;
   };
 
-  const getVigenciaLabel = (rawDate: string): string => {
-    if (!rawDate) return "SIN CONVENIO";
-    const date = new Date(rawDate);
-    // Caso de fecha por defecto inválida
-    if (
-      date.getFullYear() === 1899 &&
-      date.getMonth() === 10 &&
-      date.getDate() === 30
-    ) {
-      return "SIN CONVENIO";
-    }
-    const today = new Date();
-    if (new Date(date.toDateString()) < new Date(today.toDateString())) {
-      return "CONVENIO VENCIDO";
-    }
-    return formatDate(rawDate);
-  };
+const getVigenciaLabel = (rawDate: string): string => {
+  if (!rawDate) return "SIN CONVENIO";
+
+  const date = new Date(rawDate);
+
+  // Manejar explícitamente la fecha por defecto (MySQL o Excel a veces mandan esto)
+  const isDefault = date.toISOString().startsWith("1899-11-30");
+  if (isDefault) return "SIN CONVENIO";
+
+  const today = new Date();
+  const onlyDate = new Date(date.toDateString());
+  const todayOnly = new Date(today.toDateString());
+
+  if (onlyDate < todayOnly) return "CONVENIO VENCIDO";
+
+  return formatDate(rawDate);
+};
+
 
   const handleRowClick = (hotel: FullHotelData) => {
     console.log("Hotel seleccionado:", hotel);
