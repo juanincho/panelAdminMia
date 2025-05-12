@@ -775,14 +775,14 @@ function App({
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Código
+                    Folio
                   </th>
-                  <th
+                  {/* <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     ID Servicio
-                  </th>
+                  </th> */}
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
@@ -793,7 +793,7 @@ function App({
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Hotel
+                    Proveedor
                   </th>
                   <th
                     scope="col"
@@ -811,19 +811,19 @@ function App({
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Habitación
+                    sencilla / doble / triple / cuadruple
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Total
+                    PRECIO TOTAL DE VENTA CLIENTE CON IMPUESTOS
                   </th>
                   <th
                     scope="col"
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
-                    Estado
+                    ESTATUS DE LA RESERVACIÓN
                   </th>
                   <th
                     scope="col"
@@ -860,14 +860,14 @@ function App({
                             : "Contado"}{" "}
                         </span>
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {/* <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span
                           className="truncate max-w-[120px] inline-block"
                           title={item.id_servicio}
                         >
                           {item.id_servicio.substring(0, 10)}...
                         </span>
-                      </td>
+                      </td> */}
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         <span
                           className="truncate max-w-[120px] inline-block"
@@ -876,7 +876,7 @@ function App({
                           {item.primer_nombre || ""}{" "}
                           {item.apellido_paterno || ""}{" "}
                           {item.primer_nombre ||
-                            item.id_viajero.substring(0, 10)}
+                            item.nombre_viajero}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
