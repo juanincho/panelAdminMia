@@ -277,6 +277,9 @@ interface DeleteTarifaPreferencialProps {
   id_tarifa_preferencial_sencilla?: number | null;
   id_tarifa_preferencial_doble?: number | null;
 }
+export function quitarAcentos(texto) {
+  return texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
 
 const estadosMX = [
   "AGUASCALIENTES",
@@ -367,7 +370,11 @@ const extractNotesSection = (notes: string, section: string): string => {
 const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
-      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
+
+      //`https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+       `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+      ,
+
       {
         method: "GET",
         headers: {
@@ -391,7 +398,9 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
 const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
-      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      //`${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      `http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      ,
       {
         method: "GET",
         headers: {
@@ -704,7 +713,10 @@ export function HotelDialog({
   const fetchHotelRates = async (idHotel: string) => {
     try {
       setIsFetchingRates(true);
-      const response = await fetch(`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`, {
+      const response = await fetch(
+        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        , {
         method: "GET",
         headers: {
           "x-api-key": API_KEY,
@@ -874,8 +886,8 @@ export function HotelDialog({
           const primerResultado = data[0];
           setFormData(prev => ({
             ...prev,
-            Estado: primerResultado.d_estado.toUpperCase(),
-            municipio: primerResultado.D_mnpio.toUpperCase(),
+            Estado: quitarAcentos(primerResultado.d_estado.toUpperCase()),
+            municipio: quitarAcentos(primerResultado.D_mnpio.toUpperCase()),
             idSepomex: primerResultado.id
           }));
         }
@@ -1104,7 +1116,9 @@ export function HotelDialog({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-hotel/`,
+        // `${URL_VERCEL}hoteles/Eliminar-hotel/`
+        `http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`
+        ,
         {
           method: "PATCH",
           headers: {
@@ -1148,7 +1162,9 @@ export function HotelDialog({
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
+        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        ,
         {
           method: "GET",
           headers: {
@@ -1212,7 +1228,7 @@ export function HotelDialog({
         otros_impuestos: formData.otros_impuestos || null,
         otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje || null,
         MenoresEdad: formData.MenoresEdad || null,
-        paxExtraPersona: formData.precio_persona_extra || null,
+        paxExtraPersona: formData.doble.precio_persona_extra || null,
         Transportacion: formData.Transportacion || null,
         TransportacionComentarios: formData.TransportacionComentarios || null,
         mascotas: formData.mascotas || null,
@@ -1230,7 +1246,9 @@ export function HotelDialog({
       console.log("Actualizando hotel:", hotelPayload);
       
       const hotelResponse = await fetch(
-       `${URL_VERCEL}hoteles/Editar-hotel/`,
+       //`${URL_VERCEL}hoteles/Editar-hotel/`
+       `http://localhost:5173/v1/mia/hoteles/Editar-hotel/`
+       ,
         {
           method: "PATCH",
           headers: {
@@ -1280,7 +1298,7 @@ export function HotelDialog({
         precio_noche_extra: formatNumber(formData.doble.precio_noche_extra),
         comentario_desayuno: formData.doble.comentarios,
         tipo_desayuno: formData.doble.tipo_desayuno,
-        precio_persona_extra: formatNumber(formData.precio_persona_extra)
+        precio_persona_extra: formatNumber(formData.doble.precio_persona_extra)
       };
   
       // 3. Update preferential rates
@@ -1329,7 +1347,10 @@ export function HotelDialog({
       const allTarifasPayloads = [sencillaPayload, doblePayload, ...tarifasPreferencialesPayloads];
       
       const tarifasPromises = allTarifasPayloads.map(payload => 
-        fetch(`${URL_VERCEL}hoteles/Actualiza-tarifa`, {
+        fetch(
+          //`${URL_VERCEL}hoteles/Actualiza-tarifa`
+          `http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`
+          , {
           method: "PATCH",
           headers: {
             "x-api-key": API_KEY,
@@ -1374,7 +1395,9 @@ export function HotelDialog({
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
+        // `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
+        `http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        ,
         {
           method: "PATCH",
           headers: {
@@ -1918,7 +1941,7 @@ style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' 
                       id="precio_persona_extra"
                       placeholder="0.00"
                       value={formData.doble.precio_persona_extra}
-                      onChange={(e) => handleChange("precio_persona_extra", e.target.value)} 
+                      onChange={(e) => handleChange("doble.precio_persona_extra", e.target.value)} 
                       disabled={mode === "view"}
                       style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' } : {}}
                       className="font-medium"

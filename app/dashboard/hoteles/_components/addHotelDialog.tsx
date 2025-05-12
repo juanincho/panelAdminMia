@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { quitarAcentos } from "./hotel-dialog";
 
 // Interfaces
 interface CodigoPostalData {
@@ -347,9 +348,9 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
           const primerResultado = data[0];
           setFormData(prev => ({
             ...prev,
-            estado: primerResultado.d_estado,
-            ciudad_zona: primerResultado.d_ciudad,
-            municipio: primerResultado.D_mnpio,
+            estado: quitarAcentos(primerResultado.d_estado.toUpperCase()),
+            ciudad_zona: quitarAcentos(primerResultado.d_ciudad.toUpperCase()),
+            municipio: quitarAcentos(primerResultado.D_mnpio.toUpperCase()),
             id_sepomex: primerResultado.id.toString()
           }));
         }
@@ -604,94 +605,121 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
       const combinedNotes = combineNotes();
       
       const payload = {
-        id_excel: formData.id_excel ? Number(formData.id_excel) : null,
-        tipo_negociacion: formData.tipo_negociacion || null,
-        vigencia_convenio: formData.hay_convenio ? formData.vigencia_convenio : null,
-        comentario_vigencia: !formData.hay_convenio ? formData.comentario_vigencia : null,
-        nombre: formData.nombre,
-        id_cadena: 11,
-        rfc: formData.rfc || null,
-        razon_social: formData.razon_social || null,
-        direccion: direccionCompleta,
-        latitud: formData.latitud || null,
-        longitud: formData.longitud || null,
-        estado: formData.estado,
-        ciudad_zona: formData.ciudad_zona,
-        codigoPostal: formData.codigoPostal,
-        colonia: formData.colonia,
-        tipo_hospedaje: formData.tipo_hospedaje || 'hotel',
-        tipo_pago: formData.tipo_pago || null,
-        disponibilidad_precio: formData.disponibilidad_precio || null,
-        contacto_convenio: formData.contacto_convenio || null,
-        contacto_recepcion: formData.contacto_recepcion || null,
-        iva: formData.iva ? Number(formData.iva) : null,
-        ish: formData.ish ? Number(formData.ish) : null,
-        otros_impuestos: formData.otros_impuestos ? Number(formData.otros_impuestos) : null,
-        otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje ? Number(formData.otros_impuestos_porcentaje) : null,
-        menoresEdad: formData.menoresEdad || null,
-        paxExtraPersona: formData.precio_persona_extra || null,
-        transportacion: formData.transportacion || null,
-        transportacionComentarios: formData.transportacionComentarios || null,
-        mascotas: formData.mascotas || null,
-        salones: formData.salones || null,
-        urlImagenHotel: formData.urlImagenHotel || null,
-        urlImagenHotelQ: formData.urlImagenHotelQ || null,
-        urlImagenHotelQQ: formData.urlImagenHotelQQ || null,
-        calificacion: formData.calificacion ? Number(formData.calificacion) : null,
-        activo: formData.activo !== undefined ? formData.activo : 1,
-        id_sepomex: formData.id_sepomex,
-        Comentarios: combinedNotes || null,
-        comentario_pago: formData.comentario_pago || null,
-        tarifas: {
-          general: {
-            costo_q: formatNumber(formData.costo_q) || "0.00",
-            precio_q: formatNumber(formData.precio_q) || "0.00",
-            costo_qq: formatNumber(formData.costo_qq) || "0.00",
-            precio_qq: formatNumber(formData.precio_qq) || "0.00",
-            precio_persona_extra: formatNumber(formData.precio_persona_extra),
-            sencilla: {
-              incluye: formData.sencilla.incluye,
-              tipo_desayuno: formData.sencilla.tipo_desayuno || null,
-              precio: formData.sencilla.incluye ? formatNumber(formData.sencilla.precio) : null,
-              comentarios: formData.sencilla.comentarios || null,
-              precio_noche_extra: null,
-            },
-            doble: {
-              incluye: formData.doble.incluye,
-              tipo_desayuno: formData.doble.tipo_desayuno || null,
-              precio: formData.doble.incluye ? formatNumber(formData.doble.precio) : null,
-              comentarios: formData.doble.comentarios || null,
-              precio_persona_extra: formatNumber(formData.precio_persona_extra) || null,
-              precio_noche_extra: null,
-            },
-          },
-          preferenciales: tarifasPreferenciales.map(t => ({
-            id_agente: t.id_agente || null,
-            costo_q: formatNumber(t.costo_q) || "0.00",
-            precio_q: formatNumber(t.precio_q) || "0.00",
-            costo_qq: formatNumber(t.costo_qq) || "0.00",
-            precio_qq: formatNumber(t.precio_qq) || "0.00",
-            sencilla: {
-              incluye: t.sencilla.incluye,
-              tipo_desayuno: t.sencilla.tipo_desayuno || null,
-              precio: t.sencilla.incluye ? formatNumber(t.sencilla.precio) : null,
-              comentarios: t.sencilla.comentarios || null,
-              precio_noche_extra: null,
-            },
-            doble: {
-              incluye: t.doble.incluye,
-              tipo_desayuno: t.doble.tipo_desayuno || null,
-              precio: t.doble.incluye ? formatNumber(t.doble.precio) : null,
-              comentarios: t.doble.comentarios || null,
-              // No precio_persona_extra for preferential rates
-              precio_noche_extra: null,
-            },
-          }))
-        }
-      };
+  id_excel: formData.id_excel ? Number(formData.id_excel) : null,
+  tipo_negociacion: formData.tipo_negociacion || null,
+  vigencia_convenio: formData.hay_convenio ? formData.vigencia_convenio : null,
+  comentario_vigencia: !formData.hay_convenio ? formData.comentario_vigencia : null,
+  nombre: formData.nombre,
+  id_cadena: 11,
+  rfc: formData.rfc || null,
+  razon_social: formData.razon_social || null,
+  direccion: direccionCompleta,
+  latitud: formData.latitud || null,
+  longitud: formData.longitud || null,
+  estado: formData.estado,
+  ciudad_zona: formData.ciudad_zona,
+  codigoPostal: formData.codigoPostal,
+  colonia: formData.colonia,
+  tipo_hospedaje: formData.tipo_hospedaje || 'hotel',
+  tipo_pago: formData.tipo_pago || null,
+  disponibilidad_precio: formData.disponibilidad_precio || null,
+  contacto_convenio: formData.contacto_convenio || null,
+  contacto_recepcion: formData.contacto_recepcion || null,
+  iva: formData.iva ? Number(formData.iva) : null,
+  ish: formData.ish ? Number(formData.ish) : null,
+  otros_impuestos: formData.otros_impuestos ? Number(formData.otros_impuestos) : null,
+  otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje
+    ? Number(formData.otros_impuestos_porcentaje)
+    : null,
+  menoresEdad: formData.menoresEdad || null,
+  paxExtraPersona: formData.doble.precio_persona_extra
+    ? Number(formData.doble.precio_persona_extra)
+    : null,
+  transportacion: formData.transportacion || null,
+  transportacionComentarios: formData.transportacionComentarios || null,
+  mascotas: formData.mascotas || null,
+  salones: formData.salones || null,
+  urlImagenHotel: formData.urlImagenHotel || null,
+  urlImagenHotelQ: formData.urlImagenHotelQ || null,
+  urlImagenHotelQQ: formData.urlImagenHotelQQ || null,
+  comentario_pago: formData.comentario_pago || null,
+  calificacion: formData.calificacion ? Number(formData.calificacion) : null,
+  id_sepomex: formData.id_sepomex || null,
+  Comentarios: combinedNotes || null,
+  activo: formData.activo !== undefined ? formData.activo : 1,
+  tarifas: {
+    general: {
+      costo_q:    formatNumber(formData.costo_q)    || "0.00",
+      precio_q:   formatNumber(formData.precio_q)   || "0.00",
+      costo_qq:   formatNumber(formData.costo_qq)   || "0.00",
+      precio_qq:  formatNumber(formData.precio_qq)  || "0.00",
+      precio_persona_extra: formData.doble.precio_persona_extra
+        ? formatNumber(formData.doble.precio_persona_extra)
+        : null,
+
+      sencilla: {
+        incluye:          formData.sencilla.incluye,
+        tipo_desayuno:    formData.sencilla.tipo_desayuno || null,
+        precio:           formData.sencilla.incluye
+                           ? formatNumber(formData.sencilla.precio)
+                           : null,
+        comentarios:      formData.sencilla.comentarios || null,
+        precio_noche_extra: formData.sencilla.precio_noche_extra
+                             ? formatNumber(formData.sencilla.precio_noche_extra)
+                             : null,
+      },
+
+      doble: {
+        incluye:          formData.doble.incluye,
+        tipo_desayuno:    formData.doble.tipo_desayuno || null,
+        precio:           formData.doble.incluye
+                           ? formatNumber(formData.doble.precio)
+                           : null,
+        comentarios:      formData.doble.comentarios || null,
+        precio_persona_extra: formData.doble.precio_persona_extra
+                             ? formatNumber(formData.doble.precio_persona_extra)
+                             : null,
+        precio_noche_extra: formData.doble.precio_noche_extra
+                             ? formatNumber(formData.doble.precio_noche_extra)
+                             : null,
+      },
+    },
+
+    preferenciales: tarifasPreferenciales.map(t => ({
+      id_agente: t.id_agente || null,
+      costo_q:   formatNumber(t.costo_q)   || "0.00",
+      precio_q:  formatNumber(t.precio_q)  || "0.00",
+      costo_qq:  formatNumber(t.costo_qq)  || "0.00",
+      precio_qq: formatNumber(t.precio_qq) || "0.00",
+
+      sencilla: {
+        incluye: t.sencilla.incluye,
+        tipo_desayuno: t.sencilla.tipo_desayuno || null,
+        precio: t.sencilla.incluye
+                 ? formatNumber(t.sencilla.precio)
+                 : null,
+        comentarios: t.sencilla.comentarios || null,
+        precio_noche_extra: null,
+      },
+
+      doble: {
+        incluye: t.doble.incluye,
+        tipo_desayuno: t.doble.tipo_desayuno || null,
+        precio: t.doble.incluye
+                 ? formatNumber(t.doble.precio)
+                 : null,
+        comentarios: t.doble.comentarios || null,
+        precio_noche_extra: null,
+      },
+    })),
+  },
+};
 
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Agregar-hotel/`,
+        "http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
+        //`${URL_VERCEL}hoteles/Agregar-hotel/`
+         
+        ,
         {
           method: "POST",
           headers: {
@@ -997,7 +1025,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                     <SelectContent>
                       {colonias.map((colonia) => (
                         <SelectItem key={colonia.id} value={colonia.id.toString()}>
-                          {colonia.d_asenta.toUpperCase()}
+                          {quitarAcentos(colonia.d_asenta.toUpperCase())}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -1143,8 +1171,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                     id="precio_persona_extra"
                     type="number" 
                     placeholder="0.00"
-                    value={formData.precio_persona_extra} 
-                    onChange={(e) => handleChange("precio_persona_extra", e.target.value)} 
+                    value={formData.doble.precio_persona_extra} 
+                    onChange={(e) => handleChange("doble.precio_persona_extra", e.target.value)} 
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
