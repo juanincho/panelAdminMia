@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -49,7 +49,6 @@ export default function AgentDetailsCard(props) {
     queryFn: async () => {
       try {
         const response = fetchAgenteById(props.agente);
-
         return response;
       } catch (error) {
         console.error("Error fetching agent:", error);
@@ -57,6 +56,20 @@ export default function AgentDetailsCard(props) {
       }
     },
   });
+  useEffect(() => {
+    if (agent) {
+      setFormData({
+        ...agent,
+        fecha_nacimiento: agent.fecha_nacimiento
+          ? format(new Date(agent.fecha_nacimiento), "yyyy-MM-dd")
+          : null,
+        empresas: agent.empresas.map((company) => ({
+          ...company,
+          razon_social: company.razon_social || "",
+        })),
+      });
+    }
+  }, [agent]);
 
   const [formData, setFormData] = useState<Agent | null>(agent || null);
 
@@ -89,24 +102,25 @@ export default function AgentDetailsCard(props) {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof Agent
   ) => {
+    console.log("Campo cambiado:", field, e.target.value);
     setFormData((prev) => {
       if (!prev) return prev;
 
       // Manejo especial para campos booleanos (como checkboxes)
-      if (field === "tiene_credito_consolidado") {
-        return {
-          ...prev,
-          [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
-        };
-      }
+      // if (field === "tiene_credito_consolidado") {
+      //   return {
+      //     ...prev,
+      //     [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
+      //   };
+      // }
 
       // Manejo especial para campos numéricos
-      if (field === "monto_credito") {
-        return {
-          ...prev,
-          [field]: Number(e.target.value),
-        };
-      }
+      // if (field === "monto_credito") {
+      //   return {
+      //     ...prev,
+      //     [field]: Number(e.target.value),
+      //   };
+      // }
 
       // Para todos los demás campos (strings)
       return {
@@ -213,7 +227,7 @@ export default function AgentDetailsCard(props) {
             <Label htmlFor="nacionalidad">Nacionalidad</Label>
             <select
               name="nacionalidad"
-              defaultValue={formData?.nacionalidad || ""}
+              value={formData?.nacionalidad || ""}
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(e) => handleInputChange(e, "nacionalidad")}
               disabled={!isEditing}

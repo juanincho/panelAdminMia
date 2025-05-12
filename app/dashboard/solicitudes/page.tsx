@@ -4,13 +4,9 @@ import { API_KEY } from "../../constants/constantes";
 
 export default async function Dashboard() {
   try {
-    const endpoints = [
-      "https://mianoktos.vercel.app/v1/mia/viajeros",
-      "https://mianoktos.vercel.app/v1/mia/impuestos",
-      "https://mianoktos.vercel.app/v1/mia/hoteles",
-    ];
+    const endpoints = ["https://mianoktos.vercel.app/v1/mia/hoteles"];
 
-    const [viajeros, impuestos, hoteles] = await Promise.all(
+    const [hoteles] = await Promise.all(
       endpoints.map((endpoint) =>
         fetch(endpoint, {
           headers: {
@@ -24,11 +20,7 @@ export default async function Dashboard() {
 
     return (
       <Suspense fallback={<div>Cargando...</div>}>
-        <DashboardModuleWrapper
-          viajeros={viajeros}
-          impuestos={impuestos}
-          hoteles={hoteles}
-        />
+        <DashboardModuleWrapper hoteles={hoteles} />
       </Suspense>
     );
   } catch (error) {

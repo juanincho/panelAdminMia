@@ -103,6 +103,7 @@ const mockTravelers: Traveler[] = [
 
 export default function TravelersTable() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [countTravelers, setCountTravelers] = useState(0);
   const [expandedTraveler, setExpandedTraveler] = useState<string | null>(null);
 
   const {
@@ -114,6 +115,7 @@ export default function TravelersTable() {
     queryFn: async () => {
       try {
         const response: Traveler[] = await fetchAgentes();
+        setCountTravelers(response.length);
         return response;
       } catch (error) {
         console.error("Error fetching travelers:", error);
@@ -191,7 +193,7 @@ export default function TravelersTable() {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-[1200px] mx-auto">
       <div className="px-6 py-4 border-b border-gray-200">
-        <h2 className="text-2xl font-bold text-gray-800">Viajeros</h2>
+        <h2 className="text-2xl font-bold text-gray-800">Clientes</h2>
       </div>
       <div className="p-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -204,6 +206,10 @@ export default function TravelersTable() {
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full pl-8 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
             />
+          </div>
+          <div className="text-gray-500 text-sm">
+            {countTravelers} {countTravelers === 1 ? "viajero" : "viajeros"}{" "}
+            encontrados
           </div>
         </div>
 

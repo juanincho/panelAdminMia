@@ -43,16 +43,12 @@ import {
   Hotel,
   NightCost,
   PaymentMethod,
-  Room,
-  Solicitud,
-  Tax,
   Traveler,
 } from "@/app/_types/reservas";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
   hotels: Hotel[];
-  travelers: Traveler[];
   onClose: () => void;
 }
 
@@ -176,10 +172,7 @@ export function ReservationForm({
       setSelectedTraveler(solicitud.id_viajero.toString());
       setCheckIn(solicitud.check_in.split("T")[0]);
       setCheckOut(solicitud.check_out.split("T")[0]);
-      setTotalSalePrice(solicitud.total);
-      setReservationStatus(
-        solicitud.status === "complete" ? "Confirmada" : solicitud.status
-      );
+      setTotalSalePrice(Number(solicitud.total));
 
       // Set confirmation code if available
       if (solicitud.confirmation_code) {
@@ -311,7 +304,7 @@ export function ReservationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 mx-5 rounded-md shadow-md bg-white p-4"
+      className="space-y-6 mx-5 overflow-y-auto rounded-md shadow-md bg-white p-4"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
@@ -322,6 +315,14 @@ export function ReservationForm({
 
         <TabsContent value="cliente" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2 col-span-2">
+              <Label>Código de Reserva del Hotel</Label>
+              <Input
+                value={hotelReservationCode}
+                onChange={(e) => setHotelReservationCode(e.target.value)}
+                placeholder={solicitud.confirmation_code || "Ej: RES123456"}
+              />
+            </div>
             <div className="space-y-2">
               <Label>Hotel</Label>
 
@@ -513,14 +514,6 @@ export function ReservationForm({
         <TabsContent value="proveedor" className="space-y-4">
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Código de Reserva del Hotel</Label>
-                <Input
-                  value={hotelReservationCode}
-                  onChange={(e) => setHotelReservationCode(e.target.value)}
-                  placeholder={solicitud.confirmation_code || "Ej: RES123456"}
-                />
-              </div>
               <div className="space-y-2">
                 <Label>Costo Subtotal</Label>
                 <Input

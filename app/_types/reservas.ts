@@ -53,20 +53,6 @@ export interface Traveler {
   numero_pasaporte: string | null;
   numero_empleado: string | null;
 }
-export interface Solicitud {
-  id_usuario_generador: any;
-  id_servicio: string;
-  id_solicitud: string;
-  confirmation_code: string;
-  id_viajero: number;
-  hotel: string;
-  check_in: string;
-  check_out: string;
-  room: string;
-  total: number;
-  status: string;
-  created_at: string;
-}
 
 export interface ReservationFormProps {
   solicitud: Solicitud;

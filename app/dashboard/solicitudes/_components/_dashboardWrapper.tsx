@@ -5,12 +5,8 @@ import DashboardModule from "./_dashboard";
 import { API_KEY } from "@/services/constant";
 
 export default function DashboardModuleWrapper({
-  viajeros,
-  impuestos,
   hoteles,
 }: {
-  viajeros: any[];
-  impuestos: any[];
   hoteles: any[];
 }) {
   const [solicitudes, setSolicitudes] = useState<any[]>([]);
@@ -36,12 +32,5 @@ export default function DashboardModuleWrapper({
     return () => clearInterval(interval); // Limpieza
   }, []);
 
-  return (
-    <DashboardModule
-      data={solicitudes}
-      viajeros={viajeros}
-      impuestos={impuestos}
-      hoteles={hoteles}
-    />
-  );
+  return <DashboardModule data={solicitudes} hoteles={hoteles} />;
 }
