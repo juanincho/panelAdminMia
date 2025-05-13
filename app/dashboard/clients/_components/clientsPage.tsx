@@ -12,6 +12,7 @@ import {
   Mail,
   Calendar,
   Search,
+  Phone,
 } from "lucide-react";
 import { fetchAgentes } from "@/services/agentes";
 import Link from "next/link";
@@ -146,11 +147,9 @@ export default function TravelersTable() {
   }
 
   const filteredTravelers = travelers.filter((traveler) => {
-    const fullName = `${traveler.primer_nombre || ""} ${
-      traveler.segundo_nombre || ""
-    } ${traveler.apellido_paterno || ""} ${
-      traveler.apellido_materno || ""
-    }`.toLowerCase();
+    const fullName = `${traveler.primer_nombre || ""} ${traveler.segundo_nombre || ""
+      } ${traveler.apellido_paterno || ""} ${traveler.apellido_materno || ""
+      }`.toLowerCase();
     const email = traveler.correo?.toLowerCase() || "";
     const telefono = traveler.telefono?.toString() || "";
 
@@ -224,6 +223,9 @@ export default function TravelersTable() {
                     Empresas
                   </th>
                   <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Telefono
+                  </th>
+                  <th className="py-3 px-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Credito
                   </th>
                 </tr>
@@ -242,11 +244,10 @@ export default function TravelersTable() {
                     <>
                       <tr
                         key={traveler.id_viajero}
-                        className={`hover:bg-gray-50 transition-colors ${
-                          expandedTraveler === traveler.id_viajero
+                        className={`hover:bg-gray-50 transition-colors ${expandedTraveler === traveler.id_viajero
                             ? "bg-blue-50"
                             : ""
-                        }`}
+                          }`}
                       >
                         <td
                           className="py-4 px-4"
@@ -303,11 +304,19 @@ export default function TravelersTable() {
                           <div className="flex items-center">
                             <Building2 className="h-4 w-4 text-gray-400 mr-2" />
                             <span>
-                              {traveler.empresas.length}{" "}
-                              {traveler.empresas.length === 1
-                                ? "empresa"
-                                : "empresas"}
+                              {traveler.empresas.map((empresa, index) => (
+                                <span key={index}>
+                                  {empresa.razon_social} {/* Suponiendo que cada empresa tiene una propiedad 'nombre' */}
+                                  {index < traveler.empresas.length - 1 && ", "}
+                                </span>
+                              ))}
                             </span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-4">
+                          <div className="flex items-center">
+                            <Phone className="h-4 w-4 text-gray-400 mr-2" />
+                            <span>{traveler.telefono}</span>
                           </div>
                         </td>
                         <td className="py-4 px-4">

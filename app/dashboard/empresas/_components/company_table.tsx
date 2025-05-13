@@ -28,7 +28,7 @@ export function CompanyTable() {
     const fetchCompanies = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3001/v1/mia/empresas/getAll",
+          "https://mianoktos.vercel.app/v1/mia/empresas",
           {
             method: "GET",
             headers: {
@@ -45,6 +45,7 @@ export function CompanyTable() {
           throw new Error("Error fetching companies");
         }
         setCompanies(json || []);
+        
       } catch (error) {
         setCompanies([]);
         console.error("Error fetching companies:", error);
