@@ -7,3 +7,17 @@ export const formatDate = (dateString: string) => {
     year: "numeric",
   });
 };
+
+export const formatRoom = (room: string) => {
+  let response = room;
+  if (response.toUpperCase() == "SINGLE") {
+    response = "SENCILLA";
+  } else if (response.toUpperCase() == "DOUBLE") {
+    response = "DOBLE";
+  }
+  return response;
+};
+
+function quitarAcentos(texto) {
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
