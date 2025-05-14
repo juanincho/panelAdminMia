@@ -31,6 +31,7 @@ export interface FullHotelData {
   NoktosQQ?: number;
   MenoresEdad?: string;
   PaxExtraPersona?: string;
+  PaxExtraPersona2?: string;
   DesayunoIncluido?: string;
   DesayunoComentarios?: string;
   DesayunoPrecioPorPersona?: string;
@@ -58,7 +59,7 @@ export function HotelContainer() {
     null
   );
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [totalPages, setTotalPages] = useState(10);
   const [totalItems, setTotalItems] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -75,6 +76,7 @@ export function HotelContainer() {
   };
 
   const fetchHotels = async (page: number, search: string = "") => {
+    console.log(page)
     setIsLoading(true);
     try {
       const params = new URLSearchParams();
@@ -99,12 +101,15 @@ export function HotelContainer() {
       if (!response.ok) throw new Error("Error al cargar hoteles");
 
       const result = await response.json();
-      const hotels = result.hoteles || [];
-
+      console.log("revisando estructura",result)
+      const raw = result.hoteles;
+      const hotels = Array.isArray(raw) ? Array.isArray(raw[0]) ? raw[0] : raw  : [];
+      const info_pag = result.info || [];
+      console.log("revisando el acceso a la segunda query",info_pag)
       setHotelData(hotels);
-      setTotalPages(result.total_paginas || 1);
-      setTotalItems(result.total_registros || hotels.length);
-      setCurrentPage(result.pagina || page);
+      setTotalPages(info_pag.total_paginas || 1);
+      setTotalItems(info_pag.total_registros || hotels.length);
+      setCurrentPage(page);
       setSearchTerm(search);
     } catch (error) {
       console.error("Error:", error);
@@ -125,6 +130,7 @@ export function HotelContainer() {
     const params = new URLSearchParams();
     params.set("pagina", "1");
     router.push(`${pathname}?${params.toString()}`);
+    setSearchTerm("")
     fetchHotels(1, "");
   };
 
@@ -146,6 +152,7 @@ export function HotelContainer() {
                   params.set("pagina", "1");
                   params.set("termino", term);
                   router.push(`${pathname}?${params.toString()}`);
+                  setSearchTerm(term)
                 }}
                 initialValue={searchTerm}
                 isLoading={isLoading}

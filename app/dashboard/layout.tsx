@@ -1,3 +1,7 @@
+export const metadata = {
+  title: "MIA - Operaciones",
+};
+
 export default function DashboardLayout({
   children,
 }: {

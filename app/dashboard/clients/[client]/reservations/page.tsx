@@ -38,11 +38,13 @@ interface Reservation {
 type TabType = "operaciones" | "pagos" | "facturas" | "cuentas-cobrar";
 
 // Utility Functions
-const formatDate = (dateString: string): string => {
-  return new Date(dateString).toLocaleDateString("es-MX", {
+const formatDate = (dateString: string) => {
+  const [year, month, day] = dateString.split("T")[0].split("-");
+  const date = new Date(+year, +month - 1, +day);
+  return date.toLocaleDateString("es-MX", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
-    month: "short",
-    day: "numeric",
   });
 };
 

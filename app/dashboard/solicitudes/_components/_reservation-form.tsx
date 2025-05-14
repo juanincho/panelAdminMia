@@ -43,16 +43,12 @@ import {
   Hotel,
   NightCost,
   PaymentMethod,
-  Room,
-  Solicitud,
-  Tax,
   Traveler,
 } from "@/app/_types/reservas";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
   hotels: Hotel[];
-  travelers: Traveler[];
   onClose: () => void;
 }
 
@@ -90,6 +86,7 @@ export function ReservationForm({
 }: ReservationFormProps) {
   const [travelers, setTravelers] = useState([]);
   const [activeTab, setActiveTab] = useState("cliente");
+  const [comments, setComments] = useState("");
   const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [selectedTraveler, setSelectedTraveler] = useState<string>("");
@@ -175,10 +172,7 @@ export function ReservationForm({
       setSelectedTraveler(solicitud.id_viajero.toString());
       setCheckIn(solicitud.check_in.split("T")[0]);
       setCheckOut(solicitud.check_out.split("T")[0]);
-      setTotalSalePrice(solicitud.total);
-      setReservationStatus(
-        solicitud.status === "complete" ? "Confirmada" : solicitud.status
-      );
+      setTotalSalePrice(Number(solicitud.total));
 
       // Set confirmation code if available
       if (solicitud.confirmation_code) {
@@ -241,6 +235,7 @@ export function ReservationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log(selectedHotelData);
 
     const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
     const reservation = {
@@ -262,6 +257,7 @@ export function ReservationForm({
       check_in: checkIn,
       check_out: checkOut,
       id_viajero: selectedTraveler,
+      id_hotel: selectedHotelData.id_hotel,
       nombre_hotel: selectedHotelData?.nombre_hotel || originalHotel,
       total: totalSalePrice,
       subtotal: totalSalePrice / 1.16,
@@ -270,6 +266,7 @@ export function ReservationForm({
       noches: nightsCount,
       costo_subtotal: totalCost,
       costo_total: totalCostWithTaxes,
+      comments: comments,
       costo_impuestos: totalCostWithTaxes - totalCost,
       codigo_reservacion_hotel:
         hotelReservationCode || solicitud.confirmation_code,
@@ -307,7 +304,7 @@ export function ReservationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 mx-5 rounded-md shadow-md bg-white p-4"
+      className="space-y-6 mx-5 overflow-y-auto rounded-md shadow-md bg-white p-4"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-3">
@@ -318,6 +315,14 @@ export function ReservationForm({
 
         <TabsContent value="cliente" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2 col-span-2">
+              <Label>Código de Reserva del Hotel</Label>
+              <Input
+                value={hotelReservationCode}
+                onChange={(e) => setHotelReservationCode(e.target.value)}
+                placeholder={solicitud.confirmation_code || "Ej: RES123456"}
+              />
+            </div>
             <div className="space-y-2">
               <Label>Hotel</Label>
 
@@ -445,6 +450,7 @@ export function ReservationForm({
                     type="text"
                     disabled
                     value={[
+                      solicitud.nombre_viajero,
                       solicitud.primer_nombre,
                       solicitud.apellido_paterno,
                       solicitud.id_viajero.includes("via-")
@@ -478,20 +484,29 @@ export function ReservationForm({
             </div>
 
             <div className="space-y-2">
-              <Label>Estado de la Reserva</Label>
-              <Select
-                value={reservationStatus}
-                onValueChange={setReservationStatus}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Confirmada">Confirmada</SelectItem>
-                  <SelectItem value="Cancelada">Cancelada</SelectItem>
-                  <SelectItem value="En proceso">En proceso</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-2">
+                <Label>Estado de la Reserva</Label>
+                <Select
+                  value={reservationStatus}
+                  onValueChange={setReservationStatus}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Confirmada">Confirmada</SelectItem>
+                    <SelectItem value="Cancelada">Cancelada</SelectItem>
+                    <SelectItem value="En proceso">En proceso</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Comentarios de la reserva</Label>
+                <Textarea
+                  onChange={(e) => setComments(e.target.value)}
+                  value={comments}
+                ></Textarea>
+              </div>
             </div>
           </div>
         </TabsContent>
@@ -499,14 +514,6 @@ export function ReservationForm({
         <TabsContent value="proveedor" className="space-y-4">
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Código de Reserva del Hotel</Label>
-                <Input
-                  value={hotelReservationCode}
-                  onChange={(e) => setHotelReservationCode(e.target.value)}
-                  placeholder={solicitud.confirmation_code || "Ej: RES123456"}
-                />
-              </div>
               <div className="space-y-2">
                 <Label>Costo Subtotal</Label>
                 <Input

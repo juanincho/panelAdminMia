@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -50,9 +52,8 @@ export default function AgentDetailsCard(props) {
     queryFn: async ({ queryKey }) => {
       const [, agenteId] = queryKey;
       try {
-        console.log("Fetching agent with ID:", agenteId); // Debug
         const response = await fetchAgenteById(agenteId);
-        console.log("API response:", response); // Debug
+
         return response;
       } catch (error) {
         console.error("Error fetching agent:", error);
@@ -62,6 +63,20 @@ export default function AgentDetailsCard(props) {
     staleTime: 0,
     refetchOnMount: "always",
   });
+  useEffect(() => {
+    if (agent) {
+      setFormData({
+        ...agent,
+        fecha_nacimiento: agent.fecha_nacimiento
+          ? format(new Date(agent.fecha_nacimiento), "yyyy-MM-dd")
+          : null,
+        empresas: agent.empresas.map((company) => ({
+          ...company,
+          razon_social: company.razon_social || "",
+        })),
+      });
+    }
+  }, [agent]);
 
   useEffect(() => {
     if (agent) {
@@ -103,24 +118,25 @@ export default function AgentDetailsCard(props) {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
     field: keyof Agent
   ) => {
+    console.log("Campo cambiado:", field, e.target.value);
     setFormData((prev) => {
       if (!prev) return prev;
 
       // Manejo especial para campos booleanos (como checkboxes)
-      if (field === "tiene_credito_consolidado") {
-        return {
-          ...prev,
-          [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
-        };
-      }
+      // if (field === "tiene_credito_consolidado") {
+      //   return {
+      //     ...prev,
+      //     [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
+      //   };
+      // }
 
       // Manejo especial para campos numéricos
-      if (field === "monto_credito") {
-        return {
-          ...prev,
-          [field]: Number(e.target.value),
-        };
-      }
+      // if (field === "monto_credito") {
+      //   return {
+      //     ...prev,
+      //     [field]: Number(e.target.value),
+      //   };
+      // }
 
       // Para todos los demás campos (strings)
       return {
@@ -133,7 +149,11 @@ export default function AgentDetailsCard(props) {
   const handleSave = async () => {
     console.log(formData);
     try {
-      const responseCompany = await updateViajero(formData, formData.empresas.map(company => company.id_empresa), agent.id_viajero);
+      const responseCompany = await updateViajero(
+        formData,
+        formData.empresas.map((company) => company.id_empresa),
+        agent.id_viajero
+      );
       if (!responseCompany.success) {
         throw new Error("No se pudo actualizar al viajero");
       }
@@ -146,11 +166,13 @@ export default function AgentDetailsCard(props) {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    try {
-      return format(new Date(dateString), "dd MMM yyyy", { locale: es });
-    } catch {
-      return "Fecha inválida";
-    }
+    const [year, month, day] = dateString.split("T")[0].split("-");
+    const date = new Date(+year, +month - 1, +day);
+    return date.toLocaleDateString("es-MX", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
   };
 
   const getFullName = (agent: Agent) => {
@@ -221,8 +243,8 @@ export default function AgentDetailsCard(props) {
             <Label htmlFor="nacionalidad">Nacionalidad</Label>
             <select
               name="nacionalidad"
-              defaultValue={formData?.nacionalidad || ""}
-              className='flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50'
+              value={formData?.nacionalidad || ""}
+              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               onChange={(e) => handleInputChange(e, "nacionalidad")}
               disabled={!isEditing}
             >

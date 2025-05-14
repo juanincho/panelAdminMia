@@ -214,6 +214,7 @@ export function ReservationForm({ hotels, travelers }: ReservationFormProps) {
       check_in: checkIn,
       check_out: checkOut,
       id_viajero: selectedTraveler,
+      id_hotel: selectedHotel,
       nombre_hotel: selectedHotelData?.nombre_hotel,
       total: totalSalePrice,
       subtotal: totalSalePrice / 1.16,
