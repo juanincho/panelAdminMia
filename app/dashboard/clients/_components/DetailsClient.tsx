@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
+
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,21 +42,26 @@ interface Agent {
 
 export default function AgentDetailsCard(props) {
   const [isEditing, setIsEditing] = useState(false);
+
   const {
     data: agent,
     isLoading,
     error,
   } = useQuery<Agent>({
-    queryKey: ["agent"],
-    queryFn: async () => {
+    queryKey: ["agent", props.agente],
+    queryFn: async ({ queryKey }) => {
+      const [, agenteId] = queryKey;
       try {
-        const response = fetchAgenteById(props.agente);
+        const response = await fetchAgenteById(agenteId);
+
         return response;
       } catch (error) {
         console.error("Error fetching agent:", error);
         throw error;
       }
     },
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   useEffect(() => {
     if (agent) {
@@ -70,6 +77,15 @@ export default function AgentDetailsCard(props) {
       });
     }
   }, [agent]);
+
+  useEffect(() => {
+    if (agent) {
+      console.log("Agent data received:", agent); // Debug
+      setFormData(agent);
+    }
+  }, [agent]);
+
+
 
   const [formData, setFormData] = useState<Agent | null>(agent || null);
 
