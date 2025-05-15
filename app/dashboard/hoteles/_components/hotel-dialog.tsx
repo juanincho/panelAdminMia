@@ -371,8 +371,8 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
 
-      //`https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
-       `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+       //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
       ,
 
       {
@@ -398,8 +398,8 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
 const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
-      //`${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
-      `http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
       ,
       {
         method: "GET",
@@ -708,8 +708,8 @@ export function HotelDialog({
     try {
       setIsFetchingRates(true);
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`
-        `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`
         , {
         method: "GET",
         headers: {
@@ -1108,8 +1108,8 @@ export function HotelDialog({
     setIsLoading(true);
     try {
       const response = await fetch(
-        // `${URL_VERCEL}hoteles/Eliminar-hotel/`
-        `http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`
+         `${URL_VERCEL}hoteles/Eliminar-hotel/`
+        //http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`
         ,
         {
           method: "PATCH",
@@ -1154,8 +1154,8 @@ export function HotelDialog({
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
-        `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
         ,
         {
           method: "GET",
@@ -1238,8 +1238,8 @@ export function HotelDialog({
       console.log("Actualizando hotel:", hotelPayload);
       
       const hotelResponse = await fetch(
-       //`${URL_VERCEL}hoteles/Editar-hotel/`
-       `http://localhost:5173/v1/mia/hoteles/Editar-hotel/`
+       `${URL_VERCEL}hoteles/Editar-hotel/`
+       //`http://localhost:5173/v1/mia/hoteles/Editar-hotel/`
        ,
         {
           method: "PATCH",
@@ -1340,8 +1340,8 @@ export function HotelDialog({
       
       const tarifasPromises = allTarifasPayloads.map(payload => 
         fetch(
-          //`${URL_VERCEL}hoteles/Actualiza-tarifa`
-          `http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`
+          `${URL_VERCEL}hoteles/Actualiza-tarifa`
+          //`http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`
           , {
           method: "PATCH",
           headers: {
@@ -1387,8 +1387,8 @@ export function HotelDialog({
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        // `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
-        `http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+         `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
+        //http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`
         ,
         {
           method: "PATCH",
