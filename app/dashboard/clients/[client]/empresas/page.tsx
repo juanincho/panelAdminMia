@@ -326,7 +326,7 @@ const Page = () => {
           empresa_cp: formData.empresa_cp || codigoPostal,
           empresa_colonia: formData.empresa_colonia || colonia,
           tipo_persona: tipoPersona,
-          razon_social: formData.razon_social || formData.nombre_comercial,
+          razon_social: formData.nombre_comercial,
         },
         clientId
       );
@@ -351,7 +351,7 @@ const Page = () => {
           empresa_cp: codigoPostal,
           empresa_colonia: colonia,
           tipo_persona: tipoPersona,
-          razon_social: formData.razon_social || formData.nombre_comercial,
+          razon_social: formData.nombre_comercial,
           // Otros campos que puedan necesitar actualización
         },
         formData.id_empresa,
@@ -656,22 +656,6 @@ const Page = () => {
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
                   </div>
-
-                  {tipoPersona === "moral" && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">
-                        Razón Social
-                      </label>
-                      <input
-                        type="text"
-                        name="razon_social"
-                        defaultValue={selectedCompany?.razon_social || ""}
-                        onChange={handleInputChange}
-                        required
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                  )}
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700">

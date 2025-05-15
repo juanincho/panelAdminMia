@@ -141,6 +141,7 @@ function App({ hoteles }: { hoteles: any }) {
         {/* Reservations Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
           <div className="overflow-x-auto">
+
             <Table registros={formatedSolicitudes} renderers={componentes} />
           </div>
         </div>

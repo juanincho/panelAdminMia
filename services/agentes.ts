@@ -17,7 +17,8 @@ export const fetchAgentes = async () => {
   return data;
 };
 export const fetchAgenteById = async (id) => {
-  const response = await fetch(`${URL}/mia/agentes/id?id=${id}`, {
+  const cleanId = id.split('?')[0];
+  const response = await fetch(`${URL}/mia/agentes/id?id=${cleanId}`, {
     headers: {
       "x-api-key": API_KEY,
       "Cache-Control": "no-cache, no-store, must-revalidate",
