@@ -716,8 +716,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 };
 
       const response = await fetch(
-        "http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
-        //`${URL_VERCEL}hoteles/Agregar-hotel/`
+        // "http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
+        `${URL_VERCEL}hoteles/Agregar-hotel/`
          
         ,
         {
