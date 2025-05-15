@@ -45,6 +45,7 @@ export function CompanyTable() {
           throw new Error("Error fetching companies");
         }
         setCompanies(json || []);
+        
       } catch (error) {
         setCompanies([]);
         console.error("Error fetching companies:", error);

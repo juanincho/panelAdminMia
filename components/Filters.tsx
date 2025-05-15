@@ -1,16 +1,21 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown, Filter, Search, X } from "lucide-react";
 import { on } from "node:events";
-import NumberInput from "./NumberInput";
-
 
 const Filters: React.FC<{
   onFilter: (filters: TypeFilters) => void;
   defaultOpen?: boolean;
   defaultFilters?: TypeFilters;
-}> = ({ onFilter, defaultOpen = false, defaultFilters }) => {
+  searchTerm?: string;
+  setSearchTerm?: (value: string) => void;
+}> = ({
+  onFilter,
+  defaultOpen = false,
+  defaultFilters,
+  searchTerm,
+  setSearchTerm,
+}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const toggleModal = () => {
     setIsOpen(!isOpen);
@@ -26,8 +31,8 @@ const Filters: React.FC<{
           type="text"
           className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Buscar por código, ID, hotel..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchTerm || ""}
+          onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
         />
       </div>
       <div className="flex justify-between items-center gap-4">
@@ -59,18 +64,19 @@ const FiltersModal: React.FC<{
   const [filters, setFilters] = useState<TypeFilters>(defaultFilter || {});
 
   const handleFilter = () => {
+    console.log(filters);
     onFilter(filters);
     onClose();
   };
 
-const handleResetFilters = () => {
-  const cleared: TypeFilters = {};
-  Object.keys(filters).forEach((key) => {
-    cleared[key] = null;
-  });
-  setFilters(defaultFilter || cleared);
-};
-
+  const handleResetFilters = () => {
+    const updateFilters: TypeFilters = filters;
+    Object.keys(filters).forEach((key) => {
+      updateFilters[key] = null;
+    });
+    setFilters(defaultFilter || updateFilters);
+    onFilter(defaultFilter);
+  };
 
   const handleDeleteFilter = (key: string) => {
     const updatedFilters = { ...filters };
@@ -165,9 +171,19 @@ const handleResetFilters = () => {
                 />
               )}
 
+              {"id_client" in filters && (
+                <TextInput
+                  label="ID del cliente"
+                  value={filters.id_client}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, id_client: value }))
+                  }
+                />
+              )}
+
               {"client" in filters && (
                 <TextInput
-                  label="Nombre del cliente"
+                  label="Nombre y RFC del cliente"
                   value={filters.client}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, client: value }))
@@ -209,6 +225,36 @@ const handleResetFilters = () => {
                 />
               )}
 
+              {"reservationStage" in filters && (
+                <Dropdown
+                  label="Etapa Reservación"
+                  value={filters.reservationStage}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      reservationStage: value as
+                        | "Reservado"
+                        | "In house"
+                        | "Check-out",
+                    }))
+                  }
+                  options={["Reservado", "In house", "Check out"]}
+                />
+              )}
+              {"reservante" in filters && (
+                <Dropdown
+                  label="Tipo de reservante"
+                  value={filters.reservante}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      reservante: value as "Operaciones" | "Cliente",
+                    }))
+                  }
+                  options={["Operaciones", "Cliente"]}
+                />
+              )}
+
               {"active" in filters && (
                 <Dropdown
                   label="Estatus de Reservación"
@@ -223,29 +269,15 @@ const handleResetFilters = () => {
                 />
               )}
 
-              {"reservationStage" in filters && (
-                <Dropdown
-                  label="Etapa Reservación"
-                  value={filters.reservationStage}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      reservationStage: value as
-                        | "Reservado"
-                        | "In house"
-                        | "Check out",
-                    }))
-                  }
-                  options={["Reservado", "In house", "Check out"]}
-                />
-              )}
-
               {"paymentMethod" in filters && (
                 <Dropdown
                   label="Método de pago"
                   value={filters.paymentMethod}
                   onChange={(value) =>
-                    setFilters((prev) => ({ ...prev, paymenthMethod: value }))
+                    setFilters((prev) => ({
+                      ...prev,
+                      paymentMethod: value as "Contado" | "Credito",
+                    }))
                   }
                   options={["Contado", "Credito"]}
                 />
@@ -299,7 +331,7 @@ const handleResetFilters = () => {
               {"precioMin" in filters && (
                 <NumberInput
                   label="Precio mínimo"
-                  value={filters.precioMin || ""}
+                  value={filters.precioMin }
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
@@ -312,7 +344,7 @@ const handleResetFilters = () => {
               {"precioMax" in filters && (
                 <NumberInput
                   label="Precio máximo"
-                  value={filters.precioMax || ""}
+                  value={filters.precioMax }
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
@@ -325,7 +357,7 @@ const handleResetFilters = () => {
               {"costoMin" in filters && (
                 <NumberInput
                   label="Costo mínimo"
-                  value={filters.costoMin || ""}
+                  value={filters.costoMin }
                   onChange={(value) =>
                 setFilters((prev) => ({
                   ...prev,
@@ -338,7 +370,7 @@ const handleResetFilters = () => {
               {"costoMax" in filters && (
                 <NumberInput
                   label="Costo máximo"
-                  value={filters.costoMax || ""}
+                  value={filters.costoMax }
                   onChange={(value) =>
                   setFilters((prev) => ({
                     ...prev,
@@ -361,6 +393,7 @@ const handleResetFilters = () => {
                     options={["SI", "NO"]}
                   />
                 )}
+
               {"acepta_mascotas" in filters && (
                 <Dropdown
                   label="¿Acepta mascotas?"
@@ -368,7 +401,7 @@ const handleResetFilters = () => {
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      acepta_mascotas: value as
+                       acepta_mascotas: value as
                         | "SI"
                         | "NO"
                     }))
@@ -389,12 +422,13 @@ const handleResetFilters = () => {
                         | "NO"
                     }))
                   }
-                  options={["SI", "NO"]}
+                options={["SI", "NO"]}
                 />
               )}
-            {"tipo_pago" in filters && (
+
+              {"tipo_pago" in filters && (
                 <Dropdown
-                  label="Tipo de pago"
+                label="Tipo de pago"
                   value={filters.tipo_pago}
                   onChange={(value) =>
                     setFilters((prev) => ({
@@ -431,10 +465,8 @@ const handleResetFilters = () => {
                 <TextInput
                   label="Correo"
                   value={filters.correo}
-                  onChange={(value) =>
-                    setFilters((prev) => ({ ...prev, correo: value }))
-                  }
-                />
+                  onChange={(value) => setFilters((prev) => ({ ...prev, correo: value }))
+                  }/>
               )}
               {"infoCompleta" in filters && (
             <Dropdown
@@ -550,11 +582,13 @@ const Dropdown = ({
   value,
   onChange,
   options = [],
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options?: string[];
+  disabled?: boolean;
 }) => (
   <div className="flex flex-col space-y-1">
     <label className="text-sm text-gray-600">{label}</label>
@@ -562,6 +596,7 @@ const Dropdown = ({
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         className="w-full p-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
       >
         <option value="">Selecciona una opción</option>
@@ -606,6 +641,27 @@ const DateInput = ({
 );
 
 // Custom text input component
+const NumberInput = ({
+  label,
+  value,
+  onChange,
+}: {
+  label?: string;
+  value: number;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) => (
+  <div className="flex flex-col space-y-1">
+    {label && <label className="text-sm text-gray-600">{label}</label>}
+    <input
+      type="number"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+);
+
 const TextInput = ({
   label,
   value,
