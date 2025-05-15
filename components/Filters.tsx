@@ -50,6 +50,7 @@ const Filters: React.FC<{
         isOpen={isOpen}
         onFilter={onFilter}
         defaultFilter={defaultFilters}
+        setSearchTerm={setSearchTerm}
       />
     </div>
   );
@@ -60,7 +61,8 @@ const FiltersModal: React.FC<{
   isOpen: boolean;
   onFilter: (filters: TypeFilters) => void;
   defaultFilter?: TypeFilters;
-}> = ({ onClose, isOpen, onFilter, defaultFilter }) => {
+  setSearchTerm?: (value: string) => void;
+}> = ({ onClose, isOpen, onFilter, defaultFilter,setSearchTerm }) => {
   const [filters, setFilters] = useState<TypeFilters>(defaultFilter || {});
 
   const handleFilter = () => {
@@ -71,11 +73,16 @@ const FiltersModal: React.FC<{
 
   const handleResetFilters = () => {
     const updateFilters: TypeFilters = filters;
+    
     Object.keys(filters).forEach((key) => {
       updateFilters[key] = null;
     });
     setFilters(defaultFilter || updateFilters);
     onFilter(defaultFilter);
+    if (typeof setSearchTerm === "function") {
+    setSearchTerm(""); // 👈 limpia el término de búsqueda
+  }
+
   };
 
   const handleDeleteFilter = (key: string) => {
