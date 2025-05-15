@@ -30,6 +30,8 @@ const defaultFiltersHoteles = {
 };
 
 export function HotelContainer() {
+  
+  const [searchTerm, setSearchTerm] = useState<string>("")
   const [hotels, setHotels] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -98,8 +100,23 @@ const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const sourceData = sortField ? sortedHotels : hotels;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentHotels = sourceData.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(sourceData.length / itemsPerPage);
+
+  const filteredData = sourceData.filter(item =>
+    item.nombre?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.Ciudad_Zona?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.tipo_negociacion?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.Estado?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.contacto_convenio?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.contacto_recepcion?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.precio_doble?.includes(searchTerm) ||
+    item.precio_sencilla?.includes(searchTerm) ||
+    item.costo_sencilla?.includes(searchTerm) ||
+    item.costo_doble?.includes(searchTerm) 
+
+  );
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const currentHotels = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
 
   const handleRowClick = (hotel) => {
     setSelectedHotel(hotel);
@@ -134,23 +151,27 @@ const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
     handleFilter(defaultFiltersHoteles);
   }, []);
 
+
   return (
     <div className="space-y-8">
       <Card>
         <div className="p-6 space-y-4">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <h2 className="text-xl font-semibold">Gestión de Hoteles</h2>
+            <h2 className="text-xl font-semibold">Gestión de Proveedores</h2>
             <div className="flex flex-col sm:flex-row items-center gap-2">
               <Filters
                 defaultFilters={defaultFiltersHoteles}
                 onFilter={handleFilter}
                 defaultOpen={false}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+
               />
-              {isFilterActive && hayFiltrosAplicados && (
+              {/* {isFilterActive && hayFiltrosAplicados && (
                 <Button variant="destructive" onClick={handleClearFilters} size="sm">
                   Limpiar filtros
                 </Button>
-              )}
+              )} */}
               <Button
                 variant="outline"
                 onClick={() => exportToCSV(hotels)}
