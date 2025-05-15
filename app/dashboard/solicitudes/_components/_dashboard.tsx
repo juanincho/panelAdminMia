@@ -37,7 +37,7 @@ const defaultFiltersSolicitudes: TypeFilters = {
 function App({ hoteles }: { hoteles: any }) {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
-  const [searchTerm, setSearchTerm] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string | null>("");
 
   const handleFilter = (filters: any) => {
     fetchSolicitudes(filters, (data) => {
@@ -141,7 +141,6 @@ function App({ hoteles }: { hoteles: any }) {
         {/* Reservations Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
           <div className="overflow-x-auto">
-
             <Table registros={formatedSolicitudes} renderers={componentes} />
           </div>
         </div>
