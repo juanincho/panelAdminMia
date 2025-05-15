@@ -1184,7 +1184,7 @@ export function HotelDialog({
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-hotel/`
+        `${URL_VERCEL}hoteles/Eliminar-hotel/`,
         // `http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`,
         {
           method: "PATCH",
@@ -1232,7 +1232,7 @@ export function HotelDialog({
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         // `http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         {
           method: "GET",
@@ -1327,7 +1327,7 @@ export function HotelDialog({
       console.log("Actualizando hotel:", hotelPayload);
 
       const hotelResponse = await fetch(
-        `${URL_VERCEL}hoteles/Editar-hotel/`
+        `${URL_VERCEL}hoteles/Editar-hotel/`,
         // `http://localhost:5173/v1/mia/hoteles/Editar-hotel/`,
         {
           method: "PATCH",
@@ -1452,7 +1452,7 @@ export function HotelDialog({
 
       const tarifasPromises = allTarifasPayloads.map((payload) =>
         fetch(
-          `${URL_VERCEL}hoteles/Actualiza-tarifa`
+          `${URL_VERCEL}hoteles/Actualiza-tarifa`,
           // `http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`,
           {
             method: "PATCH",
@@ -1499,7 +1499,7 @@ export function HotelDialog({
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
+        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
         // `http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`,
         {
           method: "PATCH",
