@@ -836,7 +836,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">AGREGAR NUEVO HOTEL</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">AGREGAR NUEVO PROVEEDOR</DialogTitle>
         </DialogHeader>
 
         {/* Loading, Success and Error Messages */}

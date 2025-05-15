@@ -154,7 +154,7 @@ export interface FullHotelData {
   URLImagenHotel?: string;
   URLImagenHotelQ?: string;
   URLImagenHotelQQ?: string;
-  activo?: number;
+  Activo?: boolean | number;
   Comentarios?: string | null;
   id_sepomex?: number | null;
   CodigoPostal?: string;
@@ -167,10 +167,10 @@ export interface FullHotelData {
   precio_q?: string;
   costo_qq?: string;
   precio_qq?: string;
-  iva?: string;
-  ish?: string | null;
-  otros_impuestos?: string;
-  otros_impuestos_porcentaje?: string;
+  iva?: string ;
+  ish?: string | null ;
+  otros_impuestos?: string ;
+  otros_impuestos_porcentaje?: string ;
   tipo_negociacion?: string;
   disponibilidad_precio?: string;
   comentario_pago?: string;
@@ -213,7 +213,7 @@ interface FormData {
   Id_hotel_excel?: string;
   idSepomex?: number;
   id_cadena: string;
-  activo: number;
+  Activo: boolean;
   nombre: string;
   CodigoPostal: string;
   calle: string;
@@ -462,7 +462,7 @@ export function HotelDialog({
 
   const defaultFormData: FormData = {
     id_cadena: "",
-    activo: 1,
+    Activo: true,
     nombre: "",
     CodigoPostal: "",
     calle: "",
@@ -546,19 +546,16 @@ export function HotelDialog({
     }
   }, [formData.sencilla.incluye, formData.sencilla.tipo_desayuno, formData.sencilla.precio, formData.sencilla.comentarios, mode]);
 
-  // Reset modal data when it's closed and load new data when opened
   useEffect(() => {
-    // When modal opens for a different hotel, load the data
     if (open && hotel?.id_hotel) {
-      // Only fetch if we haven't fetched this hotel yet or it's a different hotel
       if (hasFetched.current !== hotel.id_hotel) {
         console.log("Fetching new hotel data for ID:", hotel.id_hotel);
+        console.log("Data Completa de este hotel:", hotel)
         fetchHotelRates(hotel.id_hotel);
         hasFetched.current = hotel.id_hotel;
       }
     }
 
-    // When modal closes, reset all state
     if (!open) {
       console.log("Modal closed, resetting all state");
       hasFetched.current = null;
@@ -576,16 +573,13 @@ export function HotelDialog({
     }
   }, [open, hotel?.id_hotel]);
   
-  // Set form data when hotel data changes
   useEffect(() => {
     if (hotel && open) {
       console.log("Setting form data from hotel:", hotel.nombre);
       const direccionData = extractDireccionData(hotel.direccion);
       
-      // Determine if there's a convention based on data
       const hasConvention = !!hotel.vigencia_convenio && hotel.vigencia_convenio !== "";
       
-      // Extract notes sections
       const notasDatosBasicos = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "DATOS BÁSICOS") : "";
       const notasTarifasServicios = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "TARIFAS Y SERVICIOS") : "";
       const notasInformacionPagos = hotel.Comentarios ? extractNotesSection(hotel.Comentarios, "INFORMACIÓN DE PAGOS") : "";
@@ -597,7 +591,7 @@ export function HotelDialog({
       setFormData({
         Id_hotel_excel: hotel.Id_hotel_excel?.toString() || "",
         id_cadena: hotel.id_cadena?.toString() || "",
-        activo: hotel.activo ?? 1,
+        Activo: hotel.Activo === true || hotel.Activo === 1,
         nombre: hotel.nombre || "",
         CodigoPostal: hotel.CodigoPostal || "",
         calle: direccionData.calle,
@@ -617,7 +611,7 @@ export function HotelDialog({
         disponibilidad_precio: hotel.disponibilidad_precio || "",
         contacto_convenio: hotel.contacto_convenio || "",
         contacto_recepcion: hotel.contacto_recepcion || "",
-        iva: hotel.iva || "",
+        iva: hotel.iva || "" ,
         ish: hotel.ish || "",
         otros_impuestos: hotel.otros_impuestos || "",
         otros_impuestos_porcentaje: hotel.otros_impuestos_porcentaje || "",
@@ -920,9 +914,7 @@ export function HotelDialog({
     setFormData(prev => ({
       ...prev,
       hay_convenio: checked,
-      // Reset vigencia_convenio if unchecked
       vigencia_convenio: checked ? prev.vigencia_convenio : "",
-      // Set default comment if unchecked
       comentario_vigencia: checked ? prev.comentario_vigencia : "SIN CONVENIO"
     }));
   };
@@ -1237,7 +1229,7 @@ export function HotelDialog({
         URLImagenHotelQ: formData.URLImagenHotelQ || null,
         URLImagenHotelQQ: formData.URLImagenHotelQQ || null,
         calificacion: formData.calificacion ? Number(formData.calificacion) : null,
-        Activo: 1,
+        Activo: formData.Activo,
         Comentarios: combinedNotes || null,
         idSepomex: formData.idSepomex ? Number(formData.idSepomex): null,
         comentario_pago: formData.comentario_pago || null
@@ -1464,6 +1456,8 @@ export function HotelDialog({
   if (!hotel) return null;
   const currentMode = mode as "view" | "edit";
 
+
+
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1474,7 +1468,7 @@ export function HotelDialog({
             </DialogTitle>
             
             {mode === "view" && (
-              <div className="flex gap-2">
+              <div className="flex gap-2  mr-10">
                 <Button 
                   variant="outline" 
                   size="sm"
@@ -1630,6 +1624,27 @@ style={mode === "view" ? { color: 'black', opacity: 1, backgroundColor: 'white' 
                     />
                   </div>
                 )}
+                
+                <div className="flex flex-col space-y-1">
+                    <Label htmlFor="Activo">ESTATUS</Label>
+                    <Select
+                      value={String(formData.Activo)} // convierte true/false a "true"/"false"
+                      onValueChange={(value) => handleChange("Activo", value === "true")}
+                      disabled={mode === "view"}
+                      
+                    >
+                      <SelectTrigger id="Activo" className="font-medium">
+                        <SelectValue placeholder="SELECCIONA ESTATUS" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="true" className="uppercase">ACTIVO</SelectItem>
+                        <SelectItem value="false" className="uppercase">INACTIVO</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+
+
                 
                 <div className="flex flex-col space-y-1">
                   <Label htmlFor="estadoSelect">

@@ -2,7 +2,8 @@ interface TypeFilters {
   codigo_reservacion?: string | null;
   client?: string | null;
   traveler?: string | null;
-  hotel?: string | null;
+   hotel?: string | null;
+  nombre?: string | null;
   startDate?: string | null;
   endDate?: string | null;
   recordCount?: string | null;
@@ -11,4 +12,22 @@ interface TypeFilters {
   paymentMethod?: "Tarjeta de crédito" | "Transferencia" | "Efectivo" | null;
   filterType?: "Check-in" | "Check-out" | "Transaccion" | "Creacion" | null;
   active?: "Activo" | "Inactivo" | null;
+  hay_convenio?: "SI" | "NO";
+  tipo_negociacion ?: string | null;
+  estado ?: string | null;
+  ciudad ?: string | null;
+  precioMin ?: number | null;
+  precioMax ?: number | null;
+  costoMin ?: number | null;
+  costoMax ?: number | null;
+  incluye_desayuno?: boolean | "SI" | "NO" | null; 
+  acepta_mascotas ?: "SI" |"NO";
+  tiene_transportacion ?:"SI" | "NO";
+  tipo_pago ?: "CREDITO" | "PREPAGO";
+  rfc ?: string | null;
+  razon_social ?: string | null;
+  tipo_hospedaje ?: string | null;
+  correo ?: string | null;
+  infoCompleta ?: string| null;
+  activo ?: boolean |"ACTIVO" | "INACTIVO" |null;
 }

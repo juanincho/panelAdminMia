@@ -9,7 +9,7 @@ import { formatDate } from "@/helpers/utils";
 
 const defaultFiltersSolicitudes: TypeFilters = {
   client: null,
-  hotel: null,
+  proveedor: null,
   startDate: new Date().toISOString().split("T")[0],
   endDate: null,
   status: "Pendiente",
