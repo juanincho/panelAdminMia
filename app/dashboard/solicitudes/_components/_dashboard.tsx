@@ -70,7 +70,7 @@ function App({ hoteles }: { hoteles: any }) {
       viajero: (
         item.nombre_viajero || item.nombre_viajero_completo
       ).toUpperCase(),
-      reservante: !item.id_usuario_generador ? "Cliente" : "Operaciones",
+      reservante: item.id_usuario_generador ? "Cliente" : "Operaciones",
       habitacion: formatRoom(item.room),
       estado: item.status,
       creado: item.created_at,
