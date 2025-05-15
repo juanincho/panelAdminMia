@@ -1,12 +1,10 @@
-import { API_KEY } from "./constant";
+import { API_KEY, URL } from "./constant";
 
 export const fetchSolicitudes = async (
   filters: TypeFilters,
   callback: (data: Solicitud[]) => void
 ) => {
   try {
-    console.log("filters:", filters);
-
     const queryParams = new URLSearchParams();
 
     Object.entries(filters).forEach(([key, value]) => {
@@ -15,7 +13,7 @@ export const fetchSolicitudes = async (
       }
     });
 
-    const url = `https://mianoktos.vercel.app/v1/mia/solicitud?${queryParams.toString()}`;
+    const url = `${URL}/mia/solicitud?${queryParams.toString()}`;
 
     const res = await fetch(url, {
       method: "GET",

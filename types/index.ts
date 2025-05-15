@@ -8,10 +8,14 @@ interface TypeFilters {
   recordCount?: string | null;
   empresa?: string | null;
   status?: "Confirmada" | "Pendiente" | "Cancelada" | "Todos" | null;
-  reservationStage?: "Reservado" | "In house" | "Check out" | null;
-  paymentMethod?: "Tarjeta de crédito" | "Transferencia" | "Efectivo" | null;
+  reservationStage?: "Reservado" | "In house" | "Check-out" | null;
+  paymentMethod?: "Credito" | "Contado" | null;
   filterType?: "Check-in" | "Check-out" | "Transaccion" | "Creacion" | null;
   active?: "Activo" | "Inactivo" | null;
   reservante?: "Operaciones" | "Cliente";
   markUp?: number;
+  id_client?: string | null;
+  statusPagoProveedor?: null | string;
+  markup_start?: null | number;
+  markup_end?: null | number;
 }

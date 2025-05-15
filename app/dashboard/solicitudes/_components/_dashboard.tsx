@@ -1,19 +1,25 @@
 "use client";
 
 import React, { useState } from "react";
-import { Clock, CheckCircle2, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 import { ReservationForm } from "./_reservation-form";
 import Filters from "@/components/Filters";
 import { fetchSolicitudes } from "@/services/solicitudes";
-import { formatDate, formatRoom } from "@/helpers/utils";
+import {
+  calcularNoches,
+  formatDate,
+  formatRoom,
+  getPaymentBadge,
+  getStageBadge,
+  getStatusBadge,
+  getWhoCreateBadge,
+} from "@/helpers/utils";
 import { Table } from "@/components/Table";
 
 const defaultFiltersSolicitudes: TypeFilters = {
-  codigo_reservacion: null, //Falta editar
-  client: null, //No se maneja id
-  empresa: null, //Falta jalarlo
-  markUp: null, //Igual falta
-  reservante: null, //Aun no hay
+  codigo_reservacion: null,
+  client: null,
+  reservante: null,
   reservationStage: null,
   hotel: null,
   startDate: new Date().toISOString().split("T")[0],
@@ -21,12 +27,17 @@ const defaultFiltersSolicitudes: TypeFilters = {
   status: "Pendiente",
   traveler: null,
   paymentMethod: null,
+  id_client: null,
+  statusPagoProveedor: null,
   filterType: "Creacion",
+  markup_end: null,
+  markup_start: null,
 };
 
 function App({ hoteles }: { hoteles: any }) {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string | null>(null);
 
   const handleFilter = (filters: any) => {
     fetchSolicitudes(filters, (data) => {
@@ -38,44 +49,49 @@ function App({ hoteles }: { hoteles: any }) {
     setSelectedItem(item);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "pending":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="w-3 h-3 mr-1" />
-            Pendiente
-          </span>
-        );
-      case "complete":
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle2 className="w-3 h-3 mr-1" />
-            Check
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        );
-    }
-  };
-
-  let formatedSolicitudes = allSolicitudes.map((item) => ({
-    hotel: item.hotel.toUpperCase(),
-    viajero: (item.nombre_viajero || item.id_viajero).toUpperCase(),
-    habitacion: formatRoom(item.room),
-    check_in: item.check_in,
-    check_out: item.check_out,
-    total: item.total,
-    estado: item.status,
-    creado: item.created_at,
-    editar: item,
-  }));
+  let formatedSolicitudes = allSolicitudes
+    .filter(
+      (item) =>
+        item.hotel.toUpperCase().includes(searchTerm) ||
+        item.nombre_agente_completo.toUpperCase().includes(searchTerm) ||
+        item.nombre_viajero_completo.toUpperCase().includes(searchTerm)
+    )
+    .map((item) => ({
+      id_cliente: item.id_agente,
+      cliente: (item?.razon_social || "").toUpperCase(),
+      hotel: item.hotel.toUpperCase(),
+      codigo_hotel: item.codigo_reservacion_hotel,
+      metodo_de_pago: `${item.id_credito ? "credito" : "contado"}`,
+      noches: calcularNoches(item.check_in, item.check_out),
+      check_in: item.check_in,
+      check_out: item.check_out,
+      precio_de_venta: parseFloat(item.total),
+      etapa_reservacion: item.estado_reserva,
+      viajero: (
+        item.nombre_viajero || item.nombre_viajero_completo
+      ).toUpperCase(),
+      reservante: !item.id_usuario_generador ? "Cliente" : "Operaciones",
+      habitacion: formatRoom(item.room),
+      estado: item.status,
+      creado: item.created_at,
+      editar: item,
+    }));
 
   let componentes = {
+    reservante: ({ value }: { value: string | null }) =>
+      getWhoCreateBadge(value),
+    etapa_reservacion: ({ value }: { value: string | null }) =>
+      getStageBadge(value),
+    metodo_de_pago: ({ value }: { value: null | string }) =>
+      getPaymentBadge(value),
+    id_cliente: ({ value }: { value: null | string }) => (
+      <span className="font-semibold text-sm">
+        {value ? value.split("-").join("").slice(0, 8) : ""}
+      </span>
+    ),
+    codigo_hotel: (props: any) => (
+      <span className="font-semibold">{props.value}</span>
+    ),
     editar: (props: any) => (
       <button
         onClick={() => handleEdit(props.value)}
@@ -88,8 +104,8 @@ function App({ hoteles }: { hoteles: any }) {
     estado: (props: any) => (
       <span title={props.value}>{getStatusBadge(props.value)}</span>
     ),
-    total: (props: any) => (
-      <span title={props.value}>${parseFloat(props.value).toFixed(2)}</span>
+    precio_de_venta: (props: any) => (
+      <span title={props.value}>${props.value.toFixed(2)}</span>
     ),
     hotel: (props: any) => (
       <span className="font-medium " title={props.value}>
@@ -116,6 +132,8 @@ function App({ hoteles }: { hoteles: any }) {
           <Filters
             defaultFilters={defaultFiltersSolicitudes}
             onFilter={handleFilter}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
             defaultOpen={true}
           />
         </div>
@@ -141,7 +159,7 @@ function App({ hoteles }: { hoteles: any }) {
                 </h3>
                 <p className="mt-2 text-sm text-gray-500">
                   Modifica los detalles de la reserva{" "}
-                  {selectedItem?.confirmation_code}.
+                  {selectedItem?.codigo_reservacion_hotel}.
                 </p>
                 <button
                   type="button"

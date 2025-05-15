@@ -1,14 +1,20 @@
-import React, { use, useEffect, useState } from "react";
+import React, { useState } from "react";
 import { ChevronDown, Filter, Search, X } from "lucide-react";
-import { on } from "node:events";
 
 const Filters: React.FC<{
   onFilter: (filters: TypeFilters) => void;
   defaultOpen?: boolean;
   defaultFilters?: TypeFilters;
-}> = ({ onFilter, defaultOpen = false, defaultFilters }) => {
+  searchTerm?: string;
+  setSearchTerm?: (value: string) => void;
+}> = ({
+  onFilter,
+  defaultOpen = false,
+  defaultFilters,
+  searchTerm,
+  setSearchTerm,
+}) => {
   const [isOpen, setIsOpen] = useState(defaultOpen);
-  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const toggleModal = () => {
     setIsOpen(!isOpen);
@@ -24,8 +30,8 @@ const Filters: React.FC<{
           type="text"
           className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 placeholder-gray-500 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
           placeholder="Buscar por código, ID, hotel..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={searchTerm || ""}
+          onChange={(e) => setSearchTerm(e.target.value.toUpperCase())}
         />
       </div>
       <div className="flex justify-between items-center gap-4">
@@ -57,6 +63,7 @@ const FiltersModal: React.FC<{
   const [filters, setFilters] = useState<TypeFilters>(defaultFilter || {});
 
   const handleFilter = () => {
+    console.log(filters);
     onFilter(filters);
     onClose();
   };
@@ -67,6 +74,7 @@ const FiltersModal: React.FC<{
       updateFilters[key] = null;
     });
     setFilters(defaultFilter || updateFilters);
+    onFilter(defaultFilter);
   };
 
   const handleDeleteFilter = (key: string) => {
@@ -135,6 +143,16 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+              {"hotel" in filters && (
+                <TextInput
+                  label="Hotel"
+                  value={filters.hotel}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, hotel: value }))
+                  }
+                />
+              )}
+
               {"recordCount" in filters && (
                 <Dropdown
                   label="Cantidad de Registros"
@@ -151,9 +169,19 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+              {"id_client" in filters && (
+                <TextInput
+                  label="ID del cliente"
+                  value={filters.id_client}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, id_client: value }))
+                  }
+                />
+              )}
+
               {"client" in filters && (
                 <TextInput
-                  label="Nombre del cliente"
+                  label="Nombre y RFC del cliente"
                   value={filters.client}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, client: value }))
@@ -167,16 +195,6 @@ const FiltersModal: React.FC<{
                   value={filters.traveler}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, traveler: value }))
-                  }
-                />
-              )}
-
-              {"hotel" in filters && (
-                <TextInput
-                  label="Hotel"
-                  value={filters.hotel}
-                  onChange={(value) =>
-                    setFilters((prev) => ({ ...prev, hotel: value }))
                   }
                 />
               )}
@@ -195,6 +213,36 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+              {"reservationStage" in filters && (
+                <Dropdown
+                  label="Etapa Reservación"
+                  value={filters.reservationStage}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      reservationStage: value as
+                        | "Reservado"
+                        | "In house"
+                        | "Check-out",
+                    }))
+                  }
+                  options={["Reservado", "In house", "Check out"]}
+                />
+              )}
+              {"reservante" in filters && (
+                <Dropdown
+                  label="Tipo de reservante"
+                  value={filters.reservante}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      reservante: value as "Operaciones" | "Cliente",
+                    }))
+                  }
+                  options={["Operaciones", "Cliente"]}
+                />
+              )}
+
               {"active" in filters && (
                 <Dropdown
                   label="Estatus de Reservación"
@@ -209,31 +257,57 @@ const FiltersModal: React.FC<{
                 />
               )}
 
-              {"reservationStage" in filters && (
-                <Dropdown
-                  label="Etapa Reservación"
-                  value={filters.reservationStage}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      reservationStage: value as
-                        | "Reservado"
-                        | "In house"
-                        | "Check out",
-                    }))
-                  }
-                  options={["Reservado", "In house", "Check out"]}
-                />
-              )}
-
               {"paymentMethod" in filters && (
                 <Dropdown
                   label="Método de pago"
                   value={filters.paymentMethod}
                   onChange={(value) =>
-                    setFilters((prev) => ({ ...prev, paymenthMethod: value }))
+                    setFilters((prev) => ({
+                      ...prev,
+                      paymentMethod: value as "Contado" | "Credito",
+                    }))
                   }
                   options={["Contado", "Credito"]}
+                />
+              )}
+
+              {"markup_start" in filters && (
+                <NumberInput
+                  label="Markup inicio"
+                  value={filters.markup_start}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      markup_start: Number(value),
+                    }))
+                  }
+                />
+              )}
+              {"markup_end" in filters && (
+                <NumberInput
+                  label="Markup final"
+                  value={filters.markup_end}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      markup_end: Number(value),
+                    }))
+                  }
+                />
+              )}
+
+              {"statusPagoProveedor" in filters && (
+                <Dropdown
+                  label="Estatus de pago al proveedor"
+                  value={filters.statusPagoProveedor}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      statusPagoProveedor: value,
+                    }))
+                  }
+                  disabled={true}
+                  options={[]}
                 />
               )}
             </div>
@@ -287,7 +361,8 @@ const FiltersModal: React.FC<{
               className="text-xs font-medium text-sky-900 rounded-full bg-sky-200 px-2 pl-3 py-1 mr-2 mb-2 inline-flex items-center"
               key={key}
             >
-              {key.toLowerCase()} : {value.toLowerCase()}
+              {key.toLowerCase()} :{" "}
+              {typeof value != "number" ? value.toLowerCase() : value}
               <X
                 onClick={() => handleDeleteFilter(key)}
                 className="w-3 h-3 ml-1 cursor-pointer text-gray-500 hover:text-gray-700"
@@ -306,11 +381,13 @@ const Dropdown = ({
   value,
   onChange,
   options = [],
+  disabled = false,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   options?: string[];
+  disabled?: boolean;
 }) => (
   <div className="flex flex-col space-y-1">
     <label className="text-sm text-gray-600">{label}</label>
@@ -318,6 +395,7 @@ const Dropdown = ({
       <select
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
         className="w-full p-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
       >
         <option value="">Selecciona una opción</option>
@@ -362,6 +440,27 @@ const DateInput = ({
 );
 
 // Custom text input component
+const NumberInput = ({
+  label,
+  value,
+  onChange,
+}: {
+  label?: string;
+  value: number;
+  onChange: (value: string) => void;
+  placeholder?: string;
+}) => (
+  <div className="flex flex-col space-y-1">
+    {label && <label className="text-sm text-gray-600">{label}</label>}
+    <input
+      type="number"
+      value={value || ""}
+      onChange={(e) => onChange(e.target.value)}
+      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+    />
+  </div>
+);
+
 const TextInput = ({
   label,
   value,
