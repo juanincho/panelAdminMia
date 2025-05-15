@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ChevronDown, Filter, Search, X } from "lucide-react";
+import { on } from "node:events";
 
 const Filters: React.FC<{
   onFilter: (filters: TypeFilters) => void;
@@ -49,6 +50,7 @@ const Filters: React.FC<{
         isOpen={isOpen}
         onFilter={onFilter}
         defaultFilter={defaultFilters}
+        setSearchTerm={setSearchTerm}
       />
     </div>
   );
@@ -59,7 +61,8 @@ const FiltersModal: React.FC<{
   isOpen: boolean;
   onFilter: (filters: TypeFilters) => void;
   defaultFilter?: TypeFilters;
-}> = ({ onClose, isOpen, onFilter, defaultFilter }) => {
+  setSearchTerm?: (value: string) => void;
+}> = ({ onClose, isOpen, onFilter, defaultFilter,setSearchTerm }) => {
   const [filters, setFilters] = useState<TypeFilters>(defaultFilter || {});
 
   const handleFilter = () => {
@@ -70,11 +73,16 @@ const FiltersModal: React.FC<{
 
   const handleResetFilters = () => {
     const updateFilters: TypeFilters = filters;
+    
     Object.keys(filters).forEach((key) => {
       updateFilters[key] = null;
     });
     setFilters(defaultFilter || updateFilters);
     onFilter(defaultFilter);
+    if (typeof setSearchTerm === "function") {
+    setSearchTerm(""); // 👈 limpia el término de búsqueda
+  }
+
   };
 
   const handleDeleteFilter = (key: string) => {
@@ -123,7 +131,9 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+
               {"startDate" in filters && (
+                
                 <DateInput
                   label="Fecha de inicio"
                   value={filters.startDate || ""}
@@ -142,7 +152,6 @@ const FiltersModal: React.FC<{
                   }
                 />
               )}
-
               {"hotel" in filters && (
                 <TextInput
                   label="Hotel"
@@ -195,6 +204,16 @@ const FiltersModal: React.FC<{
                   value={filters.traveler}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, traveler: value }))
+                  }
+                />
+              )}
+
+              {"nombre" in filters && (
+                <TextInput
+                  label="Proveedor (Hotel)"
+                  value={filters.nombre}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, nombre: value }))
                   }
                 />
               )}
@@ -271,47 +290,232 @@ const FiltersModal: React.FC<{
                 />
               )}
 
-              {"markup_start" in filters && (
-                <NumberInput
-                  label="Markup inicio"
-                  value={filters.markup_start}
+
+
+            {/*Campos hotels table, proovedor ya existe */}
+
+             {"hay_convenio" in filters && (
+                <Dropdown
+                  label="¿Hay convenio?"
+                  value={filters.hay_convenio}
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      markup_start: Number(value),
+                      hay_convenio: value as
+                        | "SI"
+                        | "NO"
                     }))
+                  }
+                  options={["SI", "NO"]}
+                />
+              )}
+
+              {"tipo_negociacion" in filters && (
+                <TextInput
+                  label="Tipo de Negociación"
+                  value={filters.tipo_negociacion}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, tipo_negociacion: value }))
                   }
                 />
               )}
-              {"markup_end" in filters && (
+             {"estado" in filters && (
+              <Dropdown
+                label="Estado"
+                value={filters.estado || ""}
+                onChange={(val) => setFilters((prev) => ({ ...prev, estado: val }))}
+                options={[
+                  "AGUASCALIENTES", "BAJA CALIFORNIA", "BAJA CALIFORNIA SUR", "CAMPECHE",
+                  "CHIAPAS", "CHIHUAHUA", "CIUDAD DE MEXICO", "COAHUILA", "COLIMA", "DURANGO",
+                  "GUANAJUATO", "GUERRERO", "HIDALGO", "JALISCO", "MEXICO", "MICHOACAN",
+                  "MORELOS", "NAYARIT", "NUEVO LEÓN", "OAXACA", "PUEBLA", "QUERETARO",
+                  "QUINTANA ROO", "SAN LUIS POTOSI", "SINALOA", "SONORA", "TABASCO",
+                  "TAMAULIPAS", "TLAXCALA", "VERACRUZ", "YUCATÁN", "ZACATECAS"
+                ]}
+              />
+             )}
+
+              {"precioMin" in filters && (
                 <NumberInput
-                  label="Markup final"
-                  value={filters.markup_end}
+                  label="Precio mínimo"
+                  value={filters.precioMin }
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      markup_end: Number(value),
+                      precioMin: value === "" ? null : Number(value),
                     }))
                   }
                 />
               )}
 
-              {"statusPagoProveedor" in filters && (
-                <Dropdown
-                  label="Estatus de pago al proveedor"
-                  value={filters.statusPagoProveedor}
+              {"precioMax" in filters && (
+                <NumberInput
+                  label="Precio máximo"
+                  value={filters.precioMax }
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      statusPagoProveedor: value,
+                      precioMax: value === "" ? null : Number(value),
                     }))
-                  }
-                  disabled={true}
-                  options={[]}
+}
                 />
               )}
-            </div>
+
+              {"costoMin" in filters && (
+                <NumberInput
+                  label="Costo mínimo"
+                  value={filters.costoMin }
+                  onChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  costoMin: value === "" ? null : Number(value),
+                }))
+              }
+                />
+              )}
+
+              {"costoMax" in filters && (
+                <NumberInput
+                  label="Costo máximo"
+                  value={filters.costoMax }
+                  onChange={(value) =>
+                  setFilters((prev) => ({
+                    ...prev,
+                    costoMax: value === "" ? null : Number(value),
+                  }))
+                }
+                />
+              )}
+
+                {"incluye_desayuno" in filters && (
+                  <Dropdown
+                    label="¿Incluye desayuno?"
+                    value={filters.incluye_desayuno === true ? "SI" : filters.incluye_desayuno === false ? "NO" : ""}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        incluye_desayuno: value === "SI" ? true : value === "NO" ? false : null
+                      }))
+                    }
+                    options={["SI", "NO"]}
+                  />
+                )}
+
+              {"acepta_mascotas" in filters && (
+                <Dropdown
+                  label="¿Acepta mascotas?"
+                  value={filters.acepta_mascotas}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                       acepta_mascotas: value as
+                        | "SI"
+                        | "NO"
+                    }))
+                  }
+                  options={["SI", "NO"]}
+                />
+              )}
+
+              {"tiene_transportacion" in filters && (
+                <Dropdown
+                  label="¿Tiene transportacion?"
+                  value={filters.tiene_transportacion}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      tiene_transportacion: value as
+                        | "SI"
+                        | "NO"
+                    }))
+                  }
+                options={["SI", "NO"]}
+                />
+              )}
+
+              {"tipo_pago" in filters && (
+                <Dropdown
+                label="Tipo de pago"
+                  value={filters.tipo_pago}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      tipo_pago: value as
+                        | "PREPAGO"
+                        | "CREDITO"
+                    }))
+                  }
+                  options={["PREPAGO", "CREDITO"]}
+                />
+              )}
+
+              {"rfc" in filters && (
+                <TextInput
+                  label="RFC"
+                  value={filters.rfc}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, rfc: value }))
+                  }
+                />
+              )}
+
+              {"razon_social" in filters && (
+                <TextInput
+                  label="Razon Social"
+                  value={filters.razon_social}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, razon_social: value }))
+                  }
+                />
+              )}
+              {"correo" in filters && (
+                <TextInput
+                  label="Correo"
+                  value={filters.correo}
+                  onChange={(value) => setFilters((prev) => ({ ...prev, correo: value }))
+                  }/>
+              )}
+              {"infoCompleta" in filters && (
+            <Dropdown
+              label="Información Completa"
+              value={filters.infoCompleta || ""}
+
+              onChange={(value) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  infoCompleta: value,
+                }))
+              }
+              options={["COMPLETA", "INCOMPLETA"]}
+            />
+          )}
+
+              {"tipo_hospedaje" in filters && (
+                <TextInput
+                  label="Tipo de Proveedor"
+                  value={filters.tipo_hospedaje}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, tipo_hospedaje: value }))
+                  }   
+                />
+              )}
+
+              {"activo" in filters && (
+                  <Dropdown
+                    label="Estatus (Activo/Inactivo)"
+                    value={filters.activo === true ? "ACTIVO" : filters.activo === false ? "INACTIVO" : ""}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        activo: value === "ACTIVO" ? true : value === "INACTIVO" ? false : null
+                      }))
+                    }
+                    options={["ACTIVO", "INACTIVO"]}
+                  />
+                )}
+               </div>
             <div className="w-full max-w-sm mx-auto mb-4">
+              {"filterType" in filters && (
               <Dropdown
                 label="Filtrar fecha por:"
                 value={filters.filterType}
@@ -333,12 +537,12 @@ const FiltersModal: React.FC<{
                   "Actualizacion",
                 ]}
               />
+              )}
             </div>
-
             {/* Filter button */}
             <div className="flex justify-center gap-10">
               <button
-                onClick={handleFilter}
+                onClick={handleFilter} 
                 className="px-10 py-2 bg-gradient-to-r from-[#00C0FF] to-[#0080FF] text-white font-medium rounded-md hover:opacity-90 transition-opacity duration-200 shadow-md"
               >
                 Filtrar
@@ -350,8 +554,13 @@ const FiltersModal: React.FC<{
                 Cerrar
               </button>
             </div>
+            </div>
+                       
+
+
+            
           </div>
-        </div>
+        
       )}
       <div className="w-full">
         {Object.entries(filters).map(([key, value]) => {
@@ -361,8 +570,7 @@ const FiltersModal: React.FC<{
               className="text-xs font-medium text-sky-900 rounded-full bg-sky-200 px-2 pl-3 py-1 mr-2 mb-2 inline-flex items-center"
               key={key}
             >
-              {key.toLowerCase()} :{" "}
-              {typeof value != "number" ? value.toLowerCase() : value}
+              {key.toLowerCase()} : {typeof value != "boolean"? value.toLowerCase(): value.toString()}
               <X
                 onClick={() => handleDeleteFilter(key)}
                 className="w-3 h-3 ml-1 cursor-pointer text-gray-500 hover:text-gray-700"

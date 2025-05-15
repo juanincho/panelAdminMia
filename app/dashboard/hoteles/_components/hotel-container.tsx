@@ -1,262 +1,270 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { HotelTable } from "./hotel-table";
-import { HotelSearch } from "./hotel-search";
+import { useState, useEffect, useMemo } from "react";
+import { HotelTable, FullHotelData, isHotelComplete } from "./hotel-table";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { HotelDialog } from "./hotel-dialog";
 import { AddHotelDialog } from "./addHotelDialog";
 import { API_KEY } from "@/app/constants/constantes";
+import Filters from "@/components/Filters";
+import { fetchHotelesFiltro_Avanzado } from "@/services/hoteles";
 
-export interface FullHotelData {
-  id_hotel?: string;
-  nombre?: string;
-  id_cadena?: number;
-  correo?: string;
-  telefono?: string;
-  rfc?: string;
-  razon_social?: string;
-  direccion?: string;
-  latitud?: string;
-  longitud?: string;
-  convenio?: string | null;
-  descripcion?: string | null;
-  calificacion?: number | null;
-  tipo_hospedaje?: string;
-  cuenta_de_deposito?: string | null;
-  Estado?: string;
-  Ciudad_Zona?: string;
-  NoktosQ?: number;
-  NoktosQQ?: number;
-  MenoresEdad?: string;
-  PaxExtraPersona?: string;
-  PaxExtraPersona2?: string;
-  DesayunoIncluido?: string;
-  DesayunoComentarios?: string;
-  DesayunoPrecioPorPersona?: string;
-  Transportacion?: string;
-  TransportacionComentarios?: string;
-  URLImagenHotel?: string;
-  URLImagenHotelQ?: string;
-  URLImagenHotelQQ?: string;
-  Activo?: number;
-  Comentarios?: string | null;
-  Id_Sepomex?: number | null;
-  CodigoPostal?: string;
-  Id_hotel_excel?: number;
-  Colonia?: string;
-  precio_sencilla?: number;
-  precio_doble?: number;
-}
+const defaultFiltersHoteles = {
+  nombre: null,
+  hay_convenio: null,
+  tipo_negociacion: null,
+  estado: null,
+  precioMin: null,
+  precioMax: null,
+  costoMin: null,
+  costoMax: null,
+  incluye_desayuno: null,
+  acepta_mascotas: null,
+  tiene_transportacion: null,
+  tipo_pago: null,
+  rfc: null,
+  razon_social: null,
+  tipo_hospedaje: null,
+  infoCompleta: null,
+  activo: null
+};
 
 export function HotelContainer() {
-  const [hotelData, setHotelData] = useState<FullHotelData[]>([]);
-  const [searchTerm, setSearchTerm] = useState("");
+  
+  const [searchTerm, setSearchTerm] = useState<string>("")
+  const [hotels, setHotels] = useState([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
-  const [selectedHotel, setSelectedHotel] = useState<FullHotelData | null>(
-    null
-  );
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(10);
-  const [totalItems, setTotalItems] = useState(0);
+  const [selectedHotel, setSelectedHotel] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [activeFilters, setActiveFilters] = useState(defaultFiltersHoteles);
+  const [isFilterActive, setIsFilterActive] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+  const [sortField, setSortField] = useState(null);
+const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
+  const handleFilter = (filters) => {
+    setIsLoading(true);
+    setIsFilterActive(true);
+    setActiveFilters(filters);
+    setCurrentPage(1);
+    setSortField(null);
+    setSortDirection("asc");
 
-  const hasPrev = currentPage > 1;
-  const hasNext = currentPage < totalPages;
+    const infoCompletaFilter = filters.infoCompleta;
+    const apiFilters = { ...filters };
+    delete apiFilters.infoCompleta;
 
-  const handleRowClick = (hotel: FullHotelData) => {
+    fetchHotelesFiltro_Avanzado(apiFilters, (data) => {
+      const fetchedHotels = Array.isArray(data) && Array.isArray(data[0]) ? data[0] : [];
+
+      if (infoCompletaFilter !== null && infoCompletaFilter !== undefined) {
+        const filtered = fetchedHotels.filter(
+          (hotel) => isHotelComplete(hotel) === infoCompletaFilter
+        );
+        setHotels(filtered);
+      } else {
+        setHotels(fetchedHotels);
+      }
+
+      setIsLoading(false);
+    });
+  };
+
+  const handleClearFilters = () => {
+    setIsFilterActive(false);
+    setActiveFilters(defaultFiltersHoteles);
+    setSortField(null);
+    setSortDirection("asc");
+    setCurrentPage(1);
+    handleFilter(defaultFiltersHoteles);
+  };
+
+  const sortedHotels = useMemo(() => {
+    if (!sortField) return hotels;
+    return [...hotels].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        return sortDirection === "asc" ? aValue - bValue : bValue - aValue;
+      }
+      return sortDirection === "asc"
+        ? String(aValue).localeCompare(String(bValue))
+        : String(bValue).localeCompare(String(aValue));
+    });
+  }, [hotels, sortField, sortDirection]);
+
+  const sourceData = sortField ? sortedHotels : hotels;
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+
+  const filteredData = sourceData.filter(item =>
+    item.nombre?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.Ciudad_Zona?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.tipo_negociacion?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.Estado?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.contacto_convenio?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.contacto_recepcion?.toUpperCase().includes(searchTerm.toUpperCase()) ||
+    item.precio_doble?.includes(searchTerm) ||
+    item.precio_sencilla?.includes(searchTerm) ||
+    item.costo_sencilla?.includes(searchTerm) ||
+    item.costo_doble?.includes(searchTerm) 
+
+  );
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const currentHotels = filteredData.slice(indexOfFirstItem, indexOfLastItem);
+
+
+  const handleRowClick = (hotel) => {
     setSelectedHotel(hotel);
     setDialogOpen(true);
   };
 
-  const fetchHotels = async (page: number, search: string = "") => {
-    console.log(page)
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      if (search) {
-        params.set("termino", search);
-      } else {
-        params.set("pagina", page.toString());
-      }
+  const hayFiltrosAplicados = Object.values(activeFilters).some((v) => v !== null);
 
-      const url = search
-        ? `https://mianoktos.vercel.app/v1/mia/hoteles/Consulta-Hoteles-por-termino?${params.toString()}`
-        : `https://mianoktos.vercel.app/v1/mia/hoteles/Paginacion?${params.toString()}`;
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "x-api-key": API_KEY,
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!response.ok) throw new Error("Error al cargar hoteles");
-
-      const result = await response.json();
-      console.log("revisando estructura",result)
-      const raw = result.hoteles;
-      const hotels = Array.isArray(raw) ? Array.isArray(raw[0]) ? raw[0] : raw  : [];
-      const info_pag = result.info || [];
-      console.log("revisando el acceso a la segunda query",info_pag)
-      setHotelData(hotels);
-      setTotalPages(info_pag.total_paginas || 1);
-      setTotalItems(info_pag.total_registros || hotels.length);
-      setCurrentPage(page);
-      setSearchTerm(search);
-    } catch (error) {
-      console.error("Error:", error);
-      setHotelData([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handlePageChange = (newPage: number) => {
-    const params = new URLSearchParams();
-    params.set("pagina", newPage.toString());
-    if (searchTerm) params.set("termino", searchTerm);
-    router.push(`${pathname}?${params.toString()}`);
-  };
-
-  const handleClearSearch = () => {
-    const params = new URLSearchParams();
-    params.set("pagina", "1");
-    router.push(`${pathname}?${params.toString()}`);
-    setSearchTerm("")
-    fetchHotels(1, "");
+  const exportToCSV = (data, filename = 'hoteles.csv') => {
+    if (!data || data.length === 0) return;
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(","),
+      ...data.map(row =>
+        headers.map(field => {
+          const val = row[field];
+          return `"${(val ?? "").toString().replace(/"/g, '""')}"`;
+        }).join(",")
+      )
+    ].join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", filename);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   useEffect(() => {
-    const page = parseInt(searchParams.get("pagina") || "1", 10);
-    const term = searchParams.get("termino") || "";
-    fetchHotels(page, term);
-  }, [searchParams.toString()]);
+    handleFilter(defaultFiltersHoteles);
+  }, []);
+
 
   return (
     <div className="space-y-8">
       <Card>
         <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <HotelSearch
-                onSearch={(term) => {
-                  const params = new URLSearchParams();
-                  params.set("pagina", "1");
-                  params.set("termino", term);
-                  router.push(`${pathname}?${params.toString()}`);
-                  setSearchTerm(term)
-                }}
-                initialValue={searchTerm}
-                isLoading={isLoading}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <h2 className="text-xl font-semibold">Gestión de Proveedores</h2>
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+              <Filters
+                defaultFilters={defaultFiltersHoteles}
+                onFilter={handleFilter}
+                defaultOpen={false}
+                searchTerm={searchTerm}
+                setSearchTerm={setSearchTerm}
+
               />
-              {searchTerm && (
-                <Button variant="outline" onClick={handleClearSearch}>
-                  Limpiar búsqueda
+              {/* {isFilterActive && hayFiltrosAplicados && (
+                <Button variant="destructive" onClick={handleClearFilters} size="sm">
+                  Limpiar filtros
                 </Button>
-              )}
+              )} */}
+              <Button
+                variant="outline"
+                onClick={() => exportToCSV(hotels)}
+                disabled={hotels.length === 0}
+              >
+                Exportar CSV
+              </Button>
+              <Button
+                onClick={() => setAddDialogOpen(true)}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Agregar hotel
+              </Button>
             </div>
-
-            <Button
-              onClick={() => setAddDialogOpen(true)}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              Agregar hotel
-            </Button>
           </div>
-
           {isLoading ? (
             <div className="flex justify-center items-center h-64">
-              <p>Cargando hoteles...</p>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+              <p className="ml-3">Cargando hoteles...</p>
             </div>
           ) : (
             <>
-              <HotelTable data={hotelData} onRowClick={handleRowClick} />
-
-              <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-4">
-                <div className="flex items-center gap-2">
-                  <Button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    variant="outline"
-                    disabled={!hasPrev || isLoading}
-                  >
-                    Anterior
-                  </Button>
-
-                  <span className="text-sm">
-                    Página {currentPage} de {totalPages}
-                  </span>
-
-                  <Button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    variant="outline"
-                    disabled={!hasNext || isLoading}
-                  >
-                    Siguiente
+              {!isFilterActive ? (
+                <div className="text-center py-16">
+                  <h3 className="text-lg font-medium text-gray-700 mb-2">Utilice el filtro avanzado</h3>
+                  <p className="text-gray-500">Seleccione los filtros deseados para ver los hoteles que coincidan con sus criterios.</p>
+                </div>
+              ) : hotels.length === 0 ? (
+                <div className="text-center py-10">
+                  <p className="text-lg font-medium text-gray-500">No se encontraron hoteles con los filtros seleccionados</p>
+                  <Button variant="outline" onClick={handleClearFilters} className="mt-4">
+                    Limpiar filtros
                   </Button>
                 </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-sm">Ir a:</span>
-                  <input
-                    type="number"
-                    min={1}
-                    max={totalPages}
-                    value={currentPage}
-                    onChange={(e) => {
-                      const value = Math.min(
-                        Math.max(1, parseInt(e.target.value) || 1),
-                        totalPages
-                      );
-                      setCurrentPage(value);
-                    }}
-                    onKeyPress={(e) => {
-                      if (e.key === "Enter") {
-                        handlePageChange(currentPage);
+              ) : (
+                <>
+                  <HotelTable
+                    data={currentHotels}
+                    onRowClick={handleRowClick}
+                    onSort={(field) => {
+                      if (sortField === field) {
+                        setSortDirection((prev) => (prev === "asc" ? "desc" : "asc"));
+                      } else {
+                        setSortField(field);
+                        setSortDirection("asc");
                       }
+                      setCurrentPage(1);
                     }}
-                    className="w-16 px-2 py-1 border rounded text-sm"
-                    disabled={isLoading}
+                    sortField={sortField}
+                    sortDirection={sortDirection}
                   />
-                  <Button
-                    onClick={() => handlePageChange(currentPage)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-sm"
-                    disabled={isLoading}
-                  >
-                    Ir
-                  </Button>
-                </div>
-
-                <span className="text-sm text-gray-600">
-                  Total: {totalItems} hoteles
-                </span>
-              </div>
+                  <div className="flex justify-center items-center gap-4 mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                    >
+                      Anterior
+                    </Button>
+                    <span className="font-medium text-sm">
+                      Página {currentPage} de {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                    >
+                      Siguiente
+                    </Button>
+                  </div>
+                </>
+              )}
             </>
           )}
         </div>
       </Card>
-
       <HotelDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         hotel={selectedHotel}
         onSuccess={() => {
-          fetchHotels(currentPage, searchTerm);
+          if (isFilterActive) {
+            handleFilter(activeFilters);
+          }
         }}
       />
-
       <AddHotelDialog
         open={addDialogOpen}
         onOpenChange={setAddDialogOpen}
         onSuccess={() => {
-          fetchHotels(currentPage, searchTerm);
+          if (isFilterActive) {
+            handleFilter(activeFilters);
+          }
         }}
       />
     </div>
