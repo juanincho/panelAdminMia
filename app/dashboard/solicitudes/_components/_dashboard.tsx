@@ -16,24 +16,6 @@ import {
 } from "@/helpers/utils";
 import { Table } from "@/components/Table";
 
-const defaultFiltersSolicitudes: TypeFilters = {
-  codigo_reservacion: null,
-  client: null,
-  reservante: null,
-  reservationStage: null,
-  hotel: null,
-  startDate: new Date().toISOString().split("T")[0],
-  endDate: null,
-  status: "Pendiente",
-  traveler: null,
-  paymentMethod: null,
-  id_client: null,
-  statusPagoProveedor: null,
-  filterType: "Creacion",
-  markup_end: null,
-  markup_start: null,
-};
-
 function App({ hoteles }: { hoteles: any }) {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
@@ -141,7 +123,11 @@ function App({ hoteles }: { hoteles: any }) {
         {/* Reservations Table */}
         <div className="bg-white shadow overflow-hidden sm:rounded-lg border border-gray-200">
           <div className="overflow-x-auto">
-            <Table registros={formatedSolicitudes} renderers={componentes} />
+            <Table
+              registros={formatedSolicitudes}
+              renderers={componentes}
+              defaultSort={defaultSort}
+            />
           </div>
         </div>
         {selectedItem && (
@@ -188,5 +174,28 @@ function App({ hoteles }: { hoteles: any }) {
     </div>
   );
 }
+
+const defaultSort = {
+  key: "creado",
+  sort: true,
+};
+
+const defaultFiltersSolicitudes: TypeFilters = {
+  codigo_reservacion: null,
+  client: null,
+  reservante: null,
+  reservationStage: null,
+  hotel: null,
+  startDate: new Date().toISOString().split("T")[0],
+  endDate: null,
+  status: "Pendiente",
+  traveler: null,
+  paymentMethod: null,
+  id_client: null,
+  statusPagoProveedor: null,
+  filterType: "Creacion",
+  markup_end: null,
+  markup_start: null,
+};
 
 export default App;

@@ -1,3 +1,4 @@
+import { ArrowDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 
 type Registro = {
@@ -11,10 +12,22 @@ type RendererMap = {
 interface TableProps {
   registros: Registro[];
   renderers?: RendererMap;
+  defaultSort: {
+    key: string;
+    sort: boolean;
+  };
 }
 
-export const Table = ({ registros, renderers = {} }: TableProps) => {
+export const Table = ({
+  registros,
+  renderers = {},
+  defaultSort,
+}: TableProps) => {
   const [displayData, setDisplayData] = useState<Registro[]>(registros);
+  const [currentSort, setCurrentSort] = useState<{
+    key: string;
+    sort: boolean;
+  }>(defaultSort);
 
   useEffect(() => {
     setDisplayData(registros);
@@ -33,10 +46,13 @@ export const Table = ({ registros, renderers = {} }: TableProps) => {
   }, [registros]);
 
   const handleSort = (key: string) => {
+    let updateSort = { key, sort: !currentSort.sort };
+
     const sortedData = displayData.toSorted((a, b) =>
-      a[key] > b[key] ? 1 : -1
+      (currentSort.sort ? a[key] < b[key] : a[key] > b[key]) ? 1 : -1
     );
     setDisplayData(sortedData);
+    setCurrentSort(updateSort);
   };
 
   return (
@@ -50,7 +66,16 @@ export const Table = ({ registros, renderers = {} }: TableProps) => {
               onClick={() => handleSort(key)}
               className="px-6 min-w-fit whitespace-nowrap py-3 text-left cursor-pointer text-xs font-medium text-gray-600 uppercase tracking-wider"
             >
-              {key.replace(/_/g, " ").toUpperCase()}{" "}
+              <span className="flex gap-2">
+                {key == (currentSort.key || "") && (
+                  <ArrowDown
+                    className={`w-4 h-4 ${
+                      !currentSort.sort ? "" : "rotate-180"
+                    }`}
+                  />
+                )}
+                {key.replace(/_/g, " ").toUpperCase()}{" "}
+              </span>
             </th>
           ))}
         </tr>
