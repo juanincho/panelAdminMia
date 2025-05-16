@@ -28,7 +28,7 @@ export function CompanyTable() {
     const fetchCompanies = async () => {
       try {
         const response = await fetch(
-          "https://mianoktos.vercel.app/v1/mia/empresas",
+          "https://mianoktos.vercel.app/v1/mia/empresas/getAll",
           {
             method: "GET",
             headers: {
@@ -59,23 +59,29 @@ export function CompanyTable() {
     <Table>
       <TableHeader>
         <TableRow>
+          <TableHead>ID Cliente</TableHead>
+          <TableHead>Nombre Cliente</TableHead>
           <TableHead>Razón Social</TableHead>
           <TableHead>RFC</TableHead>
-          <TableHead>Nombre Comercial</TableHead>
-          <TableHead>Código Postal</TableHead>
-          <TableHead>Estado</TableHead>
+          <TableHead>Dirección</TableHead>
+          <TableHead>Estatus</TableHead>
+          <TableHead>Tiene Pagos Relacionados</TableHead>
+          <TableHead>Tiene Facturas Relacionadas</TableHead>
+          <TableHead>Tiene Reservas Relacionadas</TableHead>
+          <TableHead>Comentarios</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {companies.map((company) => (
           <TableRow key={company.id_empresa}>
+            <TableCell>{company.id_agente}</TableCell>
+            <TableCell>{company.nombre}</TableCell>
             <TableCell className="font-medium">
               {company.razon_social}
             </TableCell>
             <TableCell>{company.rfc}</TableCell>
-            <TableCell>{company.nombre_comercial}</TableCell>
-            <TableCell>{company.codigo_postal_fiscal}</TableCell>
+            <TableCell>{company.empresa_direccion} {company.empresa_colonia} {company.empresa_estado}</TableCell>
             <TableCell>
               <Badge
                 variant="outline"
@@ -88,6 +94,10 @@ export function CompanyTable() {
                 {company.status === "active" ? "Activa" : "Inactiva"}
               </Badge>
             </TableCell>
+            <TableCell> </TableCell>
+            <TableCell> </TableCell>
+            <TableCell> </TableCell>
+            <TableCell> </TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

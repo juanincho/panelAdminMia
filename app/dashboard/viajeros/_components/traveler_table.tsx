@@ -22,34 +22,43 @@ import type { Traveler } from "@/app/_types";
 
 export function TravelerTable({ viajeros }: { viajeros: Traveler[] }) {
   const [travelers, setTravelers] = useState<Traveler[]>(viajeros);
-
+  console.log(travelers);
   return (
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Nombre Completo</TableHead>
+          <TableHead>ID Cliente</TableHead>
+          <TableHead>Nombre Cliente</TableHead>
+          <TableHead>Nombre Viajero</TableHead>
           <TableHead>Correo</TableHead>
           <TableHead>Teléfono</TableHead>
           <TableHead>Género</TableHead>
           <TableHead>Fecha Nacimiento</TableHead>
-          <TableHead>Estado</TableHead>
+          <TableHead>Nacionalidad</TableHead>
+          <TableHead>Estatus</TableHead>
+          <TableHead>Comentarios</TableHead>
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {travelers.map((traveler) => (
           <TableRow key={traveler.id_viajero}>
+            <TableCell>{traveler.id_agente}</TableCell>
+            <TableCell>{traveler.nombre_agente}</TableCell>
             <TableCell className="font-medium">
-              {`${traveler.primer_nombre} ${traveler.segundo_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno}`}
+              {`${traveler.primer_nombre} ${traveler.segundo_nombre || ""} ${traveler.apellido_paterno} ${traveler.apellido_materno || ""}`}
             </TableCell>
             <TableCell>{traveler.correo}</TableCell>
             <TableCell>{traveler.telefono}</TableCell>
             <TableCell>
-              {traveler.genero === "m" ? "Masculino" : "Femenino"}
+              {traveler.genero === "masculino" && "Masculino"}
+              {traveler.genero === "femenino" && "Femenino"}
             </TableCell>
             <TableCell>
               {new Date(traveler.fecha_nacimiento).toLocaleDateString()}
             </TableCell>
+            
+            <TableCell></TableCell>
             <TableCell>
               <Badge
                 variant="outline"
@@ -62,6 +71,7 @@ export function TravelerTable({ viajeros }: { viajeros: Traveler[] }) {
                 {traveler.status === "active" ? "Activo" : "Inactivo"}
               </Badge>
             </TableCell>
+            <TableCell>{traveler.nacionalidad}</TableCell>
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

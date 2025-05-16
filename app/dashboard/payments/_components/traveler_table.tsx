@@ -27,14 +27,33 @@ export function TravelerTable({ facturas }: { facturas: Factura[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Agente</TableHead>
-          <TableHead>Total</TableHead>
+          <TableHead>Fecha Pago</TableHead>
+          <TableHead>ID Pago</TableHead>
+          <TableHead>Metodo de Pago</TableHead>
+          <TableHead>Detalles Pago</TableHead>
+          <TableHead>Banco</TableHead>
+          <TableHead>Número de Referencia</TableHead>
           <TableHead>Concepto</TableHead>
-          <TableHead>Metodo de pago</TableHead>
+          <TableHead>ID Cliente</TableHead>
+          <TableHead>Cliente</TableHead>
+          
+          <TableHead>ID Factura</TableHead>
+          <TableHead>RFC Factura</TableHead>
+          <TableHead>Razon Social Factura</TableHead>
+
+          <TableHead>Monto sin Impuestos</TableHead>
+          <TableHead>Impuestos</TableHead>
+          <TableHead>Monto con Impuestos</TableHead>
+          <TableHead>Información de la Reservación</TableHead>
+          <TableHead>Estatus Pago</TableHead>
+          <TableHead>Comentarios</TableHead>
+
+          {/* <TableHead>Metodo de pago</TableHead>
           <TableHead>Fecha creacion</TableHead>
           <TableHead>Moneda</TableHead>
-          <TableHead>Estado solicitud</TableHead>
-          <TableHead>Factura</TableHead>
+          <TableHead>Estado solicitud</TableHead> */}
+          <TableHead>Acciones</TableHead>
+          
           {/* <TableHead>Estado</TableHead>
           <TableHead className="text-right">Acciones</TableHead> */}
         </TableRow>
@@ -42,20 +61,57 @@ export function TravelerTable({ facturas }: { facturas: Factura[] }) {
       <TableBody>
         {invoices.map((factura) => (
           <TableRow key={factura.id_pago}>
+            <TableCell>{new Date(factura.fecha_transaccion).toLocaleDateString()}</TableCell>
+            <TableCell>{factura.id_pago}</TableCell>
+            <TableCell>{factura.metodo_de_pago}</TableCell>
+            <TableCell>({factura.last_digits}) {factura.banco}</TableCell>
+            <TableCell> </TableCell>
+            <TableCell>{factura.referencia} </TableCell>
+            <TableCell>{factura.concepto}</TableCell>
+            <TableCell>{factura.id_agente}</TableCell>
+            
+            
             <TableCell className="font-medium">
-              {`${factura.nombre_agente}`}
+              {`${factura.nombre_agente || ""}`}
             </TableCell>
-            <TableCell className="font-medium">
+
+            <TableCell>{factura.id_factura}</TableCell>
+            <TableCell>{factura.factura_rfc}</TableCell>
+            <TableCell>{factura.razon_social}</TableCell>
+
+            <TableCell>${factura.subtotal_pago}</TableCell>
+            <TableCell>${factura.impuestos_pago}</TableCell>
+            <TableCell>${factura.total_pago}</TableCell>
+
+            <TableCell></TableCell>
+            <TableCell>
+              <Badge
+                variant="outline"
+                className={
+                  factura.estado_factura === "Confirmada"
+                    ? "bg-green-100 text-green-800 border-green-200"
+                    : factura.estado_factura === "Cancelada" 
+                    ? "bg-red-100 text-red-800 border-red-200"
+                    : "bg-blue-100 text-blue-800 border-blue-200"
+                }
+              >
+                {factura.estado_factura}
+              </Badge>
+            </TableCell>
+            <TableCell></TableCell>
+
+
+            {/* <TableCell className="font-medium">
               {`${factura.total_pago}`}
             </TableCell>
-            <TableCell>{factura.concepto}</TableCell>
+            
             <TableCell>{factura.metodo_de_pago}</TableCell>
             <TableCell>
               {new Date(factura.pago_created_at).toLocaleDateString()}
             </TableCell>
             <TableCell>{factura.currency}</TableCell>
-            <TableCell>{factura.status_solicitud}</TableCell>
-            <TableCell>{factura.id_factura}</TableCell>
+            <TableCell>{factura.status_solicitud}</TableCell> */}
+            
             {/* <TableCell>
               <Badge
                 variant="outline"

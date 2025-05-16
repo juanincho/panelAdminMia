@@ -6,7 +6,7 @@ export default async function TravelerDashboard() {
   try {
     const apiEndpoints = [
       "https://mianoktos.vercel.app/v1/mia/empresas",
-      "https://mianoktos.vercel.app/v1/mia/viajeros",
+      "http://localhost:3001/v1/mia/viajeros/get-all-viajeros",
     ];
     const responses = await Promise.all(
       apiEndpoints.map((endpoint) =>

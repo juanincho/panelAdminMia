@@ -27,33 +27,52 @@ export function TravelerTable({ facturas }: { facturas: Factura[] }) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>Id Agente</TableHead>
-          <TableHead>Id Facturama</TableHead>
-          <TableHead>Total Factura</TableHead>
-          <TableHead>Subtotal Factura</TableHead>
-          <TableHead>Fecha de Emisión</TableHead>
+          <TableHead>Fecha de Facturación</TableHead>
+          <TableHead>ID Facturación</TableHead>
           <TableHead>Metodo de Pago</TableHead>
-          <TableHead>Hotel</TableHead>
-          <TableHead>Estado</TableHead>
+
+          <TableHead>ID Cliente</TableHead>
+          <TableHead>Nombre Cliente</TableHead>
+
+          <TableHead>RFC Factura</TableHead>
+          <TableHead>Razón Social Factura</TableHead>
+          
+          <TableHead>Monto sin Impuestos</TableHead>
+          <TableHead>Impuestos</TableHead>
+          <TableHead>Monto con Impuestos</TableHead>
+          
+          <TableHead>Estatus Factura</TableHead>
+          <TableHead>Informacion Reservación</TableHead>
+          <TableHead>Comentarios</TableHead>
+          
+          
           <TableHead className="text-right">Acciones</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {invoices.map((factura) => (
           <TableRow key={factura.id_factura}>
-            <TableCell className="font-medium">
-              {`${factura.usuario_creador}`}
+            <TableCell>
+              {new Date(factura.fecha_emision).toLocaleDateString()}
             </TableCell>
             <TableCell className="font-medium">
               {`${factura.id_facturama}`}
             </TableCell>
-            <TableCell>{factura.total_factura}</TableCell>
-            <TableCell>{factura.subtotal_factura}</TableCell>
-            <TableCell>
-              {new Date(factura.fecha_emision).toLocaleDateString()}
-            </TableCell>
             <TableCell>{factura.metodo_de_pago}</TableCell>
-            <TableCell>{factura.hotel}</TableCell>
+
+            <TableCell className="font-medium">
+              {`${factura.usuario_creador}`}
+            </TableCell>
+            <TableCell>{factura.nombre_agente}</TableCell>
+
+            <TableCell>{factura.factura_rfc}</TableCell>
+            <TableCell>{factura.razon_social}</TableCell>
+            
+            <TableCell>{factura.subtotal_factura}</TableCell>
+            <TableCell>{factura.impuestos_factura}</TableCell>
+            <TableCell>{factura.total_factura}</TableCell>
+            
+            
             <TableCell>
               <Badge
                 variant="outline"
@@ -68,6 +87,9 @@ export function TravelerTable({ facturas }: { facturas: Factura[] }) {
                 {factura.estado_factura}
               </Badge>
             </TableCell>
+            <TableCell>{factura.hotel}</TableCell>
+            <TableCell></TableCell>
+            
             <TableCell className="text-right">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
