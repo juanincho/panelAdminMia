@@ -229,7 +229,8 @@ const estadosMX = [
   "TLAXCALA",
   "VERACRUZ",
   "YUCATAN",
-  "ZACATECAS"
+  "ZACATECAS",
+  "OTROS"
 ];
 
 // Convierte 'YYYY-MM-DD' a 'DD-MM-YYYY' para almacenarlo en el estado

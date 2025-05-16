@@ -1,4 +1,5 @@
-import { ArrowDown } from "lucide-react";
+import { exportToCSV } from "@/helpers/utils";
+import { ArrowDown, FileDown } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 
 type Registro = {
@@ -56,67 +57,82 @@ export const Table = ({
   };
 
   return (
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
-        <tr>
-          {columnKeys.map((key) => (
-            <th
-              key={key}
-              scope="col"
-              onClick={() => handleSort(key)}
-              className="px-6 min-w-fit whitespace-nowrap py-3 text-left cursor-pointer text-xs font-medium text-gray-600 uppercase tracking-wider"
-            >
-              <span className="flex gap-2">
-                {key == (currentSort.key || "") && (
-                  <ArrowDown
-                    className={`w-4 h-4 ${
-                      !currentSort.sort ? "" : "rotate-180"
-                    }`}
-                  />
-                )}
-                {key.replace(/_/g, " ").toUpperCase()}{" "}
-              </span>
-            </th>
-          ))}
-        </tr>
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {displayData.length > 0 ? (
-          displayData.map((item, index) => (
-            <tr
-              key={item.id !== undefined ? item.id : index}
-              className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
-            >
-              {columnKeys.map((colKey) => {
-                const Renderer = renderers[colKey];
-                const value = item[colKey];
-
-                return (
-                  <td
-                    key={`${item.id !== undefined ? item.id : index}-${colKey}`}
-                    className="px-6 py-4 whitespace-nowrap text-xs text-gray-900"
-                  >
-                    {Renderer ? (
-                      <Renderer value={value} />
-                    ) : (
-                      String(value || "")
+    <div>
+      <div className="p-4 flex w-full justify-end">
+        <button
+          onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
+          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
+        >
+          <FileDown className="w-4 h-4 mr-2" />
+          Exportar CSV
+        </button>
+      </div>
+      <div className="overflow-auto border border-gray-200 rounded-sm">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 absoluteg top-0">
+            <tr>
+              {columnKeys.map((key) => (
+                <th
+                  key={key}
+                  scope="col"
+                  onClick={() => handleSort(key)}
+                  className="px-6 min-w-fit whitespace-nowrap py-3 text-left cursor-pointer text-xs font-medium text-gray-600 uppercase tracking-wider"
+                >
+                  <span className="flex gap-2">
+                    {key == (currentSort.key || "") && (
+                      <ArrowDown
+                        className={`w-4 h-4 ${
+                          !currentSort.sort ? "" : "rotate-180"
+                        }`}
+                      />
                     )}
-                  </td>
-                );
-              })}
+                    {key.replace(/_/g, " ").toUpperCase()}{" "}
+                  </span>
+                </th>
+              ))}
             </tr>
-          ))
-        ) : (
-          <tr>
-            <td
-              colSpan={columnKeys.length || 1}
-              className="px-6 py-4 text-center text-sm text-gray-500"
-            >
-              No se encontraron registros con los filtros aplicados
-            </td>
-          </tr>
-        )}
-      </tbody>
-    </table>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {displayData.length > 0 ? (
+              displayData.map((item, index) => (
+                <tr
+                  key={item.id !== undefined ? item.id : index}
+                  className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                >
+                  {columnKeys.map((colKey) => {
+                    const Renderer = renderers[colKey];
+                    const value = item[colKey];
+
+                    return (
+                      <td
+                        key={`${
+                          item.id !== undefined ? item.id : index
+                        }-${colKey}`}
+                        className="px-6 py-4 whitespace-nowrap text-xs text-gray-900"
+                      >
+                        {Renderer ? (
+                          <Renderer value={value} />
+                        ) : (
+                          String(value || "")
+                        )}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td
+                  colSpan={columnKeys.length || 1}
+                  className="px-6 py-4 text-center text-sm text-gray-500"
+                >
+                  No se encontraron registros con los filtros aplicados
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
   );
 };
