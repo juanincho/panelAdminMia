@@ -716,7 +716,9 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 };
 
       const response = await fetch(
-        // "http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
+
+        //"http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
+
         `${URL_VERCEL}hoteles/Agregar-hotel/`
          
         ,
@@ -836,7 +838,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     }}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">AGREGAR NUEVO HOTEL</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">AGREGAR NUEVO PROVEEDOR</DialogTitle>
         </DialogHeader>
 
         {/* Loading, Success and Error Messages */}
