@@ -17,6 +17,7 @@ import {
 import { Table } from "@/components/Table";
 import { fetchHoteles } from "@/services/hoteles";
 import Modal from "@/components/structure/Modal";
+import { TypeFilters } from "@/types";
 
 function App() {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
@@ -112,7 +113,6 @@ function App() {
 
   useEffect(() => {
     fetchHoteles((data) => {
-      console.log(data);
       setHoteles(data);
     });
   }, []);

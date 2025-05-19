@@ -291,7 +291,7 @@ const estadosMX = [
   "GUERRERO",
   "HIDALGO",
   "JALISCO",
-  "MEXICO",
+  "ESTADO DE MEXICO",
   "MICHOACAN",
   "MORELOS",
   "NAYARIT",

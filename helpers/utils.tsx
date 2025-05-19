@@ -23,7 +23,7 @@ export const formatDate = (dateString: string) => {
 export const formatRoom = (room: string) => {
   let response = room;
   if (response.toUpperCase() == "SINGLE") {
-    response = "SENCILLA";
+    response = "SENCILLO";
   } else if (response.toUpperCase() == "DOUBLE") {
     response = "DOBLE";
   }

@@ -12,14 +12,14 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Trash2, Search, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { API_KEY } from '@/app/constants/constantes';
+import { API_KEY } from "@/app/constants/constantes";
 import { URL_VERCEL } from "@/app/constants/constantes";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
@@ -72,7 +72,7 @@ interface TarifaPreferencial {
   precio_qq: string;
   sencilla: HabitacionData;
   doble: HabitacionData;
-  
+
   busqueda: {
     nombre: string;
     correo: string;
@@ -151,11 +151,11 @@ const buscarCodigoPostal = async (codigo: string) => {
         },
       }
     );
-    
+
     if (!response.ok) {
       throw new Error(`ERROR ${response.status}: ${response.statusText}`);
     }
-    
+
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {
@@ -168,7 +168,9 @@ const buscarAgentes = async (nombre: string, correo: string) => {
   try {
     const response = await fetch(
       //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
-      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`,
+      `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(
+        nombre
+      )}&correo=${encodeURIComponent(correo)}`,
       {
         method: "GET",
         headers: {
@@ -181,7 +183,7 @@ const buscarAgentes = async (nombre: string, correo: string) => {
       console.error("ERROR EN LA RESPUESTA:", response.status);
       return [];
     }
-    
+
     const data = await response.json();
     return data.success ? data.data : [];
   } catch (error) {
@@ -192,8 +194,8 @@ const buscarAgentes = async (nombre: string, correo: string) => {
 
 // Convierte 'DD-MM-YYYY' a 'YYYY-MM-DD' para el campo date
 const convertToDateInputFormat = (dateString: string): string => {
-  if (!dateString) return '';
-  const [day, month, year] = dateString.split('-');
+  if (!dateString) return "";
+  const [day, month, year] = dateString.split("-");
   return `${year}-${month}-${day}`; // Devuelve 'YYYY-MM-DD'
 };
 
@@ -212,7 +214,7 @@ const estadosMX = [
   "GUERRERO",
   "HIDALGO",
   "JALISCO",
-  "MEXICO",
+  "ESTADO DE MEXICO",
   "MICHOACAN",
   "MORELOS",
   "NAYARIT",
@@ -230,17 +232,21 @@ const estadosMX = [
   "VERACRUZ",
   "YUCATAN",
   "ZACATECAS",
-  "OTROS"
+  "OTROS",
 ];
 
 // Convierte 'YYYY-MM-DD' a 'DD-MM-YYYY' para almacenarlo en el estado
 const convertToDDMMYYYY = (dateString: string): string => {
-  if (!dateString) return '';
-  const [year, month, day] = dateString.split('-');
+  if (!dateString) return "";
+  const [year, month, day] = dateString.split("-");
   return `${day}-${month}-${year}`; // Devuelve 'DD-MM-YYYY'
 };
 
-export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialogProps) {
+export function AddHotelDialog({
+  open,
+  onOpenChange,
+  onSuccess,
+}: AddHotelDialogProps) {
   // Initial form state
   const [formData, setFormData] = useState<FormData>({
     id_cadena: "",
@@ -281,7 +287,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     notas_tarifasServicios: "",
     notas_informacionPagos: "",
     notas_generales: "",
-    notas_informacion_adicional:"",
+    notas_informacion_adicional: "",
     notas: "",
     id_sepomex: "",
     latitud: "",
@@ -313,7 +319,9 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
   // State for CP search and form management
   const [colonias, setColonias] = useState<CodigoPostalData[]>([]);
   const [buscandoCP, setBuscandoCP] = useState(false);
-  const [tarifasPreferenciales, setTarifasPreferenciales] = useState<TarifaPreferencial[]>([]);
+  const [tarifasPreferenciales, setTarifasPreferenciales] = useState<
+    TarifaPreferencial[]
+  >([]);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
@@ -322,37 +330,42 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
   // Sync breakfast data between single and double rooms
   useEffect(() => {
     if (formData.sencilla) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         doble: {
           ...prev.doble,
           incluye: prev.sencilla.incluye,
           tipo_desayuno: prev.sencilla.tipo_desayuno,
           precio: prev.sencilla.precio,
-          comentarios: prev.sencilla.comentarios
-        }
+          comentarios: prev.sencilla.comentarios,
+        },
       }));
     }
-  }, [formData.sencilla.incluye, formData.sencilla.tipo_desayuno, formData.sencilla.precio, formData.sencilla.comentarios]);
+  }, [
+    formData.sencilla.incluye,
+    formData.sencilla.tipo_desayuno,
+    formData.sencilla.precio,
+    formData.sencilla.comentarios,
+  ]);
 
   // Handler for código postal search
   const handleCodigoPostalChange = async (codigo: string) => {
-    setFormData(prev => ({ ...prev, codigoPostal: codigo }));
-    
+    setFormData((prev) => ({ ...prev, codigoPostal: codigo }));
+
     if (codigo.length === 5) {
       setBuscandoCP(true);
       try {
         const data = await buscarCodigoPostal(codigo);
         setColonias(data);
-        
+
         if (data.length > 0) {
           const primerResultado = data[0];
-          setFormData(prev => ({
+          setFormData((prev) => ({
             ...prev,
             estado: quitarAcentos(primerResultado.d_estado.toUpperCase()),
             ciudad_zona: quitarAcentos(primerResultado.d_ciudad.toUpperCase()),
             municipio: quitarAcentos(primerResultado.D_mnpio.toUpperCase()),
-            id_sepomex: primerResultado.id.toString()
+            id_sepomex: primerResultado.id.toString(),
           }));
         }
       } catch (error) {
@@ -367,9 +380,11 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
   // Handler for colonia selection
   const handleColoniaChange = (coloniaId: string) => {
-    const coloniaSeleccionada = colonias.find(c => c.id.toString() === coloniaId);
+    const coloniaSeleccionada = colonias.find(
+      (c) => c.id.toString() === coloniaId
+    );
     if (coloniaSeleccionada) {
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         colonia: coloniaSeleccionada.d_asenta,
       }));
@@ -378,24 +393,24 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
   // Handle checkbox for convention
   const handleHayConvenioChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       hay_convenio: checked,
       // Reset vigencia_convenio if unchecked
       vigencia_convenio: checked ? prev.vigencia_convenio : "",
       // Set default comment if unchecked
-      comentario_vigencia: checked ? "" : "SIN CONVENIO"
+      comentario_vigencia: checked ? "" : "SIN CONVENIO",
     }));
   };
 
   // Generic form field change handler
   const handleChange = (field: string, value: any) => {
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.');
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".");
       setFormData((prev) => ({
         ...prev,
         [parent]: {
-          ...prev[parent as keyof FormData] as object,
+          ...(prev[parent as keyof FormData] as object),
           [child]: value,
         },
       }));
@@ -410,19 +425,25 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
   // Handler for agent search within preferential rates
   const handleSearch = async (index: number) => {
     const tarifa = tarifasPreferenciales[index];
-    if (tarifa.busqueda.nombre.trim() === "" && tarifa.busqueda.correo.trim() === "") {
+    if (
+      tarifa.busqueda.nombre.trim() === "" &&
+      tarifa.busqueda.correo.trim() === ""
+    ) {
       const newTarifas = [...tarifasPreferenciales];
       newTarifas[index].busqueda.resultados = [];
       setTarifasPreferenciales(newTarifas);
       return;
     }
-    
+
     const newTarifas = [...tarifasPreferenciales];
     newTarifas[index].busqueda.buscando = true;
     setTarifasPreferenciales(newTarifas);
-    
+
     try {
-      const agentes = await buscarAgentes(tarifa.busqueda.nombre, tarifa.busqueda.correo);
+      const agentes = await buscarAgentes(
+        tarifa.busqueda.nombre,
+        tarifa.busqueda.correo
+      );
       newTarifas[index].busqueda.resultados = agentes;
       newTarifas[index].busqueda.buscando = false;
       setTarifasPreferenciales(newTarifas);
@@ -442,10 +463,18 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
       return () => clearTimeout(delayDebounce);
     });
-  }, [tarifasPreferenciales.map(t => t.busqueda.nombre + t.busqueda.correo).join()]);
+  }, [
+    tarifasPreferenciales
+      .map((t) => t.busqueda.nombre + t.busqueda.correo)
+      .join(),
+  ]);
 
   // Handle search input change
-  const handleSearchInputChange = (index: number, field: 'nombre' | 'correo', value: string) => {
+  const handleSearchInputChange = (
+    index: number,
+    field: "nombre" | "correo",
+    value: string
+  ) => {
     const newTarifas = [...tarifasPreferenciales];
     newTarifas[index].busqueda[field] = value;
     setTarifasPreferenciales(newTarifas);
@@ -470,39 +499,48 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     value: any
   ) => {
     const newTarifas = [...tarifasPreferenciales];
-    
-    if (field.includes('.')) {
-      const [parent, child] = field.split('.') as [keyof TarifaPreferencial, string];
-      if (parent === 'sencilla' || parent === 'doble') {
+
+    if (field.includes(".")) {
+      const [parent, child] = field.split(".") as [
+        keyof TarifaPreferencial,
+        string
+      ];
+      if (parent === "sencilla" || parent === "doble") {
         newTarifas[index][parent] = {
           ...newTarifas[index][parent],
-          [child]: value
+          [child]: value,
         };
-        
+
         // Sync breakfast data between single and double rooms
-        if (parent === 'sencilla' && (child === 'incluye' || child === 'tipo_desayuno' || child === 'precio' || child === 'comentarios')) {
+        if (
+          parent === "sencilla" &&
+          (child === "incluye" ||
+            child === "tipo_desayuno" ||
+            child === "precio" ||
+            child === "comentarios")
+        ) {
           newTarifas[index].doble = {
             ...newTarifas[index].doble,
-            [child]: value
+            [child]: value,
           };
         }
-      } else if (parent === 'busqueda') {
+      } else if (parent === "busqueda") {
         newTarifas[index].busqueda = {
           ...newTarifas[index].busqueda,
-          [child]: value
+          [child]: value,
         };
       }
     } else {
       // For top-level properties
       newTarifas[index] = {
         ...newTarifas[index],
-        [field]: value
+        [field]: value,
       };
     }
-    
+
     setTarifasPreferenciales(newTarifas);
   };
-  
+
   // Add a new preferential rate
   const addTarifaPreferencial = () => {
     setTarifasPreferenciales([
@@ -534,8 +572,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
           nombre: "",
           correo: "",
           resultados: [],
-          buscando: false
-        }
+          buscando: false,
+        },
       },
     ]);
   };
@@ -545,23 +583,32 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
     const newTarifas = tarifasPreferenciales.filter((_, i) => i !== index);
     setTarifasPreferenciales(newTarifas);
   };
-  
+
   // Concatenate all notes fields
   const combineNotes = () => {
     const notesMap = [
       { section: "DATOS BÁSICOS", content: formData.notas_datosBasicos },
-      { section: "TARIFAS Y SERVICIOS", content: formData.notas_tarifasServicios },
-      { section: "INFORMACIÓN DE PAGOS", content: formData.notas_informacionPagos },
-      { section: "INFORMACION ADICIONAL", content: formData.notas_informacion_adicional },
-      { section: "NOTAS GENERALES", content: formData.notas_generales }
+      {
+        section: "TARIFAS Y SERVICIOS",
+        content: formData.notas_tarifasServicios,
+      },
+      {
+        section: "INFORMACIÓN DE PAGOS",
+        content: formData.notas_informacionPagos,
+      },
+      {
+        section: "INFORMACION ADICIONAL",
+        content: formData.notas_informacion_adicional,
+      },
+      { section: "NOTAS GENERALES", content: formData.notas_generales },
     ];
-    
+
     return notesMap
-      .filter(note => note.content.trim())
-      .map(note => `## ${note.section} ##\n${note.content}`)
-      .join('\n\n');
+      .filter((note) => note.content.trim())
+      .map((note) => `## ${note.section} ##\n${note.content}`)
+      .join("\n\n");
   };
-  
+
   // Form submission handler
   const handleSubmit = async () => {
     setIsLoading(true);
@@ -570,159 +617,174 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
     try {
       const requiredFields = {
-        'nombre': 'NOMBRE',
-        'tipo_negociacion': 'TIPO DE NEGOCIACION',
-        'estado': 'ESTADO',
-        'ciudad_zona': 'CIUDAD',
-        'costo_q': 'COSTO PROVEEDOR HABITACION SENCILLA',
-        'precio_q': 'PRECIO DE VENTA HABITACION SENCILLA',
-        'costo_qq': 'COSTO PROVEEDOR HABITACION DOBLE',
-        'precio_qq': 'PRECIO DE VENTA HABITACION DOBLE'
+        nombre: "NOMBRE",
+        tipo_negociacion: "TIPO DE NEGOCIACION",
+        estado: "ESTADO",
+        ciudad_zona: "CIUDAD",
+        costo_q: "COSTO PROVEEDOR HABITACION SENCILLA",
+        precio_q: "PRECIO DE VENTA HABITACION SENCILLA",
+        costo_qq: "COSTO PROVEEDOR HABITACION DOBLE",
+        precio_qq: "PRECIO DE VENTA HABITACION DOBLE",
       };
 
       // Add vigencia_convenio as required if hay_convenio is checked
       if (formData.hay_convenio) {
-        requiredFields['vigencia_convenio' as keyof typeof requiredFields] = 'VIGENCIA DEL CONVENIO';
+        requiredFields["vigencia_convenio" as keyof typeof requiredFields] =
+          "VIGENCIA DEL CONVENIO";
       }
 
       const missingFields = Object.entries(requiredFields)
-        .filter(([field]) => !formData[field as keyof FormData] && formData[field as keyof FormData] !== 0)
+        .filter(
+          ([field]) =>
+            !formData[field as keyof FormData] &&
+            formData[field as keyof FormData] !== 0
+        )
         .map(([_, name]) => name);
 
       if (missingFields.length > 0) {
-        throw new Error(`FALTAN CAMPOS OBLIGATORIOS: ${missingFields.join(', ')}`);
+        throw new Error(
+          `FALTAN CAMPOS OBLIGATORIOS: ${missingFields.join(", ")}`
+        );
       }
-      
+
       const formatNumber = (value: any) => {
-        if (value === null || value === undefined || value === '') return null;
+        if (value === null || value === undefined || value === "") return null;
         const num = Number(value);
         return isNaN(num) ? null : num.toFixed(2);
       };
 
       // Construir la dirección completa
-      const direccionCompleta = `${formData.calle || ""},${formData.numero || ""} ,${formData.colonia}, ${formData.municipio}, ${formData.estado}, CP ${formData.codigoPostal}`;
-      
+      const direccionCompleta = `${formData.calle || ""},${
+        formData.numero || ""
+      } ,${formData.colonia}, ${formData.municipio}, ${formData.estado}, CP ${
+        formData.codigoPostal
+      }`;
+
       // Combine all notes fields
       const combinedNotes = combineNotes();
-      
+
       const payload = {
-  id_excel: formData.id_excel ? Number(formData.id_excel) : null,
-  tipo_negociacion: formData.tipo_negociacion || null,
-  vigencia_convenio: formData.hay_convenio ? formData.vigencia_convenio : null,
-  comentario_vigencia: !formData.hay_convenio ? formData.comentario_vigencia : null,
-  nombre: formData.nombre,
-  id_cadena: 11,
-  rfc: formData.rfc || null,
-  razon_social: formData.razon_social || null,
-  direccion: direccionCompleta,
-  latitud: formData.latitud || null,
-  longitud: formData.longitud || null,
-  estado: formData.estado,
-  ciudad_zona: formData.ciudad_zona,
-  codigoPostal: formData.codigoPostal,
-  colonia: formData.colonia,
-  tipo_hospedaje: formData.tipo_hospedaje || 'hotel',
-  tipo_pago: formData.tipo_pago || null,
-  disponibilidad_precio: formData.disponibilidad_precio || null,
-  contacto_convenio: formData.contacto_convenio || null,
-  contacto_recepcion: formData.contacto_recepcion || null,
-  iva: formData.iva ? Number(formData.iva) : null,
-  ish: formData.ish ? Number(formData.ish) : null,
-  otros_impuestos: formData.otros_impuestos ? Number(formData.otros_impuestos) : null,
-  otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje
-    ? Number(formData.otros_impuestos_porcentaje)
-    : null,
-  menoresEdad: formData.menoresEdad || null,
-  paxExtraPersona: formData.doble.precio_persona_extra
-    ? Number(formData.doble.precio_persona_extra)
-    : null,
-  transportacion: formData.transportacion || null,
-  transportacionComentarios: formData.transportacionComentarios || null,
-  mascotas: formData.mascotas || null,
-  salones: formData.salones || null,
-  urlImagenHotel: formData.urlImagenHotel || null,
-  urlImagenHotelQ: formData.urlImagenHotelQ || null,
-  urlImagenHotelQQ: formData.urlImagenHotelQQ || null,
-  comentario_pago: formData.comentario_pago || null,
-  calificacion: formData.calificacion ? Number(formData.calificacion) : null,
-  id_sepomex: formData.id_sepomex || null,
-  Comentarios: combinedNotes || null,
-  activo: formData.activo !== undefined ? formData.activo : 1,
-  tarifas: {
-    general: {
-      costo_q:    formatNumber(formData.costo_q)    || "0.00",
-      precio_q:   formatNumber(formData.precio_q)   || "0.00",
-      costo_qq:   formatNumber(formData.costo_qq)   || "0.00",
-      precio_qq:  formatNumber(formData.precio_qq)  || "0.00",
-      precio_persona_extra: formData.doble.precio_persona_extra
-        ? formatNumber(formData.doble.precio_persona_extra)
-        : null,
+        id_excel: formData.id_excel ? Number(formData.id_excel) : null,
+        tipo_negociacion: formData.tipo_negociacion || null,
+        vigencia_convenio: formData.hay_convenio
+          ? formData.vigencia_convenio
+          : null,
+        comentario_vigencia: !formData.hay_convenio
+          ? formData.comentario_vigencia
+          : null,
+        nombre: formData.nombre,
+        id_cadena: 11,
+        rfc: formData.rfc || null,
+        razon_social: formData.razon_social || null,
+        direccion: direccionCompleta,
+        latitud: formData.latitud || null,
+        longitud: formData.longitud || null,
+        estado: formData.estado,
+        ciudad_zona: formData.ciudad_zona,
+        codigoPostal: formData.codigoPostal,
+        colonia: formData.colonia,
+        tipo_hospedaje: formData.tipo_hospedaje || "hotel",
+        tipo_pago: formData.tipo_pago || null,
+        disponibilidad_precio: formData.disponibilidad_precio || null,
+        contacto_convenio: formData.contacto_convenio || null,
+        contacto_recepcion: formData.contacto_recepcion || null,
+        iva: formData.iva ? Number(formData.iva) : null,
+        ish: formData.ish ? Number(formData.ish) : null,
+        otros_impuestos: formData.otros_impuestos
+          ? Number(formData.otros_impuestos)
+          : null,
+        otros_impuestos_porcentaje: formData.otros_impuestos_porcentaje
+          ? Number(formData.otros_impuestos_porcentaje)
+          : null,
+        menoresEdad: formData.menoresEdad || null,
+        paxExtraPersona: formData.doble.precio_persona_extra
+          ? Number(formData.doble.precio_persona_extra)
+          : null,
+        transportacion: formData.transportacion || null,
+        transportacionComentarios: formData.transportacionComentarios || null,
+        mascotas: formData.mascotas || null,
+        salones: formData.salones || null,
+        urlImagenHotel: formData.urlImagenHotel || null,
+        urlImagenHotelQ: formData.urlImagenHotelQ || null,
+        urlImagenHotelQQ: formData.urlImagenHotelQQ || null,
+        comentario_pago: formData.comentario_pago || null,
+        calificacion: formData.calificacion
+          ? Number(formData.calificacion)
+          : null,
+        id_sepomex: formData.id_sepomex || null,
+        Comentarios: combinedNotes || null,
+        activo: formData.activo !== undefined ? formData.activo : 1,
+        tarifas: {
+          general: {
+            costo_q: formatNumber(formData.costo_q) || "0.00",
+            precio_q: formatNumber(formData.precio_q) || "0.00",
+            costo_qq: formatNumber(formData.costo_qq) || "0.00",
+            precio_qq: formatNumber(formData.precio_qq) || "0.00",
+            precio_persona_extra: formData.doble.precio_persona_extra
+              ? formatNumber(formData.doble.precio_persona_extra)
+              : null,
 
-      sencilla: {
-        incluye:          formData.sencilla.incluye,
-        tipo_desayuno:    formData.sencilla.tipo_desayuno || null,
-        precio:           formData.sencilla.incluye
-                           ? formatNumber(formData.sencilla.precio)
-                           : null,
-        comentarios:      formData.sencilla.comentarios || null,
-        precio_noche_extra: formData.sencilla.precio_noche_extra
-                             ? formatNumber(formData.sencilla.precio_noche_extra)
-                             : null,
-      },
+            sencilla: {
+              incluye: formData.sencilla.incluye,
+              tipo_desayuno: formData.sencilla.tipo_desayuno || null,
+              precio: formData.sencilla.incluye
+                ? formatNumber(formData.sencilla.precio)
+                : null,
+              comentarios: formData.sencilla.comentarios || null,
+              precio_noche_extra: formData.sencilla.precio_noche_extra
+                ? formatNumber(formData.sencilla.precio_noche_extra)
+                : null,
+            },
 
-      doble: {
-        incluye:          formData.doble.incluye,
-        tipo_desayuno:    formData.doble.tipo_desayuno || null,
-        precio:           formData.doble.incluye
-                           ? formatNumber(formData.doble.precio)
-                           : null,
-        comentarios:      formData.doble.comentarios || null,
-        precio_persona_extra: formData.doble.precio_persona_extra
-                             ? formatNumber(formData.doble.precio_persona_extra)
-                             : null,
-        precio_noche_extra: formData.doble.precio_noche_extra
-                             ? formatNumber(formData.doble.precio_noche_extra)
-                             : null,
-      },
-    },
+            doble: {
+              incluye: formData.doble.incluye,
+              tipo_desayuno: formData.doble.tipo_desayuno || null,
+              precio: formData.doble.incluye
+                ? formatNumber(formData.doble.precio)
+                : null,
+              comentarios: formData.doble.comentarios || null,
+              precio_persona_extra: formData.doble.precio_persona_extra
+                ? formatNumber(formData.doble.precio_persona_extra)
+                : null,
+              precio_noche_extra: formData.doble.precio_noche_extra
+                ? formatNumber(formData.doble.precio_noche_extra)
+                : null,
+            },
+          },
 
-    preferenciales: tarifasPreferenciales.map(t => ({
-      id_agente: t.id_agente || null,
-      costo_q:   formatNumber(t.costo_q)   || "0.00",
-      precio_q:  formatNumber(t.precio_q)  || "0.00",
-      costo_qq:  formatNumber(t.costo_qq)  || "0.00",
-      precio_qq: formatNumber(t.precio_qq) || "0.00",
+          preferenciales: tarifasPreferenciales.map((t) => ({
+            id_agente: t.id_agente || null,
+            costo_q: formatNumber(t.costo_q) || "0.00",
+            precio_q: formatNumber(t.precio_q) || "0.00",
+            costo_qq: formatNumber(t.costo_qq) || "0.00",
+            precio_qq: formatNumber(t.precio_qq) || "0.00",
 
-      sencilla: {
-        incluye: t.sencilla.incluye,
-        tipo_desayuno: t.sencilla.tipo_desayuno || null,
-        precio: t.sencilla.incluye
-                 ? formatNumber(t.sencilla.precio)
-                 : null,
-        comentarios: t.sencilla.comentarios || null,
-        precio_noche_extra: null,
-      },
+            sencilla: {
+              incluye: t.sencilla.incluye,
+              tipo_desayuno: t.sencilla.tipo_desayuno || null,
+              precio: t.sencilla.incluye
+                ? formatNumber(t.sencilla.precio)
+                : null,
+              comentarios: t.sencilla.comentarios || null,
+              precio_noche_extra: null,
+            },
 
-      doble: {
-        incluye: t.doble.incluye,
-        tipo_desayuno: t.doble.tipo_desayuno || null,
-        precio: t.doble.incluye
-                 ? formatNumber(t.doble.precio)
-                 : null,
-        comentarios: t.doble.comentarios || null,
-        precio_noche_extra: null,
-      },
-    })),
-  },
-};
+            doble: {
+              incluye: t.doble.incluye,
+              tipo_desayuno: t.doble.tipo_desayuno || null,
+              precio: t.doble.incluye ? formatNumber(t.doble.precio) : null,
+              comentarios: t.doble.comentarios || null,
+              precio_noche_extra: null,
+            },
+          })),
+        },
+      };
 
       const response = await fetch(
-
         //"http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
 
-        `${URL_VERCEL}hoteles/Agregar-hotel/`
-         
-        ,
+        `${URL_VERCEL}hoteles/Agregar-hotel/`,
+
         {
           method: "POST",
           headers: {
@@ -735,7 +797,10 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || `ERROR ${response.status}: ${response.statusText}`);
+        throw new Error(
+          errorData.message ||
+            `ERROR ${response.status}: ${response.statusText}`
+        );
       }
 
       setSuccessMessage("HOTEL CREADO EXITOSAMENTE!");
@@ -828,18 +893,21 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
   };
 
   return (
-
-
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      if (!isOpen) {
-        setSuccessMessage("");
-        setErrorMessage("");
-      }
-      onOpenChange(isOpen);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          setSuccessMessage("");
+          setErrorMessage("");
+        }
+        onOpenChange(isOpen);
+      }}
+    >
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">AGREGAR NUEVO PROVEEDOR</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            AGREGAR NUEVO PROVEEDOR
+          </DialogTitle>
         </DialogHeader>
 
         {/* Loading, Success and Error Messages */}
@@ -863,8 +931,8 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
         )}
 
         {/* Tabs Navigation */}
-        <Tabs 
-          defaultValue="datosBasicos" 
+        <Tabs
+          defaultValue="datosBasicos"
           value={activeTab}
           onValueChange={setActiveTab}
           className="w-full"
@@ -889,30 +957,44 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Required fields first */}
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="nombre">NOMBRE DEL PROVEEDOR <span className="text-red-500">*</span></Label>
-                <Input 
+                <Label htmlFor="nombre">
+                  NOMBRE DEL PROVEEDOR <span className="text-red-500">*</span>
+                </Label>
+                <Input
                   id="nombre"
-                  value={formData.nombre} 
-                  onChange={(e) => handleChange("nombre", e.target.value.toUpperCase())} 
-                  required 
-                />
-              </div>
-              
-              <div className="flex flex-col space-y-1">
-                <Label htmlFor="tipo_negociacion">TIPO DE NEGOCIACION <span className="text-red-500">*</span></Label>
-                <Input 
-                  id="tipo_negociacion"
-                  value={formData.tipo_negociacion} 
-                  onChange={(e) => handleChange("tipo_negociacion", e.target.value.toUpperCase())}
+                  value={formData.nombre}
+                  onChange={(e) =>
+                    handleChange("nombre", e.target.value.toUpperCase())
+                  }
                   required
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="hay_convenio" className="flex items-center gap-2">
+                <Label htmlFor="tipo_negociacion">
+                  TIPO DE NEGOCIACION <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="tipo_negociacion"
+                  value={formData.tipo_negociacion}
+                  onChange={(e) =>
+                    handleChange(
+                      "tipo_negociacion",
+                      e.target.value.toUpperCase()
+                    )
+                  }
+                  required
+                />
+              </div>
+
+              <div className="flex flex-col space-y-1">
+                <Label
+                  htmlFor="hay_convenio"
+                  className="flex items-center gap-2"
+                >
                   <div className="flex items-center">
-                    <Checkbox 
-                      id="hay_convenio" 
+                    <Checkbox
+                      id="hay_convenio"
                       checked={formData.hay_convenio}
                       onCheckedChange={handleHayConvenioChange}
                     />
@@ -920,40 +1002,64 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                   </div>
                 </Label>
               </div>
-              
+
               {formData.hay_convenio ? (
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="vigencia_convenio">VIGENCIA DEL CONVENIO <span className="text-red-500">*</span></Label>
-                  <Input 
+                  <Label htmlFor="vigencia_convenio">
+                    VIGENCIA DEL CONVENIO{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
                     id="vigencia_convenio"
                     type="date"
-                    value={formData.vigencia_convenio ? convertToDateInputFormat(formData.vigencia_convenio) : ''} 
-                    onChange={(e) => handleChange("vigencia_convenio", convertToDDMMYYYY(e.target.value))}
+                    value={
+                      formData.vigencia_convenio
+                        ? convertToDateInputFormat(formData.vigencia_convenio)
+                        : ""
+                    }
+                    onChange={(e) =>
+                      handleChange(
+                        "vigencia_convenio",
+                        convertToDDMMYYYY(e.target.value)
+                      )
+                    }
                     required
                   />
                 </div>
               ) : (
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="comentario_vigencia">COMENTARIO VIGENCIA</Label>
-                  <Input 
+                  <Label htmlFor="comentario_vigencia">
+                    COMENTARIO VIGENCIA
+                  </Label>
+                  <Input
                     id="comentario_vigencia"
-                    value={formData.comentario_vigencia} 
-                    onChange={(e) => handleChange("comentario_vigencia", e.target.value.toUpperCase())}
+                    value={formData.comentario_vigencia}
+                    onChange={(e) =>
+                      handleChange(
+                        "comentario_vigencia",
+                        e.target.value.toUpperCase()
+                      )
+                    }
                     disabled
                   />
                 </div>
               )}
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="estadoSelect">
                   ESTADO <span className="text-red-500">*</span>
                 </Label>
                 <Select
                   value={formData.estado}
-                  onValueChange={(val) => handleChange("estado", val.toUpperCase())}
+                  onValueChange={(val) =>
+                    handleChange("estado", val.toUpperCase())
+                  }
                   required
                 >
-                  <SelectTrigger id="estadoSelect" className="bg-gray-100 dark:bg-gray-800">
+                  <SelectTrigger
+                    id="estadoSelect"
+                    className="bg-gray-100 dark:bg-gray-800"
+                  >
                     <SelectValue placeholder="Selecciona un estado" />
                   </SelectTrigger>
                   <SelectContent className="bg-white dark:bg-gray-700">
@@ -965,56 +1071,68 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="ciudad_zona">CIUDAD <span className="text-red-500">*</span></Label>
-                <Input 
+                <Label htmlFor="ciudad_zona">
+                  CIUDAD <span className="text-red-500">*</span>
+                </Label>
+                <Input
                   id="ciudad_zona"
                   value={formData.ciudad_zona.toUpperCase()}
-                  onChange={(e) => handleChange("ciudad_zona", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleChange("ciudad_zona", e.target.value.toUpperCase())
+                  }
                   className="bg-gray-100 dark:bg-gray-800"
                   required
                 />
               </div>
-              
+
               {/* Optional fields */}
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="id_excel">ID EXCEL (SEGUIMIENTO)</Label>
-                <Input 
+                <Input
                   id="id_excel"
-                  value={formData.id_excel || ""} 
-                  onChange={(e) => handleChange("id_excel", e.target.value.toUpperCase())}
+                  value={formData.id_excel || ""}
+                  onChange={(e) =>
+                    handleChange("id_excel", e.target.value.toUpperCase())
+                  }
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="codigoPostal">CODIGO POSTAL</Label>
-                <Input 
+                <Input
                   id="codigoPostal"
                   value={formData.codigoPostal}
                   onChange={(e) => handleCodigoPostalChange(e.target.value)}
                   maxLength={5}
                 />
                 {buscandoCP && (
-                  <span className="text-xs text-blue-600">BUSCANDO CODIGO POSTAL...</span>
+                  <span className="text-xs text-blue-600">
+                    BUSCANDO CODIGO POSTAL...
+                  </span>
                 )}
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="calle">CALLE</Label>
-                <Input 
+                <Input
                   id="calle"
                   value={formData.calle || ""}
-                  onChange={(e) => handleChange("calle", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleChange("calle", e.target.value.toUpperCase())
+                  }
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="numero">NUMERO</Label>
-                <Input 
+                <Input
                   id="numero"
                   value={formData.numero || ""}
-                  onChange={(e) => handleChange("numero", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleChange("numero", e.target.value.toUpperCase())
+                  }
                 />
               </div>
 
@@ -1027,7 +1145,10 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                     </SelectTrigger>
                     <SelectContent>
                       {colonias.map((colonia) => (
-                        <SelectItem key={colonia.id} value={colonia.id.toString()}>
+                        <SelectItem
+                          key={colonia.id}
+                          value={colonia.id.toString()}
+                        >
                           {quitarAcentos(colonia.d_asenta.toUpperCase())}
                         </SelectItem>
                       ))}
@@ -1038,80 +1159,116 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="municipio">MUNICIPIO</Label>
-                <Input 
+                <Input
                   id="municipio"
                   value={formData.municipio}
-                  onChange={(e) => handleChange("municipio", e.target.value.toUpperCase())}
+                  onChange={(e) =>
+                    handleChange("municipio", e.target.value.toUpperCase())
+                  }
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="disponibilidad_precio">¿COMO SE SOLICITA LA DISPONIBILIDAD?</Label>
-                <Textarea 
+                <Label htmlFor="disponibilidad_precio">
+                  ¿COMO SE SOLICITA LA DISPONIBILIDAD?
+                </Label>
+                <Textarea
                   id="disponibilidad_precio"
-                  value={formData.disponibilidad_precio || ""} 
-                  onChange={(e) => handleChange("disponibilidad_precio", e.target.value.toUpperCase())} 
+                  value={formData.disponibilidad_precio || ""}
+                  onChange={(e) =>
+                    handleChange(
+                      "disponibilidad_precio",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="EMAIL, TELEFONO, ETC."
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="contacto_convenio">CONTACTOS DE CONVENIO</Label>
-                <Textarea 
+                <Textarea
                   id="contacto_convenio"
-                  value={formData.contacto_convenio} 
-                  onChange={(e) => handleChange("contacto_convenio", e.target.value.toUpperCase())} 
+                  value={formData.contacto_convenio}
+                  onChange={(e) =>
+                    handleChange(
+                      "contacto_convenio",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="NOMBRE Y DATOS DE CONTACTO"
                 />
               </div>
 
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="contacto_recepcion">CONTACTOS DE RECEPCION</Label>
-                <Textarea 
+                <Label htmlFor="contacto_recepcion">
+                  CONTACTOS DE RECEPCION
+                </Label>
+                <Textarea
                   id="contacto_recepcion"
-                  value={formData.contacto_recepcion} 
-                  onChange={(e) => handleChange("contacto_recepcion", e.target.value.toUpperCase())} 
+                  value={formData.contacto_recepcion}
+                  onChange={(e) =>
+                    handleChange(
+                      "contacto_recepcion",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="NOMBRE Y DATOS DE CONTACTO"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="urlImagenHotel">IMAGEN HOTEL (URL)</Label>
-                <Input 
+                <Input
                   id="urlImagenHotel"
-                  value={formData.urlImagenHotel} 
-                  onChange={(e) => handleChange("urlImagenHotel", e.target.value)} 
+                  value={formData.urlImagenHotel}
+                  onChange={(e) =>
+                    handleChange("urlImagenHotel", e.target.value)
+                  }
                   placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="urlImagenHotelQ">IMAGEN HABITACION SENCILLA (URL)</Label>
-                <Input 
+                <Label htmlFor="urlImagenHotelQ">
+                  IMAGEN HABITACION SENCILLA (URL)
+                </Label>
+                <Input
                   id="urlImagenHotelQ"
-                  value={formData.urlImagenHotelQ} 
-                  onChange={(e) => handleChange("urlImagenHotelQ", e.target.value)} 
+                  value={formData.urlImagenHotelQ}
+                  onChange={(e) =>
+                    handleChange("urlImagenHotelQ", e.target.value)
+                  }
                   placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="urlImagenHotelQQ">IMAGEN HABITACION DOBLE (URL)</Label>
-                <Input 
+                <Label htmlFor="urlImagenHotelQQ">
+                  IMAGEN HABITACION DOBLE (URL)
+                </Label>
+                <Input
                   id="urlImagenHotelQQ"
-                  value={formData.urlImagenHotelQQ} 
-                  onChange={(e) => handleChange("urlImagenHotelQQ", e.target.value)} 
+                  value={formData.urlImagenHotelQQ}
+                  onChange={(e) =>
+                    handleChange("urlImagenHotelQQ", e.target.value)
+                  }
                   placeholder="HTTPS://EJEMPLO.COM/IMAGEN.JPG"
                 />
               </div>
-              
+
               {/* Notes field for this tab */}
               <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
                 <Label htmlFor="notas_datosBasicos">NOTAS DATOS BÁSICOS</Label>
-                <Textarea 
+                <Textarea
                   id="notas_datosBasicos"
-                  value={formData.notas_datosBasicos} 
-                  onChange={(e) => handleChange("notas_datosBasicos", e.target.value.toUpperCase())} 
+                  value={formData.notas_datosBasicos}
+                  onChange={(e) =>
+                    handleChange(
+                      "notas_datosBasicos",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="NOTAS ESPECÍFICAS SOBRE LOS DATOS BÁSICOS"
                   className="min-h-[100px]"
                 />
@@ -1120,160 +1277,207 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
           </TabsContent>
 
           {/* Tab: Tarifas y Servicios */}
-          <TabsContent value="tarifasServicios" className="space-y-6 min-h-[400px]">
+          <TabsContent
+            value="tarifasServicios"
+            className="space-y-6 min-h-[400px]"
+          >
             <div>
               <h3 className="text-lg font-semibold mb-4">TARIFA GENERAL</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Required fields first */}
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="costo_q">COSTO PROVEEDOR HABITACION SENCILLA CON IMPUESTOS <span className="text-red-500">*</span></Label>
-                  <Input 
+                  <Label htmlFor="costo_q">
+                    COSTO PROVEEDOR HABITACION SENCILLA CON IMPUESTOS{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
                     id="costo_q"
-                    placeholder="0.00" 
-                    value={formData.costo_q} 
-                    onChange={(e) => handleChange("costo_q", e.target.value)} 
-                    required 
+                    placeholder="0.00"
+                    value={formData.costo_q}
+                    onChange={(e) => handleChange("costo_q", e.target.value)}
+                    required
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="precio_q">PRECIO DE VENTA HABITACION SENCILLA CON IMPUESTOS <span className="text-red-500">*</span></Label>
-                  <Input 
+                  <Label htmlFor="precio_q">
+                    PRECIO DE VENTA HABITACION SENCILLA CON IMPUESTOS{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
                     id="precio_q"
-                    placeholder="0.00" 
-                    value={formData.precio_q} 
-                    onChange={(e) => handleChange("precio_q", e.target.value)} 
-                    required 
+                    placeholder="0.00"
+                    value={formData.precio_q}
+                    onChange={(e) => handleChange("precio_q", e.target.value)}
+                    required
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="costo_qq">COSTO PROVEEDOR HABITACION DOBLE CON IMPUESTOS <span className="text-red-500">*</span></Label>
-                  <Input 
+                  <Label htmlFor="costo_qq">
+                    COSTO PROVEEDOR HABITACION DOBLE CON IMPUESTOS{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
                     id="costo_qq"
-                    placeholder="0.00" 
-                    value={formData.costo_qq} 
-                    onChange={(e) => handleChange("costo_qq", e.target.value)} 
-                    required 
+                    placeholder="0.00"
+                    value={formData.costo_qq}
+                    onChange={(e) => handleChange("costo_qq", e.target.value)}
+                    required
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="precio_qq">PRECIO DE VENTA HABITACION DOBLE CON IMPUESTOS <span className="text-red-500">*</span></Label>
-                  <Input 
+                  <Label htmlFor="precio_qq">
+                    PRECIO DE VENTA HABITACION DOBLE CON IMPUESTOS{" "}
+                    <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
                     id="precio_qq"
-                    placeholder="0.00" 
-                    value={formData.precio_qq} 
-                    onChange={(e) => handleChange("precio_qq", e.target.value)} 
-                    required 
+                    placeholder="0.00"
+                    value={formData.precio_qq}
+                    onChange={(e) => handleChange("precio_qq", e.target.value)}
+                    required
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="precio_persona_extra">COSTO POR PERSONA EXTRA CON IMPUESTOS</Label>
-                  <Input 
+                  <Label htmlFor="precio_persona_extra">
+                    COSTO POR PERSONA EXTRA CON IMPUESTOS
+                  </Label>
+                  <Input
                     id="precio_persona_extra"
-                    type="number" 
+                    type="number"
                     placeholder="0.00"
-                    value={formData.doble.precio_persona_extra} 
-                    onChange={(e) => handleChange("doble.precio_persona_extra", e.target.value)} 
+                    value={formData.doble.precio_persona_extra}
+                    onChange={(e) =>
+                      handleChange("doble.precio_persona_extra", e.target.value)
+                    }
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
                   <Label htmlFor="menoresEdad">MENORES DE EDAD</Label>
-                  <Textarea 
+                  <Textarea
                     id="menoresEdad"
-                    value={formData.menoresEdad} 
-                    onChange={(e) => handleChange("menoresEdad", e.target.value.toUpperCase())} 
+                    value={formData.menoresEdad}
+                    onChange={(e) =>
+                      handleChange("menoresEdad", e.target.value.toUpperCase())
+                    }
                     placeholder="INFORMACION SOBRE ESTADIA DE MENORES"
                   />
                 </div>
-                
+
                 <div className="flex flex-col space-y-1">
                   <Label htmlFor="iva">IMPUESTOS (IVA) EN %</Label>
-                  <Input 
+                  <Input
                     id="iva"
-                    value={formData.iva} 
-                    onChange={(e) => handleChange("iva", e.target.value)} 
+                    value={formData.iva}
+                    onChange={(e) => handleChange("iva", e.target.value)}
                     placeholder="EJ: 16.00"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
                   <Label htmlFor="ish">IMPUESTOS (ISH) EN %</Label>
-                  <Input 
+                  <Input
                     id="ish"
-                    value={formData.ish} 
-                    onChange={(e) => handleChange("ish", e.target.value)} 
+                    value={formData.ish}
+                    onChange={(e) => handleChange("ish", e.target.value)}
                     placeholder="EJ: 3.00"
                   />
                 </div>
 
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="otros_impuestos">IMPUESTOS (OTROS) MONTO</Label>
-                  <Input 
+                  <Label htmlFor="otros_impuestos">
+                    IMPUESTOS (OTROS) MONTO
+                  </Label>
+                  <Input
                     id="otros_impuestos"
-                    value={formData.otros_impuestos} 
-                    onChange={(e) => handleChange("otros_impuestos", e.target.value)} 
+                    value={formData.otros_impuestos}
+                    onChange={(e) =>
+                      handleChange("otros_impuestos", e.target.value)
+                    }
                     placeholder="EJ: 100.00"
                   />
                 </div>
-                
+
                 <div className="flex flex-col space-y-1">
-                  <Label htmlFor="otros_impuestos_porcentaje">IMPUESTOS (OTROS) EN %</Label>
-                  <Input 
+                  <Label htmlFor="otros_impuestos_porcentaje">
+                    IMPUESTOS (OTROS) EN %
+                  </Label>
+                  <Input
                     id="otros_impuestos_porcentaje"
-                    value={formData.otros_impuestos_porcentaje} 
-                    onChange={(e) => handleChange("otros_impuestos_porcentaje", e.target.value)} 
+                    value={formData.otros_impuestos_porcentaje}
+                    onChange={(e) =>
+                      handleChange("otros_impuestos_porcentaje", e.target.value)
+                    }
                     placeholder="EJ: 5.00"
                   />
                 </div>
-                
-
               </div>
 
               {/* Opciones de desayuno para habitación sencilla */}
               <div className="mt-6 border-t pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="incluye-sencilla-general"
-                    checked={formData.sencilla.incluye} 
-                    onChange={(e) => handleChange("sencilla.incluye", e.target.checked)} 
+                    checked={formData.sencilla.incluye}
+                    onChange={(e) =>
+                      handleChange("sencilla.incluye", e.target.checked)
+                    }
                     className="h-4 w-4"
                   />
-                  <Label htmlFor="incluye-sencilla-general">¿INCLUYE DESAYUNO EN HABITACION SENCILLA?</Label>
+                  <Label htmlFor="incluye-sencilla-general">
+                    ¿INCLUYE DESAYUNO EN HABITACION SENCILLA?
+                  </Label>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="sencilla_tipo_desayuno">TIPO DE DESAYUNO</Label>
-                    <Input 
+                    <Label htmlFor="sencilla_tipo_desayuno">
+                      TIPO DE DESAYUNO
+                    </Label>
+                    <Input
                       id="sencilla_tipo_desayuno"
-                      value={formData.sencilla.tipo_desayuno} 
-                      onChange={(e) => handleChange("sencilla.tipo_desayuno", e.target.value.toUpperCase())} 
+                      value={formData.sencilla.tipo_desayuno}
+                      onChange={(e) =>
+                        handleChange(
+                          "sencilla.tipo_desayuno",
+                          e.target.value.toUpperCase()
+                        )
+                      }
                       placeholder="CONTINENTAL, AMERICANO, ETC."
                     />
                   </div>
-                  
+
                   {!formData.sencilla.incluye && (
                     <div className="flex flex-col space-y-1">
-                      <Label htmlFor="sencilla_precio">COSTO DEL DESAYUNO CON IMPUESTOS</Label>
-                      <Input 
+                      <Label htmlFor="sencilla_precio">
+                        COSTO DEL DESAYUNO CON IMPUESTOS
+                      </Label>
+                      <Input
                         id="sencilla_precio"
-                        type="number" 
+                        type="number"
                         placeholder="0.00"
-                        value={formData.sencilla.precio} 
-                        onChange={(e) => handleChange("sencilla.precio", e.target.value)} 
+                        value={formData.sencilla.precio}
+                        onChange={(e) =>
+                          handleChange("sencilla.precio", e.target.value)
+                        }
                       />
                     </div>
                   )}
-                  
+
                   <div className="flex flex-col space-y-1">
                     <Label htmlFor="sencilla_comentarios">COMENTARIO</Label>
-                    <Textarea 
+                    <Textarea
                       id="sencilla_comentarios"
-                      value={formData.sencilla.comentarios} 
-                      onChange={(e) => handleChange("sencilla.comentarios", e.target.value.toUpperCase())} 
+                      value={formData.sencilla.comentarios}
+                      onChange={(e) =>
+                        handleChange(
+                          "sencilla.comentarios",
+                          e.target.value.toUpperCase()
+                        )
+                      }
                       placeholder="DETALLES ADICIONALES"
                     />
                   </div>
@@ -1283,46 +1487,66 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
               {/* Opciones de desayuno para habitación doble */}
               <div className="mt-6 border-t pt-4">
                 <div className="flex items-center gap-2 mb-3">
-                  <input 
-                    type="checkbox" 
+                  <input
+                    type="checkbox"
                     id="incluye-doble-general"
-                    checked={formData.doble.incluye} 
-                    onChange={(e) => handleChange("doble.incluye", e.target.checked)} 
+                    checked={formData.doble.incluye}
+                    onChange={(e) =>
+                      handleChange("doble.incluye", e.target.checked)
+                    }
                     className="h-4 w-4"
                   />
-                  <Label htmlFor="incluye-doble-general">¿INCLUYE DESAYUNO EN HABITACION DOBLE?</Label>
+                  <Label htmlFor="incluye-doble-general">
+                    ¿INCLUYE DESAYUNO EN HABITACION DOBLE?
+                  </Label>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
                   <div className="flex flex-col space-y-1">
-                    <Label htmlFor="doble_tipo_desayuno">TIPO DE DESAYUNO</Label>
-                    <Input 
+                    <Label htmlFor="doble_tipo_desayuno">
+                      TIPO DE DESAYUNO
+                    </Label>
+                    <Input
                       id="doble_tipo_desayuno"
-                      value={formData.doble.tipo_desayuno} 
-                      onChange={(e) => handleChange("doble.tipo_desayuno", e.target.value.toUpperCase())} 
+                      value={formData.doble.tipo_desayuno}
+                      onChange={(e) =>
+                        handleChange(
+                          "doble.tipo_desayuno",
+                          e.target.value.toUpperCase()
+                        )
+                      }
                       placeholder="CONTINENTAL, AMERICANO, ETC."
                     />
                   </div>
-                  
+
                   {!formData.doble.incluye && (
                     <div className="flex flex-col space-y-1">
-                      <Label htmlFor="doble_precio">COSTO DEL DESAYUNO CON IMPUESTOS</Label>
-                      <Input 
+                      <Label htmlFor="doble_precio">
+                        COSTO DEL DESAYUNO CON IMPUESTOS
+                      </Label>
+                      <Input
                         id="doble_precio"
-                        type="number" 
+                        type="number"
                         placeholder="0.00"
-                        value={formData.doble.precio} 
-                        onChange={(e) => handleChange("doble.precio", e.target.value)} 
+                        value={formData.doble.precio}
+                        onChange={(e) =>
+                          handleChange("doble.precio", e.target.value)
+                        }
                       />
                     </div>
                   )}
-                  
+
                   <div className="flex flex-col space-y-1">
                     <Label htmlFor="doble_comentarios">COMENTARIO</Label>
-                    <Textarea 
+                    <Textarea
                       id="doble_comentarios"
-                      value={formData.doble.comentarios} 
-                      onChange={(e) => handleChange("doble.comentarios", e.target.value.toUpperCase())} 
+                      value={formData.doble.comentarios}
+                      onChange={(e) =>
+                        handleChange(
+                          "doble.comentarios",
+                          e.target.value.toUpperCase()
+                        )
+                      }
                       placeholder="DETALLES ADICIONALES"
                     />
                   </div>
@@ -1333,9 +1557,11 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
             {/* Tarifas preferenciales */}
             <div className="mt-6 border-t pt-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">TARIFAS PREFERENCIALES</h3>
-                <Button 
-                  variant="outline" 
+                <h3 className="text-lg font-semibold">
+                  TARIFAS PREFERENCIALES
+                </h3>
+                <Button
+                  variant="outline"
                   size="sm"
                   onClick={addTarifaPreferencial}
                   className="flex items-center gap-1"
@@ -1343,7 +1569,7 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                   <Plus size={16} /> AGREGAR
                 </Button>
               </div>
-              
+
               <div className="max-h-[400px] overflow-y-auto pr-2">
                 {tarifasPreferenciales.length === 0 ? (
                   <div className="text-center py-6 text-gray-500 bg-gray-50 dark:bg-gray-800 rounded-md">
@@ -1351,33 +1577,58 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                   </div>
                 ) : (
                   tarifasPreferenciales.map((tarifa, index) => (
-                    <div key={index} className="border rounded-md p-4 mb-4 space-y-4">
+                    <div
+                      key={index}
+                      className="border rounded-md p-4 mb-4 space-y-4"
+                    >
                       {/* Búsqueda de agente */}
                       <div className="grid grid-cols-1 gap-4">
                         <div className="relative">
                           <Label className="mb-2 block">BUSCAR AGENTE</Label>
                           <div className="flex gap-2 items-start">
                             <div className="flex-1">
-                              <Label htmlFor={`nombre-agente-${index}`} className="sr-only">NOMBRE DEL AGENTE</Label>
+                              <Label
+                                htmlFor={`nombre-agente-${index}`}
+                                className="sr-only"
+                              >
+                                NOMBRE DEL AGENTE
+                              </Label>
                               <Input
                                 id={`nombre-agente-${index}`}
                                 placeholder="NOMBRE DEL AGENTE"
                                 value={tarifa.busqueda.nombre}
-                                onChange={(e) => handleSearchInputChange(index, 'nombre', e.target.value.toUpperCase())}
+                                onChange={(e) =>
+                                  handleSearchInputChange(
+                                    index,
+                                    "nombre",
+                                    e.target.value.toUpperCase()
+                                  )
+                                }
                               />
                             </div>
                             <div className="flex-1">
-                              <Label htmlFor={`correo-agente-${index}`} className="sr-only">CORREO DEL AGENTE</Label>
+                              <Label
+                                htmlFor={`correo-agente-${index}`}
+                                className="sr-only"
+                              >
+                                CORREO DEL AGENTE
+                              </Label>
                               <Input
                                 id={`correo-agente-${index}`}
                                 placeholder="CORREO DEL AGENTE"
                                 value={tarifa.busqueda.correo}
-                                onChange={(e) => handleSearchInputChange(index, 'correo', e.target.value)}
+                                onChange={(e) =>
+                                  handleSearchInputChange(
+                                    index,
+                                    "correo",
+                                    e.target.value
+                                  )
+                                }
                               />
                             </div>
-                            <Button 
-                              type="button" 
-                              variant="outline" 
+                            <Button
+                              type="button"
+                              variant="outline"
                               size="icon"
                               onClick={() => handleSearch(index)}
                               className="flex-shrink-0"
@@ -1385,30 +1636,42 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                               <Search size={18} />
                             </Button>
                           </div>
-                          
+
                           {tarifa.busqueda.resultados.length > 0 && (
                             <div className="absolute z-10 w-full mt-1 border bg-white dark:bg-gray-800 rounded-md shadow-lg max-h-[150px] overflow-y-auto">
                               {tarifa.busqueda.resultados.map((agente) => (
                                 <div
                                   key={agente.id_agente}
                                   className="cursor-pointer p-2 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                                  onClick={() => handleSelectAgente(index, agente)}
+                                  onClick={() =>
+                                    handleSelectAgente(index, agente)
+                                  }
                                 >
-                                  <div className="font-medium">{agente.primer_nombre.toUpperCase()}</div>
-                                  <div className="text-sm text-gray-500 dark:text-gray-400">{agente.correo}</div>
+                                  <div className="font-medium">
+                                    {agente.primer_nombre.toUpperCase()}
+                                  </div>
+                                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                                    {agente.correo}
+                                  </div>
                                 </div>
                               ))}
                             </div>
                           )}
-                          
+
                           {tarifa.busqueda.buscando && (
-                            <div className="text-sm text-blue-500 mt-1">BUSCANDO AGENTES...</div>
+                            <div className="text-sm text-blue-500 mt-1">
+                              BUSCANDO AGENTES...
+                            </div>
                           )}
                         </div>
-                        
+
                         {tarifa.id_agente && (
                           <div className="text-sm bg-blue-50 dark:bg-blue-900 p-2 rounded border border-blue-200 dark:border-blue-800">
-                            <span className="font-semibold">AGENTE SELECCIONADO:</span> {tarifa.nombre_agente.toUpperCase()} ({tarifa.correo_agente})
+                            <span className="font-semibold">
+                              AGENTE SELECCIONADO:
+                            </span>{" "}
+                            {tarifa.nombre_agente.toUpperCase()} (
+                            {tarifa.correo_agente})
                           </div>
                         )}
                       </div>
@@ -1416,39 +1679,71 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                       {/* Tarifas */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                         <div className="flex flex-col space-y-1">
-                          <Label htmlFor={`costo_q_${index}`}>COSTO PROVEEDOR HABITACION SENCILLA CON IMPUESTOS</Label>
+                          <Label htmlFor={`costo_q_${index}`}>
+                            COSTO PROVEEDOR HABITACION SENCILLA CON IMPUESTOS
+                          </Label>
                           <Input
                             id={`costo_q_${index}`}
                             placeholder="0.00"
                             value={tarifa.costo_q}
-                            onChange={(e) => handleTarifaPreferencialChange(index, "costo_q", e.target.value)}
+                            onChange={(e) =>
+                              handleTarifaPreferencialChange(
+                                index,
+                                "costo_q",
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
                         <div className="flex flex-col space-y-1">
-                          <Label htmlFor={`precio_q_${index}`}>PRECIO DE VENTA HABITACION SENCILLA CON IMPUESTOS</Label>
+                          <Label htmlFor={`precio_q_${index}`}>
+                            PRECIO DE VENTA HABITACION SENCILLA CON IMPUESTOS
+                          </Label>
                           <Input
                             id={`precio_q_${index}`}
                             placeholder="0.00"
                             value={tarifa.precio_q}
-                            onChange={(e) => handleTarifaPreferencialChange(index, "precio_q", e.target.value)}
+                            onChange={(e) =>
+                              handleTarifaPreferencialChange(
+                                index,
+                                "precio_q",
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
                         <div className="flex flex-col space-y-1">
-                          <Label htmlFor={`costo_qq_${index}`}>COSTO PROVEEDOR HABITACION DOBLE CON IMPUESTOS</Label>
+                          <Label htmlFor={`costo_qq_${index}`}>
+                            COSTO PROVEEDOR HABITACION DOBLE CON IMPUESTOS
+                          </Label>
                           <Input
                             id={`costo_qq_${index}`}
                             placeholder="0.00"
                             value={tarifa.costo_qq}
-                            onChange={(e) => handleTarifaPreferencialChange(index, "costo_qq", e.target.value)}
+                            onChange={(e) =>
+                              handleTarifaPreferencialChange(
+                                index,
+                                "costo_qq",
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
                         <div className="flex flex-col space-y-1">
-                          <Label htmlFor={`precio_qq_${index}`}>PRECIO DE VENTA HABITACION DOBLE CON IMPUESTOS</Label>
+                          <Label htmlFor={`precio_qq_${index}`}>
+                            PRECIO DE VENTA HABITACION DOBLE CON IMPUESTOS
+                          </Label>
                           <Input
                             id={`precio_qq_${index}`}
                             placeholder="0.00"
                             value={tarifa.precio_qq}
-                            onChange={(e) => handleTarifaPreferencialChange(index, "precio_qq", e.target.value)}
+                            onChange={(e) =>
+                              handleTarifaPreferencialChange(
+                                index,
+                                "precio_qq",
+                                e.target.value
+                              )
+                            }
                           />
                         </div>
                       </div>
@@ -1461,48 +1756,72 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                             id={`pref-sencilla-${index}`}
                             checked={tarifa.sencilla.incluye}
                             onChange={(e) =>
-                              handleTarifaPreferencialChange(index, "sencilla.incluye", e.target.checked)
+                              handleTarifaPreferencialChange(
+                                index,
+                                "sencilla.incluye",
+                                e.target.checked
+                              )
                             }
                             className="h-4 w-4"
                           />
-                          <Label htmlFor={`pref-sencilla-${index}`}>¿INCLUYE DESAYUNO EN HABITACION SENCILLA?</Label>
+                          <Label htmlFor={`pref-sencilla-${index}`}>
+                            ¿INCLUYE DESAYUNO EN HABITACION SENCILLA?
+                          </Label>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`sencilla_tipo_desayuno_${index}`}>TIPO DE DESAYUNO</Label>
+                            <Label htmlFor={`sencilla_tipo_desayuno_${index}`}>
+                              TIPO DE DESAYUNO
+                            </Label>
                             <Input
                               id={`sencilla_tipo_desayuno_${index}`}
                               value={tarifa.sencilla.tipo_desayuno}
                               onChange={(e) =>
-                                handleTarifaPreferencialChange(index, "sencilla.tipo_desayuno", e.target.value.toUpperCase())
+                                handleTarifaPreferencialChange(
+                                  index,
+                                  "sencilla.tipo_desayuno",
+                                  e.target.value.toUpperCase()
+                                )
                               }
                               placeholder="CONTINENTAL, AMERICANO, ETC."
                             />
                           </div>
-                          
+
                           {!tarifa.sencilla.incluye && (
                             <div className="flex flex-col space-y-1">
-                              <Label htmlFor={`sencilla_precio_${index}`}>COSTO DEL DESAYUNO CON IMPUESTOS</Label>
+                              <Label htmlFor={`sencilla_precio_${index}`}>
+                                COSTO DEL DESAYUNO CON IMPUESTOS
+                              </Label>
                               <Input
                                 id={`sencilla_precio_${index}`}
                                 type="number"
                                 placeholder="0.00"
                                 value={tarifa.sencilla.precio}
                                 onChange={(e) =>
-                                  handleTarifaPreferencialChange(index, "sencilla.precio", e.target.value)
+                                  handleTarifaPreferencialChange(
+                                    index,
+                                    "sencilla.precio",
+                                    e.target.value
+                                  )
                                 }
                               />
                             </div>
                           )}
-                          
+
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`sencilla_comentarios_${index}`}>COMENTARIO</Label>
+                            <Label htmlFor={`sencilla_comentarios_${index}`}>
+                              COMENTARIO
+                            </Label>
                             <Textarea
                               id={`sencilla_comentarios_${index}`}
                               value={tarifa.sencilla.comentarios}
                               onChange={(e) =>
-                                handleTarifaPreferencialChange(index, "sencilla.comentarios", e.target.value.toUpperCase())
+                                handleTarifaPreferencialChange(
+                                  index,
+                                  "sencilla.comentarios",
+                                  e.target.value.toUpperCase()
+                                )
                               }
                               placeholder="DETALLES ADICIONALES"
                             />
@@ -1518,59 +1837,83 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                             id={`pref-doble-${index}`}
                             checked={tarifa.doble.incluye}
                             onChange={(e) =>
-                              handleTarifaPreferencialChange(index, "doble.incluye", e.target.checked)
+                              handleTarifaPreferencialChange(
+                                index,
+                                "doble.incluye",
+                                e.target.checked
+                              )
                             }
                             className="h-4 w-4"
                           />
-                          <Label htmlFor={`pref-doble-${index}`}>¿INCLUYE DESAYUNO EN HABITACION DOBLE?</Label>
+                          <Label htmlFor={`pref-doble-${index}`}>
+                            ¿INCLUYE DESAYUNO EN HABITACION DOBLE?
+                          </Label>
                         </div>
-                        
+
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pl-6">
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`doble_tipo_desayuno_${index}`}>TIPO DE DESAYUNO</Label>
+                            <Label htmlFor={`doble_tipo_desayuno_${index}`}>
+                              TIPO DE DESAYUNO
+                            </Label>
                             <Input
                               id={`doble_tipo_desayuno_${index}`}
                               value={tarifa.doble.tipo_desayuno}
                               onChange={(e) =>
-                                handleTarifaPreferencialChange(index, "doble.tipo_desayuno", e.target.value.toUpperCase())
+                                handleTarifaPreferencialChange(
+                                  index,
+                                  "doble.tipo_desayuno",
+                                  e.target.value.toUpperCase()
+                                )
                               }
                               placeholder="CONTINENTAL, AMERICANO, ETC."
                             />
                           </div>
-                          
+
                           {!tarifa.doble.incluye && (
                             <div className="flex flex-col space-y-1">
-                              <Label htmlFor={`doble_precio_${index}`}>COSTO DEL DESAYUNO CON IMPUESTOS</Label>
+                              <Label htmlFor={`doble_precio_${index}`}>
+                                COSTO DEL DESAYUNO CON IMPUESTOS
+                              </Label>
                               <Input
                                 id={`doble_precio_${index}`}
                                 type="number"
                                 placeholder="0.00"
                                 value={tarifa.doble.precio}
                                 onChange={(e) =>
-                                  handleTarifaPreferencialChange(index, "doble.precio", e.target.value)
+                                  handleTarifaPreferencialChange(
+                                    index,
+                                    "doble.precio",
+                                    e.target.value
+                                  )
                                 }
                               />
                             </div>
                           )}
-                          
+
                           <div className="flex flex-col space-y-1">
-                            <Label htmlFor={`doble_comentarios_${index}`}>COMENTARIO</Label>
+                            <Label htmlFor={`doble_comentarios_${index}`}>
+                              COMENTARIO
+                            </Label>
                             <Textarea
                               id={`doble_comentarios_${index}`}
                               value={tarifa.doble.comentarios}
                               onChange={(e) =>
-                                handleTarifaPreferencialChange(index, "doble.comentarios", e.target.value.toUpperCase())
+                                handleTarifaPreferencialChange(
+                                  index,
+                                  "doble.comentarios",
+                                  e.target.value.toUpperCase()
+                                )
                               }
                               placeholder="DETALLES ADICIONALES"
                             />
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="flex justify-end mt-4">
-                        <Button 
-                          variant="outline" 
-                          className="text-red-500 hover:bg-red-50 hover:text-red-600" 
+                        <Button
+                          variant="outline"
+                          className="text-red-500 hover:bg-red-50 hover:text-red-600"
                           onClick={() => removeTarifaPreferencial(index)}
                           size="sm"
                         >
@@ -1581,14 +1924,21 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
                   ))
                 )}
               </div>
-              
+
               {/* Notes field for this tab */}
               <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
-                <Label htmlFor="notas_tarifasServicios">NOTAS TARIFAS Y SERVICIOS</Label>
-                <Textarea 
+                <Label htmlFor="notas_tarifasServicios">
+                  NOTAS TARIFAS Y SERVICIOS
+                </Label>
+                <Textarea
                   id="notas_tarifasServicios"
-                  value={formData.notas_tarifasServicios} 
-                  onChange={(e) => handleChange("notas_tarifasServicios", e.target.value.toUpperCase())} 
+                  value={formData.notas_tarifasServicios}
+                  onChange={(e) =>
+                    handleChange(
+                      "notas_tarifasServicios",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="NOTAS ESPECÍFICAS SOBRE TARIFAS Y SERVICIOS"
                   className="min-h-[100px]"
                 />
@@ -1597,12 +1947,17 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
           </TabsContent>
 
           {/* Tab: Información de Pagos */}
-          <TabsContent value="informacionPagos" className="space-y-6 min-h-[400px]">
+          <TabsContent
+            value="informacionPagos"
+            className="space-y-6 min-h-[400px]"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="tipo_pago">PROVEEDOR: A CREDITO O PREPAGO</Label>
-                <Select 
-                  value={formData.tipo_pago} 
+                <Label htmlFor="tipo_pago">
+                  PROVEEDOR: A CREDITO O PREPAGO
+                </Label>
+                <Select
+                  value={formData.tipo_pago}
                   onValueChange={(value) => handleChange("tipo_pago", value)}
                 >
                   <SelectTrigger id="tipo_pago">
@@ -1617,41 +1972,57 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="comentario_pago">DETALLES TIPO DE PAGO</Label>
-                <Textarea 
+                <Textarea
                   id="comentario_pago"
-                  value={formData.comentario_pago || ""} 
-                  onChange={(e) => handleChange("comentario_pago", e.target.value.toUpperCase())} 
+                  value={formData.comentario_pago || ""}
+                  onChange={(e) =>
+                    handleChange(
+                      "comentario_pago",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="INFORMACION ADICIONAL SOBRE EL PAGO"
                 />
               </div>
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="razon_social">RAZON SOCIAL</Label>
-                <Input 
+                <Input
                   id="razon_social"
-                  value={formData.razon_social} 
-                  onChange={(e) => handleChange("razon_social", e.target.value.toUpperCase())} 
+                  value={formData.razon_social}
+                  onChange={(e) =>
+                    handleChange("razon_social", e.target.value.toUpperCase())
+                  }
                   placeholder="NOMBRE LEGAL DE LA EMPRESA"
                 />
               </div>
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="rfc">RFC</Label>
-                <Input 
+                <Input
                   id="rfc"
-                  value={formData.rfc} 
-                  onChange={(e) => handleChange("rfc", e.target.value.toUpperCase())} 
+                  value={formData.rfc}
+                  onChange={(e) =>
+                    handleChange("rfc", e.target.value.toUpperCase())
+                  }
                   placeholder="REGISTRO FEDERAL DE CONTRIBUYENTES"
                 />
               </div>
-              
+
               {/* Notes field for this tab */}
               <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
-                <Label htmlFor="notas_informacionPagos">NOTAS INFORMACIÓN DE PAGOS</Label>
-                <Textarea 
+                <Label htmlFor="notas_informacionPagos">
+                  NOTAS INFORMACIÓN DE PAGOS
+                </Label>
+                <Textarea
                   id="notas_informacionPagos"
-                  value={formData.notas_informacionPagos} 
-                  onChange={(e) => handleChange("notas_informacionPagos", e.target.value.toUpperCase())} 
+                  value={formData.notas_informacionPagos}
+                  onChange={(e) =>
+                    handleChange(
+                      "notas_informacionPagos",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="NOTAS ESPECÍFICAS SOBRE INFORMACIÓN DE PAGOS"
                   className="min-h-[100px]"
                 />
@@ -1660,58 +2031,79 @@ export function AddHotelDialog({ open, onOpenChange, onSuccess }: AddHotelDialog
           </TabsContent>
 
           {/* Tab: Información Adicional */}
-          <TabsContent value="informacionAdicional" className="space-y-6 min-h-[400px]">
+          <TabsContent
+            value="informacionAdicional"
+            className="space-y-6 min-h-[400px]"
+          >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="mascotas">MASCOTAS</Label>
-                <Textarea 
+                <Textarea
                   id="mascotas"
-                  value={formData.mascotas} 
-                  onChange={(e) => handleChange("mascotas", e.target.value.toUpperCase())} 
+                  value={formData.mascotas}
+                  onChange={(e) =>
+                    handleChange("mascotas", e.target.value.toUpperCase())
+                  }
                   placeholder="POLITICAS PARA MASCOTAS"
                   className="min-h-[100px]"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="salones">SALONES</Label>
-                <Textarea 
+                <Textarea
                   id="salones"
-                  value={formData.salones} 
-                  onChange={(e) => handleChange("salones", e.target.value.toUpperCase())} 
+                  value={formData.salones}
+                  onChange={(e) =>
+                    handleChange("salones", e.target.value.toUpperCase())
+                  }
                   placeholder="INFORMACION SOBRE SALONES DISPONIBLES"
                   className="min-h-[100px]"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="transportacion">TRANSPORTACION</Label>
-                <Textarea 
+                <Textarea
                   id="transportacion"
-                  value={formData.transportacion} 
-                  onChange={(e) => handleChange("transportacion", e.target.value.toUpperCase())} 
+                  value={formData.transportacion}
+                  onChange={(e) =>
+                    handleChange("transportacion", e.target.value.toUpperCase())
+                  }
                   placeholder="DETALLES DE TRANSPORTACION"
                   className="min-h-[100px]"
                 />
               </div>
-              
+
               <div className="flex flex-col space-y-1">
-                <Label htmlFor="notas_informacion_adicional">NOTA INFORMACION ADICIONAL</Label>
-                <Textarea 
+                <Label htmlFor="notas_informacion_adicional">
+                  NOTA INFORMACION ADICIONAL
+                </Label>
+                <Textarea
                   id="notas_informacion_adicional"
-                  value={formData.notas_informacion_adicional} 
-                  onChange={(e) => handleChange("notas_informacion_adicional", e.target.value.toUpperCase())} 
+                  value={formData.notas_informacion_adicional}
+                  onChange={(e) =>
+                    handleChange(
+                      "notas_informacion_adicional",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="INFORMACION ADICIONAL"
                   className="min-h-[100px]"
                 />
               </div>
-              
+
               <div className="col-span-1 md:col-span-2 flex flex-col space-y-1 mt-4 border-t pt-4">
                 <Label htmlFor="notas_generales">NOTAS GENERALES</Label>
-                <Textarea 
+                <Textarea
                   id="notas_generales"
-                  value={formData.notas_generales} 
-                  onChange={(e) => handleChange("notas_generales", e.target.value.toUpperCase())} 
+                  value={formData.notas_generales}
+                  onChange={(e) =>
+                    handleChange(
+                      "notas_generales",
+                      e.target.value.toUpperCase()
+                    )
+                  }
                   placeholder="COMENTARIOS ADICIONALES SOBRE EL HOTEL"
                   className="min-h-[120px]"
                 />

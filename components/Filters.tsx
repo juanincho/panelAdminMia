@@ -1,6 +1,12 @@
 import React, { useState } from "react";
-import { ChevronDown, Filter, Search, X } from "lucide-react";
-import { on } from "node:events";
+import { Filter, Search, X } from "lucide-react";
+import {
+  DateInput,
+  Dropdown,
+  NumberInput,
+  TextInput,
+} from "@/components/atom/Input";
+import { TypeFilters } from "@/types";
 
 const Filters: React.FC<{
   onFilter: (filters: TypeFilters) => void;
@@ -334,7 +340,7 @@ const FiltersModal: React.FC<{
                     "GUERRERO",
                     "HIDALGO",
                     "JALISCO",
-                    "MEXICO",
+                    "ESTADO DE MEXICO",
                     "MICHOACAN",
                     "MORELOS",
                     "NAYARIT",
@@ -615,114 +621,5 @@ const FiltersModal: React.FC<{
     </>
   );
 };
-
-// Custom dropdown component to reduce repetition
-const Dropdown = ({
-  label,
-  value,
-  onChange,
-  options = [],
-  disabled = false,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  options?: string[];
-  disabled?: boolean;
-}) => (
-  <div className="flex flex-col space-y-1">
-    <label className="text-sm text-gray-600">{label}</label>
-    <div className="relative">
-      <select
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        disabled={disabled}
-        className="w-full p-2 pr-10 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white"
-      >
-        <option value="">Selecciona una opción</option>
-        {options.length > 0 ? (
-          options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))
-        ) : (
-          <option value={value}>{value}</option>
-        )}
-      </select>
-      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
-        <ChevronDown size={18} className="text-gray-500" />
-      </div>
-    </div>
-  </div>
-);
-
-// Custom date input component
-const DateInput = ({
-  label,
-  value,
-  onChange,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-}) => (
-  <div className="flex flex-col space-y-1">
-    <label className="text-sm text-gray-600">{label}</label>
-    <div className="relative">
-      <input
-        type="date"
-        value={value || ""}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
-    </div>
-  </div>
-);
-
-// Custom text input component
-const NumberInput = ({
-  label,
-  value,
-  onChange,
-}: {
-  label?: string;
-  value: number;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) => (
-  <div className="flex flex-col space-y-1">
-    {label && <label className="text-sm text-gray-600">{label}</label>}
-    <input
-      type="number"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
-);
-
-const TextInput = ({
-  label,
-  value,
-  onChange,
-  placeholder = "",
-}: {
-  label?: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder?: string;
-}) => (
-  <div className="flex flex-col space-y-1">
-    {label && <label className="text-sm text-gray-600">{label}</label>}
-    <input
-      type="text"
-      value={value || ""}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
-);
 
 export default Filters;

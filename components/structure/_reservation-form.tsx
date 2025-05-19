@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import { differenceInDays, parseISO, format } from "date-fns";
-import { useParams } from "next/navigation";
 import {
   X,
   Plus,
@@ -45,6 +44,16 @@ import {
   PaymentMethod,
   Traveler,
 } from "@/app/_types/reservas";
+import {
+  ComboBox,
+  DateInput,
+  Dropdown,
+  DropdownValues,
+  NumberInput,
+  TextInput,
+} from "@/components/atom/Input";
+import { fetchViajerosFromAgent } from "@/services/viajeros";
+import { Viajero } from "@/types";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
@@ -79,14 +88,52 @@ const DEFAULT_TAXES = [
   },
 ];
 
+interface ReservaForm {
+  codigo_reservacion_hotel?: string;
+  hotel: { name: string; content?: Hotel };
+  habitacion: string;
+  check_in: string;
+  check_out: string;
+  viajero?: Viajero;
+  estado_reserva: "Confirmada" | "En proceso" | "Cancelada";
+  comments: string;
+  proveedor: {
+    total: number | null;
+  };
+}
+
 export function ReservationForm({
   solicitud,
   hotels,
   onClose,
 }: ReservationFormProps) {
-  const [travelers, setTravelers] = useState([]);
+  const [form, setData] = useState<ReservaForm>({
+    hotel: {
+      name: solicitud.hotel || "",
+      content: hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0],
+    },
+    habitacion: updateRoom(solicitud.room) || "",
+    check_in: solicitud.check_in.split("T")[0] || "",
+    check_out: solicitud.check_out.split("T")[0] || "",
+    codigo_reservacion_hotel: "",
+    viajero: {
+      nombre_completo: "",
+    },
+    estado_reserva: "Confirmada",
+    comments: "",
+    proveedor: {
+      total: null,
+    },
+  });
+  const [habitaciones, setHabitaciones] = useState(
+    hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0]
+      .tipos_cuartos
+  );
+  const [travelers, setTravelers] = useState<Viajero[]>([]);
+
+  console.log(hotels);
+
   const [activeTab, setActiveTab] = useState("cliente");
-  const [comments, setComments] = useState("");
   const [selectedHotel, setSelectedHotel] = useState<string>("");
   const [selectedRoom, setSelectedRoom] = useState<string>("");
   const [selectedTraveler, setSelectedTraveler] = useState<string>("");
@@ -96,8 +143,6 @@ export function ReservationForm({
   const [totalCost, setTotalCost] = useState<number>(0);
   const [totalCostWithTaxes, setTotalCostWithTaxes] = useState<number>(0);
   const [nights, setNights] = useState<NightCost[]>([]);
-  const [reservationStatus, setReservationStatus] = useState("Confirmada");
-  const [hotelReservationCode, setHotelReservationCode] = useState("");
   const [enabledTaxes, setEnabledTaxes] = useState(DEFAULT_TAXES);
   const [customTaxes, setCustomTaxes] = useState<
     { name: string; rate: number }[]
@@ -108,8 +153,6 @@ export function ReservationForm({
     comments: "",
   });
 
-  // UI state for original hotel display
-  const [isChangingHotel, setIsChangingHotel] = useState(false);
   const [originalHotel, setOriginalHotel] = useState<string>("");
 
   const selectedHotelData = hotels.find((h) => h.id_hotel === selectedHotel);
@@ -117,33 +160,26 @@ export function ReservationForm({
     (r) => r.id_tipo_cuarto.toString() === selectedRoom
   );
 
+  /*ESTE SE QUITA, NO AFECTA */
   useEffect(() => {
-    const fetchViajero = async () => {
-      try {
-        const response = await fetch(
-          `https://mianoktos.vercel.app/v1/mia/viajeros/id?id=${solicitud.id_usuario_generador}`,
-          {
-            headers: {
-              "x-api-key": API_KEY || "",
-              "Cache-Control": "no-cache, no-store, must-revalidate",
-              Pragma: "no-cache",
-              Expires: "0",
-            },
-            cache: "no-store",
-          }
-        ).then((res) => res.json());
-        if (response.error) {
-          throw new Error("Error al buscar los viajeros");
+    console.log(form);
+  }, [form]);
+
+  useEffect(() => {
+    try {
+      fetchViajerosFromAgent(solicitud.id_agente, (data) => {
+        const viajeroFiltrado = data.filter(
+          (viajero) => viajero.id_viajero == solicitud.id_viajero
+        );
+        if (viajeroFiltrado.length > 0) {
+          setData((prev) => ({ ...prev, viajero: viajeroFiltrado[0] }));
         }
-        console.log(response);
-        setTravelers(response);
-      } catch (error) {
-        console.log(error);
-        setTravelers([]);
-      }
-    };
-    console.log(solicitud);
-    fetchViajero();
+        setTravelers(data);
+      });
+    } catch (error) {
+      console.log(error);
+      setTravelers([]);
+    }
   }, []);
 
   // Initialize form with solicitud data
@@ -175,9 +211,6 @@ export function ReservationForm({
       setTotalSalePrice(Number(solicitud.total));
 
       // Set confirmation code if available
-      if (solicitud.confirmation_code) {
-        setHotelReservationCode(solicitud.confirmation_code);
-      }
     }
   }, [solicitud, hotels]);
 
@@ -235,7 +268,7 @@ export function ReservationForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log(selectedHotelData);
+    // console.log(selectedHotelData);
 
     const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
     const reservation = {
@@ -283,11 +316,12 @@ export function ReservationForm({
       })),
     };
 
-    console.log(reservation);
+    // console.log(reservation);
     try {
       const response = await fetchCreateReservaFromSolicitud(reservation);
       alert("Actualizado con éxito");
-      console.log(response);
+      onClose();
+      // console.log(response);
     } catch (error) {
       alert("Hubo un error");
     }
@@ -304,9 +338,13 @@ export function ReservationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 mx-5 overflow-y-auto rounded-md shadow-md bg-white p-4"
+      className="space-y-6 mx-5 overflow-y-auto rounded-md bg-white p-4"
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="shadow-none"
+      >
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="cliente">Cliente</TabsTrigger>
           <TabsTrigger value="proveedor">Proveedor</TabsTrigger>
@@ -315,196 +353,119 @@ export function ReservationForm({
 
         <TabsContent value="cliente" className="space-y-4">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="space-y-2 col-span-2">
-              <Label>Código de Reserva del Hotel</Label>
-              <Input
-                value={hotelReservationCode}
-                onChange={(e) => setHotelReservationCode(e.target.value)}
-                placeholder={solicitud.confirmation_code || "Ej: RES123456"}
+            <div className="space-y-2">
+              <ComboBox
+                label={`Hotel`}
+                sublabel={`(${solicitud.hotel})`}
+                onChange={(value) => {
+                  if ("tipos_cuartos" in value.content) {
+                    setHabitaciones((value.content as Hotel).tipos_cuartos);
+                  }
+                  setData((prev) => ({
+                    ...prev,
+                    hotel: {
+                      name: value.name,
+                      content: value.content as Hotel,
+                    },
+                  }));
+                }}
+                value={{
+                  name: form.hotel.name,
+                  content: form.hotel.content as Hotel,
+                }}
+                options={hotels.map((item) => ({
+                  name: item.nombre_hotel,
+                  content: item,
+                }))}
+                placeholderOption={solicitud.hotel}
+              />
+              <DropdownValues
+                label="Tipo de Habitación"
+                onChange={(value) => {
+                  setData((prev) => ({ ...prev, habitacion: value.value }));
+                }}
+                options={
+                  habitaciones.map((item) => ({
+                    value: item.nombre_tipo_cuarto,
+                    label: `${item.nombre_tipo_cuarto} $${item.precio}`,
+                  })) || []
+                }
+                value={form.habitacion}
               />
             </div>
             <div className="space-y-2">
-              <Label>Hotel</Label>
-
-              {/* Custom hotel selection UI */}
-              <div className="rounded-md border border-input bg-background">
-                {/* Original hotel display */}
-                <div className="flex items-center justify-between px-3 py-2">
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <span
-                      className={
-                        isChangingHotel
-                          ? "text-muted-foreground line-through"
-                          : ""
-                      }
-                    >
-                      {originalHotel || "Hotel sin nombre"}
-                    </span>
-                  </div>
-
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsChangingHotel(!isChangingHotel)}
-                    className="h-8 px-2"
-                  >
-                    {isChangingHotel ? (
-                      <Check className="h-4 w-4 mr-1" />
-                    ) : (
-                      <Edit className="h-4 w-4 mr-1" />
-                    )}
-                    {isChangingHotel ? "Confirmar" : "Cambiar"}
-                  </Button>
-                </div>
-
-                {/* Hotel selection dropdown */}
-                {isChangingHotel && (
-                  <div className="px-3 py-2 border-t">
-                    <Select
-                      value={selectedHotel}
-                      onValueChange={setSelectedHotel}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar nuevo hotel" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hotels.map((hotel) => (
-                          <SelectItem
-                            key={hotel.id_hotel}
-                            value={hotel.id_hotel}
-                          >
-                            <div className="flex items-center gap-2">
-                              <Building2 className="h-4 w-4" />
-                              {hotel.nombre_hotel || "Hotel sin nombre"} -{" "}
-                              {hotel.Ciudad_Zona}
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
+              <Dropdown
+                label="Estado de la reserva"
+                onChange={(value) => {
+                  setData((prev) => ({
+                    ...prev,
+                    estado_reserva: value as
+                      | "Confirmada"
+                      | "Cancelada"
+                      | "En proceso",
+                  }));
+                }}
+                options={["Confirmada", "Cancelada", "En proceso"]}
+                value={form.estado_reserva}
+              />
+              <TextInput
+                onChange={(value) => {
+                  setData((prev) => ({
+                    ...prev,
+                    codigo_reservacion_hotel: value,
+                  }));
+                }}
+                value={form.codigo_reservacion_hotel}
+                label="Codigo reservación de hotel"
+                placeholder="Ingresa el codigo de reservación del hotel"
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Tipo de Habitación</Label>
-              <Select
-                value={selectedRoom}
-                onValueChange={setSelectedRoom}
-                disabled={!selectedHotel}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={
-                      updateRoom(solicitud.room) || "Seleccionar habitación"
-                    }
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedHotelData?.tipos_cuartos.map((room) => (
-                    <SelectItem
-                      key={room.id_tipo_cuarto}
-                      value={room.id_tipo_cuarto.toString()}
-                    >
-                      {room.nombre_tipo_cuarto} - ${room.precio}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <DateInput
+                label="Check-in"
+                value={form.check_in}
+                onChange={(value) => {
+                  setData((prev) => ({ ...prev, check_in: value }));
+                }}
+              />
+              <DateInput
+                label="Check-out"
+                value={form.check_out}
+                onChange={(value) => {
+                  setData((prev) => ({ ...prev, check_out: value }));
+                }}
+              />
             </div>
 
             <div className="space-y-2">
-              <Label>Check-in</Label>
-              <div className="relative">
-                <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-8"
-                  value={checkIn}
-                  onChange={(e) => setCheckIn(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Check-out</Label>
-              <div className="relative">
-                <Calendar className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="date"
-                  className="pl-8"
-                  value={checkOut}
-                  onChange={(e) => setCheckOut(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-4 bg-gray-100 p-4 rounded-sm">
-              <div className="space-y-2">
-                <Label>Datos viajero seleccionado</Label>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    disabled
-                    value={[
-                      solicitud.nombre_viajero,
-                      solicitud.primer_nombre,
-                      solicitud.apellido_paterno,
-                      solicitud.id_viajero.includes("via-")
-                        ? solicitud.id_viajero
-                        : null,
-                    ]
-                      .filter((item) => !!item)
-                      .join(" ")}
-                  />
-                </div>
-              </div>
-              <Label>Viajero</Label>
-              <Select
-                value={selectedTraveler}
-                onValueChange={setSelectedTraveler}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Seleccionar viajero" />
-                </SelectTrigger>
-                <SelectContent>
-                  {travelers.map((traveler) => (
-                    <SelectItem
-                      key={traveler.id_viajero}
-                      value={traveler.id_viajero}
-                    >
-                      {`${traveler.primer_nombre} ${traveler.apellido_paterno} ${traveler.apellido_materno} - ${traveler.id_viajero}`}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="space-y-2">
-                <Label>Estado de la Reserva</Label>
-                <Select
-                  value={reservationStatus}
-                  onValueChange={setReservationStatus}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Confirmada">Confirmada</SelectItem>
-                    <SelectItem value="Cancelada">Cancelada</SelectItem>
-                    <SelectItem value="En proceso">En proceso</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <ComboBox
+                label={`Viajeros`}
+                sublabel={`(${
+                  solicitud.nombre_viajero || solicitud.nombre_viajero_completo
+                } - ${solicitud.id_viajero})`}
+                onChange={(value) => {
+                  setData((prev) => ({
+                    ...prev,
+                    viajero: value.content as Viajero,
+                  }));
+                }}
+                value={{
+                  name: form.viajero.nombre_completo || "",
+                  content: form.viajero || null,
+                }}
+                options={travelers.map((item) => ({
+                  name: item.nombre_completo,
+                  content: item,
+                }))}
+              />
               <div className="space-y-2">
                 <Label>Comentarios de la reserva</Label>
                 <Textarea
-                  onChange={(e) => setComments(e.target.value)}
-                  value={comments}
+                  onChange={(e) =>
+                    setData((prev) => ({ ...prev, comments: e.target.value }))
+                  }
+                  value={form.comments}
                 ></Textarea>
               </div>
             </div>
@@ -513,42 +474,30 @@ export function ReservationForm({
 
         <TabsContent value="proveedor" className="space-y-4">
           <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Costo Subtotal</Label>
-                <Input
-                  type="number"
-                  value={totalCost > 0 ? totalCost : ""}
-                  onChange={(e) => {
-                    const totalCost = Number(e.target.value);
-                    const nightsCount = nights.length;
-                    setTotalCost(totalCost);
-                    calculateNightlyCosts(nightsCount, totalCost);
+            <div className="grid grid-cols-4 gap-4">
+              <div className="col-span-4">
+                <NumberInput
+                  value={form.proveedor.total}
+                  onChange={(value) => {
+                    setData((prev) => ({
+                      ...prev,
+                      proveedor: { ...prev.proveedor, total: Number(value) },
+                    }));
                   }}
+                  label="Costo total"
                 />
               </div>
-            </div>
 
-            <div className="flex flex-wrap gap-4 items-center">
-              {enabledTaxes.map((tax) => (
-                <Label key={tax.id} className="flex items-center space-x-2">
-                  <Checkbox
-                    checked={tax.selected}
-                    onCheckedChange={(checked) => {
-                      setEnabledTaxes(
-                        enabledTaxes.map((t) =>
-                          t.id === tax.id ? { ...t, selected: !!checked } : t
-                        )
-                      );
-                    }}
-                  />
-                  <span>{tax.descripcion}</span>
-                </Label>
-              ))}
-              <Button type="button" variant="outline" onClick={addCustomTax}>
-                <Plus className="h-4 w-4 mr-2" />
-                Agregar Impuesto
-              </Button>
+              <NumberInput
+                value={form.proveedor.total}
+                onChange={(value) => {
+                  setData((prev) => ({
+                    ...prev,
+                    proveedor: { ...prev.proveedor, total: Number(value) },
+                  }));
+                }}
+                label="Costo total"
+              />
             </div>
 
             {customTaxes.map((tax, index) => (
@@ -725,10 +674,10 @@ export function ReservationForm({
 function updateRoom(room: string) {
   let updated = room;
   if (updated.toUpperCase() == "SINGLE") {
-    updated = "Sencilla";
+    updated = "SENCILLO";
   }
   if (updated.toUpperCase() == "DOUBLE") {
-    updated = "Doble";
+    updated = "DOBLE";
   }
   return updated;
 }

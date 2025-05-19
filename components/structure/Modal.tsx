@@ -41,7 +41,9 @@ const Modal: React.FC<ModalProps> = ({
             </h3>
           )}
           {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-          <div>{children}</div>
+          <div className="w-full max-h-[600px] h-fit overflow-y-auto">
+            {children}
+          </div>
         </div>
       </div>
     </div>
