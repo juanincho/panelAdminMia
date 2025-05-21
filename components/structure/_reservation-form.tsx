@@ -1,35 +1,7 @@
-import React, { useState, useEffect } from "react";
-import { differenceInDays, parseISO, format } from "date-fns";
-import {
-  X,
-  Plus,
-  Building2,
-  Calendar,
-  CreditCard,
-  Check,
-  Edit,
-} from "lucide-react";
-
-// Mock imports for UI components (replace with actual imports)
+import React, { useState, useEffect, use, FormEvent } from "react";
+import { differenceInDays, parseISO, format, getISODay } from "date-fns";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -38,12 +10,7 @@ import {
   fetchCreateReservaFromSolicitud,
 } from "@/services/reservas";
 import { API_KEY } from "@/services/constant";
-import {
-  Hotel,
-  NightCost,
-  PaymentMethod,
-  Traveler,
-} from "@/app/_types/reservas";
+import { Hotel } from "@/app/_types/reservas";
 import {
   ComboBox,
   DateInput,
@@ -54,40 +21,14 @@ import {
 } from "@/components/atom/Input";
 import { fetchViajerosFromAgent } from "@/services/viajeros";
 import { Viajero } from "@/types";
+import { Table } from "../Table";
+import { da } from "date-fns/locale";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
   hotels: Hotel[];
   onClose: () => void;
 }
-
-const DEFAULT_TAXES = [
-  {
-    id: 1,
-    selected: false,
-    descripcion: "IVA (16%)",
-    name: "IVA",
-    rate: 0.16,
-    mount: 0,
-  },
-  {
-    id: 2,
-    selected: false,
-    descripcion: "ISH (3%)",
-    name: "ISH",
-    rate: 0.03,
-    mount: 0,
-  },
-  {
-    id: 3,
-    selected: false,
-    descripcion: "Saneamiento ($32)",
-    name: "Saneamiento",
-    rate: 0,
-    mount: 32,
-  },
-];
-
 interface ReservaForm {
   codigo_reservacion_hotel?: string;
   hotel: { name: string; content?: Hotel };
@@ -99,7 +40,43 @@ interface ReservaForm {
   comments: string;
   proveedor: {
     total: number | null;
+    subtotal: number;
+    impuestos: number;
   };
+  impuestos: {
+    iva: number;
+    ish: number;
+    otros_impuestos: number;
+    otros_impuestos_porcentaje: number;
+  };
+  venta: {
+    markup?: number;
+    total: number;
+    subtotal: number;
+    impuestos: number;
+  };
+  items?: {
+    noche: number;
+    costo: {
+      total: number;
+      subtotal: number;
+      impuestos: number;
+    };
+    venta: {
+      total: number;
+      subtotal: number;
+      impuestos: number;
+    };
+    impuestos?: {
+      name: string;
+      rate: number;
+      tipo_impuesto: string;
+      monto: number; // o cambia a "monto" en ambos
+      base: number;
+      total: number;
+    }[];
+  }[];
+  noches: number;
 }
 
 export function ReservationForm({
@@ -107,10 +84,14 @@ export function ReservationForm({
   hotels,
   onClose,
 }: ReservationFormProps) {
+  const currentHotel = hotels.filter(
+    (item) => item.nombre_hotel == solicitud.hotel
+  )[0];
+
   const [form, setData] = useState<ReservaForm>({
     hotel: {
       name: solicitud.hotel || "",
-      content: hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0],
+      content: currentHotel || null,
     },
     habitacion: updateRoom(solicitud.room) || "",
     check_in: solicitud.check_in.split("T")[0] || "",
@@ -119,52 +100,60 @@ export function ReservationForm({
     viajero: {
       nombre_completo: "",
     },
+    noches: differenceInDays(
+      parseISO(solicitud.check_out),
+      parseISO(solicitud.check_in)
+    ),
+    venta: {
+      total: Number(solicitud.total) || 0,
+      subtotal: Number(solicitud.total) * 0.84 || 0,
+      impuestos: Number(solicitud.total) * 0.16 || 0,
+      markup: 0,
+    },
     estado_reserva: "Confirmada",
     comments: "",
     proveedor: {
-      total: null,
+      total: 0,
+      subtotal: 0,
+      impuestos: 0,
     },
+    impuestos: {
+      iva:
+        Number(
+          currentHotel?.impuestos.find((item) => item.name == "iva")?.porcentaje
+        ) || 0,
+      ish:
+        Number(
+          currentHotel?.impuestos.find((item) => item.name == "ish")?.porcentaje
+        ) || 0,
+      otros_impuestos:
+        Number(
+          currentHotel?.impuestos.find((item) => item.name == "otros_impuestos")
+            .monto
+        ) || 0,
+      otros_impuestos_porcentaje:
+        Number(
+          currentHotel?.impuestos.find(
+            (item) => item.name == "otros_impuestos_porcentaje"
+          )?.porcentaje
+        ) || 0,
+    },
+    items: [],
   });
   const [habitaciones, setHabitaciones] = useState(
     hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0]
       .tipos_cuartos
   );
   const [travelers, setTravelers] = useState<Viajero[]>([]);
+  const [activeTab, setActiveTab] = useState("cliente");
 
   console.log(hotels);
-
-  const [activeTab, setActiveTab] = useState("cliente");
-  const [selectedHotel, setSelectedHotel] = useState<string>("");
-  const [selectedRoom, setSelectedRoom] = useState<string>("");
-  const [selectedTraveler, setSelectedTraveler] = useState<string>("");
-  const [checkIn, setCheckIn] = useState<string>("");
-  const [checkOut, setCheckOut] = useState<string>("");
-  const [totalSalePrice, setTotalSalePrice] = useState<number>(0);
-  const [totalCost, setTotalCost] = useState<number>(0);
-  const [totalCostWithTaxes, setTotalCostWithTaxes] = useState<number>(0);
-  const [nights, setNights] = useState<NightCost[]>([]);
-  const [enabledTaxes, setEnabledTaxes] = useState(DEFAULT_TAXES);
-  const [customTaxes, setCustomTaxes] = useState<
-    { name: string; rate: number }[]
-  >([]);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>({
-    type: "spei",
-    paymentDate: format(new Date(), "yyyy-MM-dd"),
-    comments: "",
-  });
-
-  const [originalHotel, setOriginalHotel] = useState<string>("");
-
-  const selectedHotelData = hotels.find((h) => h.id_hotel === selectedHotel);
-  const selectedRoomData = selectedHotelData?.tipos_cuartos.find(
-    (r) => r.id_tipo_cuarto.toString() === selectedRoom
-  );
 
   /*ESTE SE QUITA, NO AFECTA */
   useEffect(() => {
     console.log(form);
   }, [form]);
-
+  /* ESTe es el nuevo, si afecta */
   useEffect(() => {
     try {
       fetchViajerosFromAgent(solicitud.id_agente, (data) => {
@@ -182,157 +171,119 @@ export function ReservationForm({
     }
   }, []);
 
-  // Initialize form with solicitud data
   useEffect(() => {
-    if (solicitud) {
-      // Store original hotel name
-      setOriginalHotel(solicitud.hotel);
-
-      // Find matching hotel in hotels array if possible
-      const matchingHotel = hotels.find(
-        (h) => h.nombre_hotel === solicitud.hotel
+    if (
+      form.hotel.content &&
+      form.check_in &&
+      form.check_out &&
+      form.habitacion
+    ) {
+      const nights = differenceInDays(
+        //Obtenemos las noches para poder dividir el costo total entre las noches y obtener los items
+        parseISO(form.check_out),
+        parseISO(form.check_in)
       );
-      if (matchingHotel) {
-        setSelectedHotel(matchingHotel.id_hotel);
 
-        // Find matching room if possible
-        const matchingRoom = matchingHotel.tipos_cuartos.find(
-          (r) => r.nombre_tipo_cuarto === solicitud.room
-        );
-        if (matchingRoom) {
-          setSelectedRoom(matchingRoom.id_tipo_cuarto.toString());
-        }
-      }
-
-      // Set other form values from solicitud
-      setSelectedTraveler(solicitud.id_viajero.toString());
-      setCheckIn(solicitud.check_in.split("T")[0]);
-      setCheckOut(solicitud.check_out.split("T")[0]);
-      setTotalSalePrice(Number(solicitud.total));
-
-      // Set confirmation code if available
-    }
-  }, [solicitud, hotels]);
-
-  // Calculate nights and costs when relevant data changes
-  useEffect(() => {
-    if (checkIn && checkOut && selectedRoomData) {
-      const nightsCount = differenceInDays(
-        parseISO(checkOut),
-        parseISO(checkIn)
+      const roomPrice = Number(
+        form.hotel.content.tipos_cuartos.find(
+          (item) => item.nombre_tipo_cuarto == form.habitacion
+        ).precio
       );
-      const roomPrice = parseFloat(selectedRoomData.precio);
-      setTotalSalePrice(roomPrice * nightsCount);
-      calculateNightlyCosts(nightsCount, roomPrice);
-    }
-  }, [checkIn, checkOut, selectedRoomData, enabledTaxes]);
 
-  // Recalculate when taxes change
-  useEffect(() => {
-    calculateNightlyCosts(nights.length, totalCost);
-  }, [enabledTaxes]);
+      const costoBase =
+        form.proveedor.total - form.impuestos.otros_impuestos * nights;
+      const { subtotal, impuestos } = Object.keys(form.impuestos).reduce(
+        (acc, key) => {
+          //Sacamos el valor de los impuestos y el subtotal del costo total
+          const value = form.impuestos[key as keyof ReservaForm["impuestos"]];
+          if (key == "otros_impuestos") {
+            return acc;
+          } else {
+            console.log(acc);
+            return {
+              subtotal: acc.subtotal - (costoBase * value) / 100,
+              impuestos: acc.impuestos + (costoBase * value) / 100,
+            };
+          }
+        },
+        { subtotal: costoBase || 0, impuestos: 0 }
+      );
 
-  const calculateNightlyCosts = (nightsCount: number, baseCost: number) => {
-    if (nightsCount > 0 && baseCost > 0) {
-      const taxFilter = enabledTaxes.filter((tax) => tax.selected);
-      const newNights: NightCost[] = Array.from(
-        { length: nightsCount },
-        (_, index) => ({
-          night: index + 1,
-          baseCost: baseCost / nightsCount,
-          taxes: taxFilter.map(({ id, name, rate, mount }) => ({
-            id_impuesto: id,
-            name,
-            rate,
-            mount,
-            base: baseCost / nightsCount,
-            total: (baseCost / nightsCount) * rate + mount,
-          })),
-          totalWithTaxes: taxFilter.reduce(
-            (prev, current) =>
-              prev + ((baseCost / nightsCount) * current.rate + current.mount),
-            baseCost / nightsCount
+      const items = Array.from({ length: nights }, (_, index) => ({
+        noche: index + 1,
+        costo: {
+          total: Number((form.proveedor.total / nights || 0).toFixed(2)),
+          subtotal: Number((subtotal / nights || 0).toFixed(2)),
+          impuestos: Number((impuestos / nights || 0).toFixed(2)),
+        },
+        venta: {
+          total: Number(roomPrice),
+          subtotal: Number((roomPrice * 0.84).toFixed(2)),
+          impuestos: Number((roomPrice * 0.16).toFixed(2)),
+        },
+        impuestos: Object.keys(form.impuestos)
+          .map((key) => {
+            const value = Number(
+              form.impuestos[key as keyof ReservaForm["impuestos"]]
+            );
+            if (value <= 0) return null;
+            const base = Number(
+              (
+                form.proveedor.total / nights -
+                form.impuestos.otros_impuestos
+              ).toFixed(2)
+            );
+            const total =
+              key !== "otros_impuestos"
+                ? Number(((base * value) / 100).toFixed(2))
+                : value;
+            return {
+              name: key,
+              rate: key !== "otros_impuestos" ? value : 0,
+              tipo_impuesto: "c",
+              monto: key === "otros_impuestos" ? value : 0,
+              base: key === "otros_impuestos" ? base + value : base,
+              total,
+            };
+          })
+          .filter(Boolean),
+      }));
+
+      setData((prev) => ({
+        ...prev,
+        proveedor: {
+          ...prev.proveedor,
+          subtotal: subtotal,
+          impuestos: impuestos,
+        },
+        venta: {
+          total: Number((roomPrice * nights).toFixed(2) || 0),
+          subtotal: Number((roomPrice * nights * 0.84).toFixed(2) || 0),
+          impuestos: Number((roomPrice * nights * 0.16).toFixed(2) || 0),
+          markup: Number(
+            (
+              ((roomPrice * nights - form.proveedor.total) /
+                form.proveedor.total) *
+              100
+            ).toFixed(2)
           ),
-        })
-      );
-
-      setNights(newNights);
-      const totalWithTaxes = newNights.reduce(
-        (sum, night) => sum + night.totalWithTaxes,
-        0
-      );
-      setTotalCost(baseCost);
-      setTotalCostWithTaxes(totalWithTaxes);
+        },
+        items: form.proveedor.total > 0 ? items : [],
+        noches: Number(nights),
+      }));
     }
-  };
+  }, [
+    form.check_in,
+    form.check_out,
+    form.impuestos,
+    form.proveedor.total,
+    form.habitacion,
+    form.hotel,
+  ]); //Se ejecuta cuando cambian las fechas de check-in y check-out, los impuestos o el costo total
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    // console.log(selectedHotelData);
-
-    const nightsCount = differenceInDays(parseISO(checkOut), parseISO(checkIn));
-    const reservation = {
-      solicitud: {
-        id_solicitud: solicitud.id_solicitud, // Preserve original ID
-        id_servicio: solicitud.id_servicio, // Preserve original service ID
-        confirmation_code: hotelReservationCode || solicitud.confirmation_code,
-        id_viajero: selectedTraveler,
-        hotel: selectedHotelData?.nombre_hotel || originalHotel,
-        check_in: checkIn,
-        check_out: checkOut,
-        room: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
-        total: totalSalePrice,
-        status:
-          reservationStatus === "Confirmada" ? "complete" : reservationStatus,
-        created_at: solicitud.created_at, // Preserve original creation date
-      },
-      estado: reservationStatus,
-      check_in: checkIn,
-      check_out: checkOut,
-      id_viajero: selectedTraveler,
-      id_hotel: selectedHotelData.id_hotel,
-      nombre_hotel: selectedHotelData?.nombre_hotel || originalHotel,
-      total: totalSalePrice,
-      subtotal: totalSalePrice / 1.16,
-      impuestos: totalSalePrice - totalSalePrice / 1.16,
-      tipo_cuarto: selectedRoomData?.nombre_tipo_cuarto || solicitud.room,
-      noches: nightsCount,
-      costo_subtotal: totalCost,
-      costo_total: totalCostWithTaxes,
-      comments: comments,
-      costo_impuestos: totalCostWithTaxes - totalCost,
-      codigo_reservacion_hotel:
-        hotelReservationCode || solicitud.confirmation_code,
-      id_usuario_generador: solicitud.id_usuario_generador,
-      items: nights.map((night) => ({
-        total: totalSalePrice / nightsCount,
-        subtotal: (totalSalePrice / nightsCount) * 0.84,
-        impuestos: (totalSalePrice / nightsCount) * 0.16,
-        costo_total: night.totalWithTaxes,
-        costo_subtotal: night.baseCost,
-        costo_impuestos: night.totalWithTaxes - night.baseCost,
-        costo_iva: night.taxes.find((tax) => tax.name === "IVA")?.total || 0,
-        taxes: night.taxes,
-      })),
-    };
-
-    // console.log(reservation);
-    try {
-      const response = await fetchCreateReservaFromSolicitud(reservation);
-      alert("Actualizado con éxito");
-      onClose();
-      // console.log(response);
-    } catch (error) {
-      alert("Hubo un error");
-    }
-  };
-
-  const addCustomTax = () => {
-    setCustomTaxes([...customTaxes, { name: "", rate: 0 }]);
-  };
-
-  const removeCustomTax = (index: number) => {
-    setCustomTaxes(customTaxes.filter((_, i) => i !== index));
+    console.log(form);
   };
 
   return (
@@ -417,7 +368,6 @@ export function ReservationForm({
                 }}
                 value={form.codigo_reservacion_hotel}
                 label="Codigo reservación de hotel"
-                placeholder="Ingresa el codigo de reservación del hotel"
               />
             </div>
 
@@ -488,106 +438,103 @@ export function ReservationForm({
                 />
               </div>
 
-              <NumberInput
-                value={form.proveedor.total}
-                onChange={(value) => {
-                  setData((prev) => ({
-                    ...prev,
-                    proveedor: { ...prev.proveedor, total: Number(value) },
-                  }));
+              {Object.keys(form.impuestos).map((key) => (
+                <NumberInput
+                  value={form.impuestos[key as keyof ReservaForm["impuestos"]]}
+                  key={key}
+                  onChange={(value) => {
+                    setData((prev) => ({
+                      ...prev,
+                      impuestos: { ...prev.impuestos, [key]: Number(value) },
+                    }));
+                  }}
+                  label={key.replace(/_/g, " ").toUpperCase()}
+                />
+              ))}
+            </div>
+            <div className="w-xl overflow-auto">
+              <Table
+                registros={
+                  form.items.map((item) => ({
+                    noche: item.noche,
+                    ...item.impuestos.reduce((acc, tax) => {
+                      acc[tax.name] = tax.total;
+                      return acc;
+                    }, {}),
+                    costo_impuestos: item.costo.impuestos,
+                    costo_subtotal: item.costo.subtotal,
+                    costo: item.costo.total,
+                    venta: item.venta.total,
+                  })) || []
+                }
+                exportButton={false}
+                renderers={{
+                  noche: (props: any) => (
+                    <span title={props.value}>{props.value}</span>
+                  ),
+                  costo: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  venta: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  iva: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  ish: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  otros_impuestos: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  otros_impuestos_porcentaje: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
+                  total_impuestos_costo: (props: any) => (
+                    <span title={props.value}>${props.value}</span>
+                  ),
                 }}
-                label="Costo total"
+                defaultSort={{ key: "noche", sort: true }}
               />
             </div>
-
-            {customTaxes.map((tax, index) => (
-              <div key={index} className="flex gap-4 items-center">
-                <Input
-                  placeholder="Nombre del impuesto"
-                  value={tax.name}
-                  onChange={(e) => {
-                    const newTaxes = [...customTaxes];
-                    newTaxes[index].name = e.target.value;
-                    setCustomTaxes(newTaxes);
-                  }}
-                />
-                <Input
-                  type="number"
-                  placeholder="Tasa (%)"
-                  value={tax.rate}
-                  onChange={(e) => {
-                    const newTaxes = [...customTaxes];
-                    newTaxes[index].rate = Number(e.target.value) / 100;
-                    setCustomTaxes(newTaxes);
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => removeCustomTax(index)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-
-            {nights.length > 0 && (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Noche</TableHead>
-                    <TableHead>Costo Base</TableHead>
-                    {enabledTaxes
-                      .filter((tax) => tax.selected)
-                      .map((tax) => (
-                        <TableHead key={tax.id}>{tax.descripcion}</TableHead>
-                      ))}
-                    <TableHead>Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {nights.map((night) => (
-                    <TableRow key={night.night}>
-                      <TableCell>{night.night}</TableCell>
-                      <TableCell>${night.baseCost}</TableCell>
-                      {night.taxes.map((tax) => (
-                        <TableCell key={tax.id_impuesto}>
-                          ${tax.total}
-                        </TableCell>
-                      ))}
-                      <TableCell>${night.totalWithTaxes}</TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
-
-            <div className="bg-muted p-4 rounded-lg space-y-2">
-              <div className="flex justify-between">
-                <span>Venta Total:</span>
-                <span>${totalSalePrice}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Costo Total:</span>
-                <span>${totalCostWithTaxes}</span>
-              </div>
-              {totalCost > 0 && (
-                <div className="flex justify-between font-medium">
-                  <span>Markup:</span>
-                  <span>
-                    {((totalSalePrice - totalCostWithTaxes) /
-                      totalCostWithTaxes) *
-                      100}
-                    %
-                  </span>
+            {form.items.length > 0 && (
+              <div className="w-full p-4 border border-gray-200 rounded-md bg-white shadow-sm">
+                <h2 className="text-sm font-semibold text-gray-700 mb-4">
+                  Resumen:
+                </h2>
+                <div className="space-y-2 text-sm text-gray-600">
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total venta:</span>
+                    <span className="text-gray-900 font-semibold">
+                      ${form.venta.total.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="font-medium">Costo base:</span>
+                    <span className="text-gray-900 font-semibold">
+                      ${form.proveedor.total.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2 mt-2 font-medium text-gray-700">
+                    <span>Ganancia:</span>
+                    <span className="text-gray-900">
+                      ${(form.venta.total - form.proveedor.total).toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between border-t pt-2 mt-2 font-medium text-gray-700">
+                    <span>Markup:</span>
+                    <span className="text-gray-900">
+                      {form.venta.markup.toFixed(2)}%
+                    </span>
+                  </div>
                 </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </TabsContent>
 
         <TabsContent value="pago" className="space-y-4">
-          <div className="grid gap-4">
+          {/*     <div className="grid gap-4">
             <div className="space-y-2">
               <Label>Método de Pago</Label>
               <Select
@@ -661,6 +608,8 @@ export function ReservationForm({
               />
             </div>
           </div>
+           */}
+          <p>Proximamente...</p>
         </TabsContent>
       </Tabs>
 
