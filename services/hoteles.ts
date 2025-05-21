@@ -1,5 +1,6 @@
 import { FullHotelData } from "@/app/dashboard/hoteles/_components/hotel-table";
 import { API_KEY } from "./constant";
+import { TypeFilters } from "@/types";
 
 export const fetchHoteles = async (callback: (data) => void = (data) => {}) => {
   try {
@@ -53,7 +54,7 @@ export const fetchHotelesFiltro_Avanzado = async (
 
     const response = await fetch(
       "https://mianoktos.vercel.app/v1/mia/hoteles/Filtro-avanzado"
-      //http://localhost:5173/v1/mia/hoteles/Filtro-avanzado"
+      //"http://localhost:3001/v1/mia/hoteles/Filtro-avanzado"
       ,
       {
         method: "POST", // Usar POST para enviar el body

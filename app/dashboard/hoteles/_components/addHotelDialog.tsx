@@ -90,6 +90,8 @@ interface FormData {
   calle: string;
   numero: string;
   colonia: string;
+  internacional: boolean;
+  pais: string;
   estado: string;
   ciudad_zona: string;
   municipio: string;
@@ -141,7 +143,7 @@ interface FormData {
 const buscarCodigoPostal = async (codigo: string) => {
   try {
     const response = await fetch(
-      //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
+     // `http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
       `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${codigo}`,
       {
         method: "GET",
@@ -257,6 +259,8 @@ export function AddHotelDialog({
     numero: "",
     colonia: "",
     estado: "",
+    internacional: false,
+    pais: "",
     ciudad_zona: "",
     municipio: "",
     tipo_negociacion: "",
@@ -403,6 +407,15 @@ export function AddHotelDialog({
     }));
   };
 
+  // Handle checkbox for international
+const handleInternacionalChange = (checked: boolean) => {
+  setFormData((prev) => ({
+    ...prev,
+    internacional: checked,
+    pais: checked ? prev.pais || "" : "MEXICO",
+    estado: checked ? "OTROS" : "",
+  }));
+};
   // Generic form field change handler
   const handleChange = (field: string, value: any) => {
     if (field.includes(".")) {
@@ -632,6 +645,10 @@ export function AddHotelDialog({
         requiredFields["vigencia_convenio" as keyof typeof requiredFields] =
           "VIGENCIA DEL CONVENIO";
       }
+      // add pais as required if internacional is checked
+      if (formData.internacional) {
+        requiredFields["pais" as keyof typeof requiredFields] = "PAIS";
+      }
 
       const missingFields = Object.entries(requiredFields)
         .filter(
@@ -778,12 +795,13 @@ export function AddHotelDialog({
             },
           })),
         },
+        pais: formData.pais || null,
       };
 
       const response = await fetch(
-        //"http://localhost:5173/v1/mia/hoteles/Agregar-hotel/"
-
-        `${URL_VERCEL}hoteles/Agregar-hotel/`,
+        //"http://localhost:3001/v1/mia/hoteles/Agregar-hotel/"
+        `${URL_VERCEL}hoteles/Agregar-hotel/`
+        ,
 
         {
           method: "POST",
@@ -829,6 +847,8 @@ export function AddHotelDialog({
       numero: "",
       colonia: "",
       estado: "",
+      internacional: false,
+      pais: "MEXICO",
       ciudad_zona: "",
       municipio: "",
       tipo_negociacion: "",
@@ -1045,6 +1065,40 @@ export function AddHotelDialog({
                 </div>
               )}
 
+              {/*Aqui vamos a poner el checkbox de pais*/}
+
+
+              <div className="flex flex-col space-y-1">
+                <Label
+                  htmlFor="internacional"
+                  className="flex items-center gap-2"
+                >
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="internacional"
+                      checked={formData.internacional}
+                      onCheckedChange={handleInternacionalChange}
+                    />
+                    <span className="ml-2">Hotel internacional</span>
+                  </div>
+                </Label>
+              </div>
+
+              {formData.internacional && (
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="pais">
+                    PAÍS <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="pais"
+                    value={formData.pais}
+                    onChange={(e) => handleChange("pais", e.target.value.toUpperCase())}
+                    required
+                  />
+                </div>
+              )}
+
+              {/* Aqui termina la lógica para el nuevo campo de pais */}
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="estadoSelect">
                   ESTADO <span className="text-red-500">*</span>
@@ -1055,6 +1109,7 @@ export function AddHotelDialog({
                     handleChange("estado", val.toUpperCase())
                   }
                   required
+                  disabled={formData.internacional} 
                 >
                   <SelectTrigger
                     id="estadoSelect"
