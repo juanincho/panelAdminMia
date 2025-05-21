@@ -38,15 +38,15 @@ export const fetchHotelesFiltro_Avanzado = async (
     // Preparar el payload eliminando valores nulos/vacíos
     const payload = Object.entries(filters).reduce((acc, [key, value]) => {
       // Convertir booleanos a 1/0 para el backend
-      if (typeof value === 'boolean') {
+      if (typeof value === "boolean") {
         return { ...acc, [key]: value ? 1 : 0 };
       }
-      
+
       // Ignorar valores nulos, undefined o strings vacíos
-      if (value !== null && value !== undefined && value !== '') {
+      if (value !== null && value !== undefined && value !== "") {
         return { ...acc, [key]: value };
       }
-      
+
       return acc;
     }, {});
 
@@ -71,14 +71,14 @@ export const fetchHotelesFiltro_Avanzado = async (
     }
 
     const result = await response.json();
-    
+
     // Procesar la respuesta según la estructura esperada
     const rawData = result.hoteles || result.data || result;
     const hoteles = Array.isArray(rawData) ? rawData : [rawData];
-    
+
     console.log("Hoteles recibidos:", hoteles);
     callback(hoteles);
-    
+
     return hoteles;
   } catch (error) {
     console.error("Error en fetchHotelesFiltro_Avanzado:", error);

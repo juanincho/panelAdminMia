@@ -17,12 +17,14 @@ interface TableProps {
     key: string;
     sort: boolean;
   };
+  exportButton?: boolean;
 }
 
 export const Table = ({
   registros,
   renderers = {},
   defaultSort,
+  exportButton = true,
 }: TableProps) => {
   const [displayData, setDisplayData] = useState<Registro[]>(registros);
   const [currentSort, setCurrentSort] = useState<{
@@ -57,17 +59,19 @@ export const Table = ({
   };
 
   return (
-    <div>
-      <div className="p-4 flex w-full justify-end">
-        <button
-          onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
-          className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
-        >
-          <FileDown className="w-4 h-4 mr-2" />
-          Exportar CSV
-        </button>
-      </div>
-      <div className="overflow-auto border border-gray-200 rounded-sm">
+    <div className="relative w-full">
+      {exportButton && (
+        <div className="p-4 flex w-full justify-end">
+          <button
+            onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
+          >
+            <FileDown className="w-4 h-4 mr-2" />
+            Exportar CSV
+          </button>
+        </div>
+      )}
+      <div className="overflow-auto border border-gray-200 rounded-sm w-full">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50 absoluteg top-0">
             <tr>
@@ -126,7 +130,7 @@ export const Table = ({
                   colSpan={columnKeys.length || 1}
                   className="px-6 py-4 text-center text-sm text-gray-500"
                 >
-                  No se encontraron registros con los filtros aplicados
+                  No se encontraron registros
                 </td>
               </tr>
             )}

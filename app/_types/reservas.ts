@@ -21,6 +21,12 @@ export interface PaymentMethod {
   comments: string;
 }
 
+export interface Tax {
+  name: string;
+  porcentaje?: string;
+  monto?: string;
+}
+
 export interface Room {
   id_tipo_cuarto: number;
   nombre_tipo_cuarto: string;
@@ -34,6 +40,8 @@ export interface Hotel {
   nombre_hotel: string;
   Estado: string;
   Ciudad_Zona: string;
+  impuestos: Tax[];
+  imagenes: (string | null)[];
   tipos_cuartos: Room[];
 }
 
