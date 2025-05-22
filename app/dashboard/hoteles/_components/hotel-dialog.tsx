@@ -175,6 +175,7 @@ export interface FullHotelData {
   mascotas?: string;
   salones?: string;
   hay_convenio?: boolean;
+  pais?: string;
 }
 
 interface HotelRate {
@@ -258,6 +259,8 @@ interface FormData {
   precio_persona_extra: string;
   sencilla: HabitacionData;
   doble: HabitacionData;
+  internacional?: boolean;
+  pais?: string;
 }
 
 interface HotelDialogProps {
@@ -522,6 +525,8 @@ export function HotelDialog({
       precio_noche_extra: "",
       precio_persona_extra: "",
     },
+    internacional: false,
+    pais: "",
   };
 
   const [formData, setFormData] = useState<FormData>(defaultFormData);
@@ -671,6 +676,8 @@ export function HotelDialog({
           precio_noche_extra: "",
           precio_persona_extra: hotel.paxExtraPersona || "",
         },
+        pais: hotel.pais==="MEXICO" ? "" : hotel.pais,
+        internacional:hotel.pais && hotel.pais !== "MEXICO",
       });
 
       // Fetch colonias if we have a valid postal code
@@ -901,7 +908,15 @@ export function HotelDialog({
       setIsFetchingRates(false);
     }
   };
-
+//handler for international hotel
+const handleInternacionalChange = (checked: boolean) => {
+  setFormData((prev) => ({
+    ...prev,
+    internacional: checked,
+    pais: checked ? prev.pais || "" : "MEXICO",
+    Estado: checked ? "OTROS" : "",
+  }));
+};
   // Handler for código postal search
   const handleCodigoPostalChange = async (codigo: string) => {
     setFormData((prev) => ({ ...prev, CodigoPostal: codigo }));
@@ -962,6 +977,16 @@ export function HotelDialog({
     // Convert text values to uppercase if they're strings
     const processedValue =
       typeof value === "string" ? value.toUpperCase() : value;
+
+  if (field === "pais") {
+    setFormData((prev) => ({
+      ...prev,
+      pais: processedValue,
+      internacional: processedValue && processedValue !== "MEXICO",
+      Estado: processedValue && processedValue !== "MEXICO" ? "OTROS" : prev.Estado,
+    }));
+    return;
+  }    
 
     if (field.includes(".")) {
       const [parent, child] = field.split(".");
@@ -1046,7 +1071,7 @@ export function HotelDialog({
 
     const newTarifas = [...tarifasPreferenciales];
 
-    // Convert text to uppercase if it's a string
+    // Convert text to uppercase if it's a stringS
     const processedValue =
       typeof value === "string" && field !== "busqueda.correo"
         ? value.toUpperCase()
@@ -1315,13 +1340,15 @@ export function HotelDialog({
         Comentarios: combinedNotes || null,
         idSepomex: formData.idSepomex ? Number(formData.idSepomex) : null,
         comentario_pago: formData.comentario_pago || null,
+        pais: formData.pais || null,
       };
 
       console.log("Actualizando hotel:", hotelPayload);
 
       const hotelResponse = await fetch(
-        `${URL_VERCEL}hoteles/Editar-hotel/`,
-        //`http://localhost:5173/v1/mia/hoteles/Editar-hotel/`
+        `${URL_VERCEL}hoteles/Editar-hotel/`
+        //`http://localhost:3001/v1/mia/hoteles/Editar-hotel/`
+        ,
         {
           method: "PATCH",
           headers: {
@@ -1813,7 +1840,37 @@ export function HotelDialog({
                     </SelectContent>
                   </Select>
                 </div>
+                {/*Logica del check de internacionales */}
+                <div className="flex flex-col space-y-1">
+                <Label htmlFor="internacional" className="flex items-center gap-2">
+                  <div className="flex items-center">
+                    <Checkbox
+                      id="internacional"
+                      checked={formData.internacional}
+                      onCheckedChange={handleInternacionalChange}
+                      disabled={mode === "view"}
+                    />
+                    <span className="ml-2 font-medium">Hotel internacional</span>
+                  </div>
+                </Label>
+              </div>
 
+              {formData.internacional && (
+                <div className="flex flex-col space-y-1">
+                  <Label htmlFor="pais">
+                    PAÍS <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="pais"
+                    value={formData.pais}
+                    onChange={(e) => handleChange("pais", e.target.value)}
+                    disabled={mode === "view"}
+                    className="font-medium"
+                    required
+                  />
+                </div>
+              )}
+                {/*Fin logica check internacionales */}
                 <div className="flex flex-col space-y-1">
                   <Label htmlFor="estadoSelect">
                     ESTADO <span className="text-red-500">*</span>
@@ -1823,7 +1880,7 @@ export function HotelDialog({
                     onValueChange={(val) =>
                       handleChange("Estado", val.toUpperCase())
                     }
-                    disabled={mode === "view"}
+                    disabled={mode === "view" || formData.internacional}
                     required
                   >
                     <SelectTrigger id="estadoSelect" className="font-medium">

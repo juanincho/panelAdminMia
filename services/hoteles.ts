@@ -53,8 +53,9 @@ export const fetchHotelesFiltro_Avanzado = async (
     console.log("Payload enviado:", payload);
 
     const response = await fetch(
-      "https://mianoktos.vercel.app/v1/mia/hoteles/Filtro-avanzado",
-      //http://localhost:5173/v1/mia/hoteles/Filtro-avanzado"
+      "https://mianoktos.vercel.app/v1/mia/hoteles/Filtro-avanzado"
+      //"http://localhost:3001/v1/mia/hoteles/Filtro-avanzado"
+      ,
       {
         method: "POST", // Usar POST para enviar el body
         headers: {

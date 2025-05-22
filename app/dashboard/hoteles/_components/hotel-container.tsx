@@ -26,7 +26,8 @@ const defaultFiltersHoteles = {
   razon_social: null,
   tipo_hospedaje: null,
   infoCompleta: null,
-  activo: null
+  activo: null,
+  pais: null,
 };
 
 export function HotelContainer() {
