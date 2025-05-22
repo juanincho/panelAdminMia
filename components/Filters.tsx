@@ -554,6 +554,15 @@ const FiltersModal: React.FC<{
                   options={["ACTIVO", "INACTIVO"]}
                 />
               )}
+            {"pais" in filters && (
+                <TextInput
+                  label="pais"
+                  value={filters.pais}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, pais: value }))
+                  }
+                />
+              )}
             </div>
             <div className="w-full max-w-sm mx-auto mb-4">
               {"filterType" in filters && (

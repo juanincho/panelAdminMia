@@ -31,6 +31,7 @@ export interface TypeFilters {
   correo?: string | null;
   infoCompleta?: string | null;
   activo?: boolean | "ACTIVO" | "INACTIVO" | null;
+  pais?: string | null;
   reservante?: "Operaciones" | "Cliente";
   markUp?: number;
   id_client?: string | null;
