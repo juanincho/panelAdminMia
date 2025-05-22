@@ -33,6 +33,7 @@ export interface Room {
   id_tarifa: number;
   precio: string;
   id_agente: null | string;
+  costo: number | null;
 }
 
 export interface Hotel {

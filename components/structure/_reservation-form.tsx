@@ -22,7 +22,6 @@ import {
 import { fetchViajerosFromAgent } from "@/services/viajeros";
 import { Viajero } from "@/types";
 import { Table } from "../Table";
-import { da } from "date-fns/locale";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
@@ -87,6 +86,10 @@ export function ReservationForm({
   const currentHotel = hotels.filter(
     (item) => item.nombre_hotel == solicitud.hotel
   )[0];
+  const currentNoches = differenceInDays(
+    parseISO(solicitud.check_out),
+    parseISO(solicitud.check_in)
+  );
 
   const [form, setData] = useState<ReservaForm>({
     hotel: {
@@ -100,10 +103,7 @@ export function ReservationForm({
     viajero: {
       nombre_completo: "",
     },
-    noches: differenceInDays(
-      parseISO(solicitud.check_out),
-      parseISO(solicitud.check_in)
-    ),
+    noches: currentNoches,
     venta: {
       total: Number(solicitud.total) || 0,
       subtotal: Number(solicitud.total) * 0.84 || 0,
@@ -113,7 +113,12 @@ export function ReservationForm({
     estado_reserva: "Confirmada",
     comments: "",
     proveedor: {
-      total: 0,
+      total:
+        Number(
+          currentHotel?.tipos_cuartos.find(
+            (item) => item.nombre_tipo_cuarto == updateRoom(solicitud.room)
+          ).costo * currentNoches
+        ) || 0,
       subtotal: 0,
       impuestos: 0,
     },
@@ -149,10 +154,6 @@ export function ReservationForm({
 
   console.log(hotels);
 
-  /*ESTE SE QUITA, NO AFECTA */
-  useEffect(() => {
-    console.log(form);
-  }, [form]);
   /* ESTe es el nuevo, si afecta */
   useEffect(() => {
     try {

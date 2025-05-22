@@ -26,7 +26,7 @@ function App() {
   const [hoteles, setHoteles] = useState([]);
 
   const handleFilter = (filters: any) => {
-    fetchSolicitudes(filters, (data) => {
+    fetchSolicitudes(filters, { status: "Pendiente" }, (data) => {
       setAllSolicitudes(data);
     });
   };
@@ -173,7 +173,6 @@ const defaultFiltersSolicitudes: TypeFilters = {
   hotel: null,
   startDate: new Date().toISOString().split("T")[0],
   endDate: null,
-  status: "Pendiente",
   traveler: null,
   paymentMethod: null,
   id_client: null,
