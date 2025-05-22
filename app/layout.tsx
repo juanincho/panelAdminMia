@@ -94,24 +94,24 @@ const navItems: NavItem[] = [
     href: "/dashboard/invoices",
     icon: Receipt,
   },
-  {
-    navShow: false,
-    title: "Empresas",
-    href: "/dashboard/empresas",
-    icon: Factory,
-  },
+  // {
+  //   navShow: false,
+  //   title: "Empresas",
+  //   href: "/dashboard/empresas",
+  //   icon: Factory,
+  // },
   {
     navShow: false,
     title: "Viajeros",
     href: "/dashboard/viajeros",
     icon: Users,
   },
-  {
-    navShow: false,
-    title: "Agentes",
-    href: "/dashboard/agentes",
-    icon: UserRoundCog,
-  },
+  // {
+  //   navShow: false,
+  //   title: "Agentes",
+  //   href: "/dashboard/agentes",
+  //   icon: UserRoundCog,
+  // },
 ];
 
 const queryClient = new QueryClient({

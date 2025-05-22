@@ -1,16 +1,11 @@
-import React, { useState, useEffect, use, FormEvent } from "react";
-import { differenceInDays, parseISO, format, getISODay } from "date-fns";
+import React, { useState, useEffect, FormEvent } from "react";
+import { differenceInDays, parseISO } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  fetchCreateReserva,
-  fetchCreateReservaFromSolicitud,
-} from "@/services/reservas";
-import { API_KEY } from "@/services/constant";
-import { Hotel } from "@/app/_types/reservas";
+import { fetchCreateReservaFromSolicitud } from "@/services/reservas";
 import {
   ComboBox,
   DateInput,
@@ -20,62 +15,13 @@ import {
   TextInput,
 } from "@/components/atom/Input";
 import { fetchViajerosFromAgent } from "@/services/viajeros";
-import { Viajero } from "@/types";
+import { Hotel, Solicitud, ReservaForm, Viajero } from "@/types";
 import { Table } from "../Table";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
   hotels: Hotel[];
   onClose: () => void;
-}
-interface ReservaForm {
-  codigo_reservacion_hotel?: string;
-  hotel: { name: string; content?: Hotel };
-  habitacion: string;
-  check_in: string;
-  check_out: string;
-  viajero?: Viajero;
-  estado_reserva: "Confirmada" | "En proceso" | "Cancelada";
-  comments: string;
-  proveedor: {
-    total: number | null;
-    subtotal: number;
-    impuestos: number;
-  };
-  impuestos: {
-    iva: number;
-    ish: number;
-    otros_impuestos: number;
-    otros_impuestos_porcentaje: number;
-  };
-  venta: {
-    markup?: number;
-    total: number;
-    subtotal: number;
-    impuestos: number;
-  };
-  items?: {
-    noche: number;
-    costo: {
-      total: number;
-      subtotal: number;
-      impuestos: number;
-    };
-    venta: {
-      total: number;
-      subtotal: number;
-      impuestos: number;
-    };
-    impuestos?: {
-      name: string;
-      rate: number;
-      tipo_impuesto: string;
-      monto: number; // o cambia a "monto" en ambos
-      base: number;
-      total: number;
-    }[];
-  }[];
-  noches: number;
 }
 
 export function ReservationForm({
@@ -115,9 +61,11 @@ export function ReservationForm({
     proveedor: {
       total:
         Number(
-          currentHotel?.tipos_cuartos.find(
-            (item) => item.nombre_tipo_cuarto == updateRoom(solicitud.room)
-          ).costo * currentNoches
+          Number(
+            currentHotel?.tipos_cuartos.find(
+              (item) => item.nombre_tipo_cuarto == updateRoom(solicitud.room)
+            )?.costo ?? 0
+          ) * currentNoches
         ) || 0,
       subtotal: 0,
       impuestos: 0,
@@ -144,6 +92,7 @@ export function ReservationForm({
         ) || 0,
     },
     items: [],
+    solicitud,
   });
   const [habitaciones, setHabitaciones] = useState(
     hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0]
@@ -285,6 +234,15 @@ export function ReservationForm({
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     console.log(form);
+    fetchCreateReservaFromSolicitud(form, (data) => {
+      console.log(data);
+      if (data.error) {
+        alert("Error al crear la reserva");
+        return;
+      }
+      alert("Reserva creada correctamente");
+      onClose();
+    });
   };
 
   return (

@@ -17,7 +17,7 @@ import {
 import { Table } from "@/components/Table";
 import { fetchHoteles } from "@/services/hoteles";
 import Modal from "@/components/structure/Modal";
-import { TypeFilters } from "@/types";
+import { TypeFilters, Solicitud } from "@/types";
 
 function App() {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
@@ -143,8 +143,8 @@ function App() {
             onClose={() => {
               setSelectedItem(null);
             }}
-            title="Editar reserva"
-            subtitle="Modifica los detalles de la reserva."
+            title="Crear reserva"
+            subtitle="Modifica los detalles de la reserva y creala."
           >
             <ReservationForm
               hotels={hoteles}

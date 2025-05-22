@@ -1,4 +1,4 @@
-import { TypeFilters } from "@/types";
+import { TypeFilters, Solicitud } from "@/types";
 import { API_KEY, URL } from "./constant";
 
 export const fetchSolicitudes = async (

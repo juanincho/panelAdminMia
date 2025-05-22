@@ -1,4 +1,4 @@
-import { Hotel } from "@/app/_types/reservas";
+import { Hotel } from "@/types";
 import { Viajero } from "@/types";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
