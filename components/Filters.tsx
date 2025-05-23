@@ -28,7 +28,7 @@ const Filters: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden max-w-full mx-auto relative flex flex-col md:flex-row md:items-center md:flex-wrap justify-between gap-4 p-4">
+    <div className=" overflow-hidden max-w-full mx-auto relative flex flex-col md:flex-row md:items-center md:flex-wrap justify-between gap-4">
       <div className="relative flex-1">
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />
@@ -554,7 +554,7 @@ const FiltersModal: React.FC<{
                   options={["ACTIVO", "INACTIVO"]}
                 />
               )}
-            {"pais" in filters && (
+              {"pais" in filters && (
                 <TextInput
                   label="pais"
                   value={filters.pais}

@@ -61,7 +61,7 @@ export const Table = ({
   return (
     <div className="relative w-full">
       {exportButton && (
-        <div className="p-4 flex w-full justify-end">
+        <div className="flex w-full justify-end mb-2">
           <button
             onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
             className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"

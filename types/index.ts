@@ -51,6 +51,7 @@ export type Solicitud = {
   check_in: string; // o Date
   check_out: string; // o Date
   room: string;
+  costo_total: string; // puede ser number si lo vas a convertir
   total: string; // puede ser number si lo vas a convertir
   status: "pending" | "confirmed" | "cancelled" | string;
   id_usuario_generador: string;

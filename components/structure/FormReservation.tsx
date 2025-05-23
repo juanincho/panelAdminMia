@@ -22,12 +22,14 @@ interface ReservationFormProps {
   solicitud: Solicitud;
   hotels: Hotel[];
   onClose: () => void;
+  edicion?: boolean;
 }
 
 export function ReservationForm({
   solicitud,
   hotels,
   onClose,
+  edicion = false,
 }: ReservationFormProps) {
   const currentHotel = hotels.filter(
     (item) => item.nombre_hotel == solicitud.hotel
@@ -212,8 +214,8 @@ export function ReservationForm({
           impuestos: Number((roomPrice * nights * 0.16).toFixed(2) || 0),
           markup: Number(
             (
-              ((roomPrice * nights - form.proveedor.total) /
-                form.proveedor.total) *
+              ((roomPrice * nights - form.proveedor.total) / roomPrice) *
+              nights *
               100
             ).toFixed(2)
           ),
