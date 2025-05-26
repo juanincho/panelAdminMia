@@ -27,14 +27,21 @@ function App() {
   const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [loading, setLoading] = useState(false);
   const [hoteles, setHoteles] = useState([]);
+  const [filters, setFilters] = useState<TypeFilters>(
+    defaultFiltersSolicitudes
+  );
 
-  const handleFilter = (filters: any) => {
+  const handleFetchSolicitudes = () => {
     setLoading(true);
     fetchSolicitudes(filters, { status: "Pendiente" }, (data) => {
       setAllSolicitudes(data);
       setLoading(false);
     });
   };
+
+  useEffect(() => {
+    handleFetchSolicitudes();
+  }, [filters]);
 
   const handleEdit = (item: Solicitud) => {
     setSelectedItem(item);
@@ -137,18 +144,9 @@ function App() {
   };
 
   useEffect(() => {
-    setLoading(true);
     fetchHoteles((data) => {
       setHoteles(data);
     });
-    fetchSolicitudes(
-      defaultFiltersSolicitudes,
-      { status: "Pendiente" },
-      (data) => {
-        setAllSolicitudes(data);
-        setLoading(false);
-      }
-    );
   }, []);
 
   return (
@@ -156,8 +154,8 @@ function App() {
       <div className="max-w-7xl mx-auto bg-white p-4 rounded-lg shadow">
         <div>
           <Filters
-            defaultFilters={defaultFiltersSolicitudes}
-            onFilter={handleFilter}
+            defaultFilters={filters}
+            onFilter={setFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
           />
@@ -188,6 +186,7 @@ function App() {
               solicitud={selectedItem}
               onClose={() => {
                 setSelectedItem(null);
+                handleFetchSolicitudes();
               }}
             />
           </Modal>

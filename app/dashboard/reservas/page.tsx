@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { ReservationForm } from "../../../components/structure/FormReservation";
 import Filters from "@/components/Filters";
@@ -18,7 +18,6 @@ import { Table } from "@/components/Table";
 import { fetchHoteles } from "@/services/hoteles";
 import Modal from "@/components/structure/Modal";
 import { TypeFilters, Solicitud } from "@/types";
-import { set } from "date-fns";
 import { Loader } from "@/components/atom/Loader";
 
 function App() {
@@ -27,14 +26,9 @@ function App() {
   const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [loading, setLoading] = useState(false);
   const [hoteles, setHoteles] = useState([]);
-
-  const handleFilter = (filters: any) => {
-    setLoading(true);
-    fetchSolicitudes(filters, {}, (data) => {
-      setAllSolicitudes(data);
-      setLoading(false);
-    });
-  };
+  const [filters, setFilters] = useState<TypeFilters>(
+    defaultFiltersSolicitudes
+  );
 
   const handleEdit = (item: Solicitud) => {
     setSelectedItem(item);
@@ -136,19 +130,22 @@ function App() {
     ),
   };
 
-  useEffect(() => {
+  const handleFetchSolicitudes = () => {
     setLoading(true);
+    fetchSolicitudes(filters, {}, (data) => {
+      setAllSolicitudes(data);
+      setLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    handleFetchSolicitudes();
+  }, [filters]);
+
+  useEffect(() => {
     fetchHoteles((data) => {
       setHoteles(data);
     });
-    fetchSolicitudes(
-      defaultFiltersSolicitudes,
-      { status: "Pendiente" },
-      (data) => {
-        setAllSolicitudes(data);
-        setLoading(false);
-      }
-    );
   }, []);
 
   return (
@@ -156,8 +153,8 @@ function App() {
       <div className="max-w-7xl mx-auto bg-white p-4 rounded-lg shadow">
         <div>
           <Filters
-            defaultFilters={defaultFiltersSolicitudes}
-            onFilter={handleFilter}
+            defaultFilters={filters}
+            onFilter={setFilters}
             searchTerm={searchTerm}
             setSearchTerm={setSearchTerm}
           />
@@ -188,6 +185,7 @@ function App() {
               solicitud={selectedItem}
               onClose={() => {
                 setSelectedItem(null);
+                handleFetchSolicitudes();
               }}
               edicion={true}
             />
@@ -199,8 +197,8 @@ function App() {
 }
 
 const defaultSort = {
-  key: "estado",
-  sort: true,
+  key: "creado",
+  sort: false,
 };
 
 const defaultFiltersSolicitudes: TypeFilters = {

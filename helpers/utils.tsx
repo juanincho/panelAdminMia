@@ -177,3 +177,35 @@ export const exportToCSV = (data, filename = "archivo.csv") => {
   link.click();
   document.body.removeChild(link);
 };
+
+export function formatNumberWithCommas(numberStr: string): string {
+  // 1. Separar la parte entera de la parte decimal
+  const parts = numberStr.split(".");
+  const integerPart = parts[0];
+  const decimalPart = parts.length > 1 ? parts[1] : undefined;
+
+  // 2. Formatear la parte entera
+  // Invertimos la parte entera para facilitar la inserción de comas cada tres dígitos desde la derecha
+  const reversedInteger = integerPart.split("").reverse().join("");
+  let formattedReversedInteger = "";
+
+  for (let i = 0; i < reversedInteger.length; i++) {
+    if (i > 0 && i % 3 === 0) {
+      formattedReversedInteger += ",";
+    }
+    formattedReversedInteger += reversedInteger[i];
+  }
+
+  // Volvemos a invertir la parte entera formateada para obtener el orden correcto
+  const formattedInteger = formattedReversedInteger
+    .split("")
+    .reverse()
+    .join("");
+
+  // 3. Unir la parte entera formateada con la parte decimal (si existe)
+  if (decimalPart !== undefined) {
+    return `${formattedInteger}.${decimalPart}`;
+  } else {
+    return formattedInteger;
+  }
+}

@@ -1,6 +1,33 @@
-import { ReservaForm } from "@/types";
+import { EdicionForm, ReservaForm } from "@/types";
 import { URL, API_KEY } from "./constant/index";
-import { ok } from "node:assert";
+
+export async function updateReserva(
+  reserva: EdicionForm,
+  id_booking: string,
+  callback: (data: any) => void
+) {
+  try {
+    const response = await fetch(`${URL}/mia/reservas?id=${id_booking}`, {
+      method: "PUT",
+      headers: {
+        "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reserva),
+      cache: "no-store",
+    }).then((res) => res.json());
+    callback(response);
+    console.log(response);
+    if (response.error) {
+      throw new Error("Error al cargar los datos en reservas");
+    }
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
 
 export async function fetchCreateReserva(reserva) {
   try {

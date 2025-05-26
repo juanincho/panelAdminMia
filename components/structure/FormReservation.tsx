@@ -1,11 +1,14 @@
 import React, { useState, useEffect, FormEvent } from "react";
-import { differenceInDays, parseISO } from "date-fns";
+import { differenceInDays, parseISO, set } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { fetchCreateReservaFromSolicitud } from "@/services/reservas";
+import {
+  fetchCreateReservaFromSolicitud,
+  updateReserva,
+} from "@/services/reservas";
 import {
   ComboBox,
   DateInput,
@@ -15,8 +18,9 @@ import {
   TextInput,
 } from "@/components/atom/Input";
 import { fetchViajerosFromAgent } from "@/services/viajeros";
-import { Hotel, Solicitud, ReservaForm, Viajero } from "@/types";
+import { Hotel, Solicitud, ReservaForm, Viajero, EdicionForm } from "@/types";
 import { Table } from "../Table";
+import { formatNumberWithCommas } from "@/helpers/utils";
 
 interface ReservationFormProps {
   solicitud: Solicitud;
@@ -38,8 +42,7 @@ export function ReservationForm({
     parseISO(solicitud.check_out),
     parseISO(solicitud.check_in)
   );
-
-  const [form, setData] = useState<ReservaForm>({
+  const [form, setForm] = useState<ReservaForm>({
     hotel: {
       name: solicitud.hotel || "",
       content: currentHotel || null,
@@ -47,7 +50,7 @@ export function ReservationForm({
     habitacion: updateRoom(solicitud.room) || "",
     check_in: solicitud.check_in.split("T")[0] || "",
     check_out: solicitud.check_out.split("T")[0] || "",
-    codigo_reservacion_hotel: "",
+    codigo_reservacion_hotel: solicitud.codigo_reservacion_hotel || "",
     viajero: {
       nombre_completo: "",
     },
@@ -59,7 +62,7 @@ export function ReservationForm({
       markup: 0,
     },
     estado_reserva: "Confirmada",
-    comments: "",
+    comments: solicitud.comments || "",
     proveedor: {
       total:
         Number(
@@ -100,10 +103,9 @@ export function ReservationForm({
     hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0]
       .tipos_cuartos
   );
+  const [edicionForm, setEdicionForm] = useState<EdicionForm>({});
   const [travelers, setTravelers] = useState<Viajero[]>([]);
   const [activeTab, setActiveTab] = useState("cliente");
-
-  console.log(hotels);
 
   /* ESTe es el nuevo, si afecta */
   useEffect(() => {
@@ -113,7 +115,7 @@ export function ReservationForm({
           (viajero) => viajero.id_viajero == solicitud.id_viajero
         );
         if (viajeroFiltrado.length > 0) {
-          setData((prev) => ({ ...prev, viajero: viajeroFiltrado[0] }));
+          setForm((prev) => ({ ...prev, viajero: viajeroFiltrado[0] }));
         }
         setTravelers(data);
       });
@@ -151,7 +153,6 @@ export function ReservationForm({
           if (key == "otros_impuestos") {
             return acc;
           } else {
-            console.log(acc);
             return {
               subtotal: acc.subtotal - (costoBase * value) / 100,
               impuestos: acc.impuestos + (costoBase * value) / 100,
@@ -201,12 +202,59 @@ export function ReservationForm({
           .filter(Boolean),
       }));
 
-      setData((prev) => ({
+      if (edicion) {
+        setEdicionForm((prev) => ({
+          ...prev,
+          proveedor: {
+            before: {
+              ...form.proveedor,
+              subtotal: form.proveedor.subtotal,
+              impuestos: form.proveedor.impuestos,
+            },
+            current: {
+              ...form.proveedor,
+              subtotal: subtotal,
+              impuestos: impuestos,
+            },
+          },
+          venta: {
+            before: {
+              ...form.venta,
+              total: form.venta.total,
+              subtotal: form.venta.subtotal,
+              impuestos: form.venta.impuestos,
+              markup: form.venta.markup,
+            },
+            current: {
+              ...form.venta,
+              total: Number((roomPrice * nights).toFixed(2) || 0),
+              subtotal: Number((roomPrice * nights * 0.84).toFixed(2) || 0),
+              impuestos: Number((roomPrice * nights * 0.16).toFixed(2) || 0),
+              markup: Number(
+                (
+                  ((roomPrice * nights - form.proveedor.total) / roomPrice) *
+                  nights *
+                  100
+                ).toFixed(2)
+              ),
+            },
+          },
+          items: {
+            before: form.items,
+            current: form.proveedor.total > 0 ? items : [],
+          },
+          noches: {
+            before: form.noches,
+            current: Number(nights),
+          },
+        }));
+      }
+      setForm((prev) => ({
         ...prev,
         proveedor: {
           ...prev.proveedor,
-          subtotal: subtotal,
-          impuestos: impuestos,
+          subtotal: Number(subtotal.toFixed(2) || 0),
+          impuestos: Number(impuestos.toFixed(2) || 0),
         },
         venta: {
           total: Number((roomPrice * nights).toFixed(2) || 0),
@@ -214,8 +262,8 @@ export function ReservationForm({
           impuestos: Number((roomPrice * nights * 0.16).toFixed(2) || 0),
           markup: Number(
             (
-              ((roomPrice * nights - form.proveedor.total) / roomPrice) *
-              nights *
+              ((roomPrice * nights - form.proveedor.total) /
+                form.proveedor.total) *
               100
             ).toFixed(2)
           ),
@@ -235,16 +283,26 @@ export function ReservationForm({
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    console.log(form);
-    fetchCreateReservaFromSolicitud(form, (data) => {
-      console.log(data);
-      if (data.error) {
-        alert("Error al crear la reserva");
-        return;
-      }
-      alert("Reserva creada correctamente");
-      onClose();
-    });
+    if (edicion) {
+      updateReserva(edicionForm, solicitud.id_booking, (data) => {
+        if (data.error) {
+          alert("Error al actualizar la reserva");
+          return;
+        }
+        alert("Reserva actualizada correctamente");
+        onClose();
+        console.log(data);
+      });
+    } else {
+      fetchCreateReservaFromSolicitud(form, (data) => {
+        if (data.error) {
+          alert("Error al crear la reserva");
+          return;
+        }
+        alert("Reserva creada correctamente");
+        onClose();
+      });
+    }
   };
 
   return (
@@ -273,11 +331,37 @@ export function ReservationForm({
                   if ("tipos_cuartos" in value.content) {
                     setHabitaciones((value.content as Hotel).tipos_cuartos);
                   }
-                  setData((prev) => ({
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      hotel: {
+                        before: {
+                          name: form.hotel.name,
+                          content: form.hotel.content as Hotel,
+                        },
+                        current: {
+                          name: value.name,
+                          content: value.content as Hotel,
+                        },
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({
                     ...prev,
                     hotel: {
                       name: value.name,
                       content: value.content as Hotel,
+                    },
+                    proveedor: {
+                      ...prev.proveedor,
+                      total:
+                        Number(
+                          (value.content as Hotel).tipos_cuartos.find(
+                            (item) =>
+                              item.nombre_tipo_cuarto ==
+                              updateRoom(prev.habitacion)
+                          )?.costo ?? 0
+                        ) * prev.noches || 0,
                     },
                   }));
                 }}
@@ -294,7 +378,16 @@ export function ReservationForm({
               <DropdownValues
                 label="Tipo de Habitación"
                 onChange={(value) => {
-                  setData((prev) => ({ ...prev, habitacion: value.value }));
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      habitacion: {
+                        before: form.habitacion,
+                        current: value.value,
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({ ...prev, habitacion: value.value }));
                 }}
                 options={
                   habitaciones.map((item) => ({
@@ -309,7 +402,19 @@ export function ReservationForm({
               <Dropdown
                 label="Estado de la reserva"
                 onChange={(value) => {
-                  setData((prev) => ({
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      estado_reserva: {
+                        before: form.estado_reserva,
+                        current: value as
+                          | "Confirmada"
+                          | "Cancelada"
+                          | "En proceso",
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({
                     ...prev,
                     estado_reserva: value as
                       | "Confirmada"
@@ -322,7 +427,16 @@ export function ReservationForm({
               />
               <TextInput
                 onChange={(value) => {
-                  setData((prev) => ({
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      codigo_reservacion_hotel: {
+                        before: form.codigo_reservacion_hotel,
+                        current: value,
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({
                     ...prev,
                     codigo_reservacion_hotel: value,
                   }));
@@ -337,14 +451,32 @@ export function ReservationForm({
                 label="Check-in"
                 value={form.check_in}
                 onChange={(value) => {
-                  setData((prev) => ({ ...prev, check_in: value }));
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      check_in: {
+                        before: form.check_in,
+                        current: value,
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({ ...prev, check_in: value }));
                 }}
               />
               <DateInput
                 label="Check-out"
                 value={form.check_out}
                 onChange={(value) => {
-                  setData((prev) => ({ ...prev, check_out: value }));
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      check_out: {
+                        before: form.check_out,
+                        current: value,
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({ ...prev, check_out: value }));
                 }}
               />
             </div>
@@ -356,7 +488,16 @@ export function ReservationForm({
                   solicitud.nombre_viajero || solicitud.nombre_viajero_completo
                 } - ${solicitud.id_viajero})`}
                 onChange={(value) => {
-                  setData((prev) => ({
+                  if (edicion) {
+                    setEdicionForm((prev) => ({
+                      ...prev,
+                      viajero: {
+                        before: form.viajero,
+                        current: value.content as Viajero,
+                      },
+                    }));
+                  }
+                  setForm((prev) => ({
                     ...prev,
                     viajero: value.content as Viajero,
                   }));
@@ -373,9 +514,18 @@ export function ReservationForm({
               <div className="space-y-2">
                 <Label>Comentarios de la reserva</Label>
                 <Textarea
-                  onChange={(e) =>
-                    setData((prev) => ({ ...prev, comments: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    if (edicion) {
+                      setEdicionForm((prev) => ({
+                        ...prev,
+                        comments: {
+                          before: form.comments,
+                          current: e.target.value,
+                        },
+                      }));
+                    }
+                    setForm((prev) => ({ ...prev, comments: e.target.value }));
+                  }}
                   value={form.comments}
                 ></Textarea>
               </div>
@@ -390,7 +540,19 @@ export function ReservationForm({
                 <NumberInput
                   value={form.proveedor.total}
                   onChange={(value) => {
-                    setData((prev) => ({
+                    if (edicion) {
+                      setEdicionForm((prev) => ({
+                        ...prev,
+                        proveedor: {
+                          before: { ...form.proveedor },
+                          current: {
+                            ...form.proveedor,
+                            total: Number(value),
+                          },
+                        },
+                      }));
+                    }
+                    setForm((prev) => ({
                       ...prev,
                       proveedor: { ...prev.proveedor, total: Number(value) },
                     }));
@@ -404,7 +566,21 @@ export function ReservationForm({
                   value={form.impuestos[key as keyof ReservaForm["impuestos"]]}
                   key={key}
                   onChange={(value) => {
-                    setData((prev) => ({
+                    if (edicion) {
+                      setEdicionForm((prev) => ({
+                        ...prev,
+                        impuestos: {
+                          before: {
+                            ...form.impuestos,
+                          },
+                          current: {
+                            ...form.impuestos,
+                            [key]: Number(value),
+                          },
+                        },
+                      }));
+                    }
+                    setForm((prev) => ({
                       ...prev,
                       impuestos: { ...prev.impuestos, [key]: Number(value) },
                     }));
@@ -422,7 +598,7 @@ export function ReservationForm({
                       acc[tax.name] = tax.total;
                       return acc;
                     }, {}),
-                    costo_impuestos: item.costo.impuestos,
+                    // costo_impuestos: item.costo.impuestos,
                     costo_subtotal: item.costo.subtotal,
                     costo: item.costo.total,
                     venta: item.venta.total,
@@ -433,26 +609,50 @@ export function ReservationForm({
                   noche: (props: any) => (
                     <span title={props.value}>{props.value}</span>
                   ),
+                  // costo_impuestos: (props: any) => (
+                  //   <span title={props.value}>
+                  //     ${formatNumberWithCommas(props.value.toFixed(2))}
+                  //   </span>
+                  // ),
+                  costo_subtotal: (props: any) => (
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
+                  ),
                   costo: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   venta: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   iva: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   ish: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   otros_impuestos: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   otros_impuestos_porcentaje: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                   total_impuestos_costo: (props: any) => (
-                    <span title={props.value}>${props.value}</span>
+                    <span title={props.value}>
+                      ${formatNumberWithCommas(props.value.toFixed(2))}
+                    </span>
                   ),
                 }}
                 defaultSort={{ key: "noche", sort: true }}
@@ -467,21 +667,21 @@ export function ReservationForm({
                   <div className="flex justify-between">
                     <span className="font-medium">Total venta:</span>
                     <span className="text-gray-900 font-semibold">
-                      ${form.venta.total.toFixed(2)}
+                      ${formatNumberWithCommas(form.venta.total.toFixed(2))}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Costo base:</span>
                     <span className="text-gray-900 font-semibold">
-                      ${form.proveedor.total.toFixed(2)}
+                      ${formatNumberWithCommas(form.proveedor.total.toFixed(2))}
                     </span>
                   </div>
-                  <div className="flex justify-between border-t pt-2 mt-2 font-medium text-gray-700">
+                  {/* <div className="flex justify-between border-t pt-2 mt-2 font-medium text-gray-700">
                     <span>Ganancia:</span>
                     <span className="text-gray-900">
                       ${(form.venta.total - form.proveedor.total).toFixed(2)}
                     </span>
-                  </div>
+                  </div> */}
                   <div className="flex justify-between border-t pt-2 mt-2 font-medium text-gray-700">
                     <span>Markup:</span>
                     <span className="text-gray-900">
