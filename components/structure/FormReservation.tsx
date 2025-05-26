@@ -103,7 +103,12 @@ export function ReservationForm({
     hotels.filter((item) => item.nombre_hotel == solicitud.hotel)[0]
       .tipos_cuartos
   );
-  const [edicionForm, setEdicionForm] = useState<EdicionForm>({});
+  const [edicionForm, setEdicionForm] = useState<EdicionForm>({
+    estado_reserva: {
+      before: null,
+      current: form.estado_reserva,
+    },
+  });
   const [travelers, setTravelers] = useState<Viajero[]>([]);
   const [activeTab, setActiveTab] = useState("cliente");
 

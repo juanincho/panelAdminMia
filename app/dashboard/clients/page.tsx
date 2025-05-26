@@ -1,24 +1,81 @@
-import { Suspense } from "react";
-import TravelersTable from "./_components/clientsPage";
+"use client";
 
-export default function TravelersPage() {
+import React, { useEffect, useState } from "react";
+import Filters from "@/components/Filters";
+import { formatDate } from "@/helpers/utils";
+import { Table } from "@/components/Table";
+import { TypeFilters } from "@/types";
+import { Loader } from "@/components/atom/Loader";
+import { fetchAgentes } from "@/services/agentes";
+
+function App() {
+  const [clients, setClient] = useState<Agente[]>([]);
+  const [selectedItem, setSelectedItem] = useState<Agente | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string | null>("");
+  const [loading, setLoading] = useState(false);
+  const [filters, setFilters] = useState<TypeFilters>(
+    defaultFiltersSolicitudes
+  );
+
+  const handleEdit = (item: Agente) => {
+    setSelectedItem(item);
+  };
+
+  let formatedSolicitudes = clients.filter((item) => true).map((item) => ({}));
+
+  let componentes = {
+    creado: (props: any) => (
+      <span title={props.value}>{formatDate(props.value)}</span>
+    ),
+  };
+
+  const handleFetchSolicitudes = () => {
+    setLoading(true);
+    fetchAgentes((data) => {
+      console.log("Agentes fetched:", data);
+      setClient(data);
+      setLoading(false);
+    });
+  };
+
+  useEffect(() => {
+    handleFetchSolicitudes();
+  }, [filters]);
+
   return (
-    <div className="min-h-screen">
-      <main className="container">
-        <Suspense
-          fallback={
-            <div className="flex justify-center items-center h-64">
-              <div className="animate-pulse flex flex-col items-center">
-                <div className="h-12 w-12 rounded-full bg-blue-200 mb-4"></div>
-                <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
-                <div className="h-4 w-36 bg-gray-200 rounded"></div>
-              </div>
-            </div>
-          }
-        >
-          <TravelersTable />
-        </Suspense>
-      </main>
+    <div className="h-fit">
+      <div className="max-w-7xl mx-auto bg-white p-4 rounded-lg shadow">
+        <div>
+          <Filters
+            defaultFilters={filters}
+            onFilter={setFilters}
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+          />
+        </div>
+
+        {/* Reservations Table */}
+        <div className="overflow-hidden0">
+          {loading ? (
+            <Loader></Loader>
+          ) : (
+            <Table
+              registros={formatedSolicitudes}
+              renderers={componentes}
+              defaultSort={defaultSort}
+            />
+          )}
+        </div>
+      </div>
     </div>
   );
 }
+
+const defaultSort = {
+  key: "creado",
+  sort: false,
+};
+
+const defaultFiltersSolicitudes: TypeFilters = {};
+
+export default App;

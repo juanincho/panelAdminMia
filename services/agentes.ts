@@ -1,6 +1,6 @@
 import { API_KEY, URL } from "./constant";
 
-export const fetchAgentes = async () => {
+export const fetchAgentes = async (callback: (data) => void) => {
   const response = await fetch(`${URL}/mia/agentes/all`, {
     headers: {
       "x-api-key": API_KEY,
@@ -14,10 +14,11 @@ export const fetchAgentes = async () => {
     throw new Error("Error al cargar los datos");
   }
   const data = await response.json();
+  callback(data);
   return data;
 };
 export const fetchAgenteById = async (id) => {
-  const cleanId = id.split('?')[0];
+  const cleanId = id.split("?")[0];
   const response = await fetch(`${URL}/mia/agentes/id?id=${cleanId}`, {
     headers: {
       "x-api-key": API_KEY,
