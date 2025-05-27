@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({
       ></div>
       {/* Contenido del modal */}
       <div
-        className="relative bg-white rounded-lg lg:max-w-[80%] overflow-hidden shadow-xl transform transition-all sm:max-w-4xl sm:w-full"
+        className="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all w-fit max-w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón de cerrar */}
@@ -41,9 +41,7 @@ const Modal: React.FC<ModalProps> = ({
             </h3>
           )}
           {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
-          <div className="w-full max-h-[600px] h-fit overflow-y-auto">
-            {children}
-          </div>
+          <div className="w-full max-h-[600px] overflow-y-auto">{children}</div>
         </div>
       </div>
     </div>

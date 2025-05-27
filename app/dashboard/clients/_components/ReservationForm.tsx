@@ -27,6 +27,7 @@ import { X, Plus, Building2, Calendar, CreditCard } from "lucide-react";
 import { differenceInDays, parseISO, format } from "date-fns";
 import { useParams } from "next/navigation";
 import { fetchCreateReserva } from "@/services/reservas";
+import { Hotel } from "@/types";
 
 interface Tax {
   id_impuesto: number;
@@ -57,14 +58,6 @@ interface Room {
   id_tarifa: number;
   precio: string;
   id_agente: null | string;
-}
-
-interface Hotel {
-  id_hotel: string;
-  nombre_hotel: string;
-  Estado: string;
-  Ciudad_Zona: string;
-  tipos_cuartos: Room[];
 }
 
 interface Traveler {

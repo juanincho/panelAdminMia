@@ -1,4 +1,33 @@
+import { EdicionForm, ReservaForm } from "@/types";
 import { URL, API_KEY } from "./constant/index";
+
+export async function updateReserva(
+  reserva: EdicionForm,
+  id_booking: string,
+  callback: (data: any) => void
+) {
+  try {
+    const response = await fetch(`${URL}/mia/reservas?id=${id_booking}`, {
+      method: "PUT",
+      headers: {
+        "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reserva),
+      cache: "no-store",
+    }).then((res) => res.json());
+    callback(response);
+    console.log(response);
+    if (response.error) {
+      throw new Error("Error al cargar los datos en reservas");
+    }
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
 
 export async function fetchCreateReserva(reserva) {
   try {
@@ -25,7 +54,10 @@ export async function fetchCreateReserva(reserva) {
     throw error;
   }
 }
-export async function fetchCreateReservaFromSolicitud(reserva) {
+export async function fetchCreateReservaFromSolicitud(
+  reserva: ReservaForm,
+  callback: (data: any) => void
+) {
   try {
     const response = await fetch(`${URL}/mia/reservas`, {
       method: "POST",
@@ -34,15 +66,27 @@ export async function fetchCreateReservaFromSolicitud(reserva) {
         "Cache-Control": "no-cache, no-store, must-revalidate",
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(reserva),
+      body: JSON.stringify({ reserva }),
       cache: "no-store",
     }).then((res) => res.json());
 
     console.log(response);
 
     if (response.error) {
-      throw new Error("Error al cargar los datos en reservas");
+      callback({
+        error: true,
+        message: "Error al cargar los datos en reservas",
+      });
+      return {
+        error: true,
+        message: "Error al cargar los datos en reservas",
+      };
     }
+    callback({
+      ok: true,
+      message: "Reserva creada correctamente",
+      data: response,
+    });
 
     return response;
   } catch (error) {

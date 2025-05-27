@@ -1,17 +1,21 @@
+import { TypeFilters, Solicitud } from "@/types";
 import { API_KEY, URL } from "./constant";
 
 export const fetchSolicitudes = async (
   filters: TypeFilters,
+  defaultFilters: TypeFilters,
   callback: (data: Solicitud[]) => void
 ) => {
   try {
     const queryParams = new URLSearchParams();
 
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== "") {
-        queryParams.append(key, value.toString());
+    Object.entries({ ...filters, ...defaultFilters }).forEach(
+      ([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+          queryParams.append(key, value.toString());
+        }
       }
-    });
+    );
 
     const url = `${URL}/mia/solicitud?${queryParams.toString()}`;
 

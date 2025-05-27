@@ -1,4 +1,4 @@
-import { Hotel } from "@/app/_types/reservas";
+import { Hotel } from "@/types";
 import { Viajero } from "@/types";
 import { ChevronDown } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
@@ -85,7 +85,7 @@ export const NumberInput = ({
       type="number"
       value={value || ""}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+      className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
     />
   </div>
 );
@@ -201,9 +201,9 @@ export const ComboBox = ({
         </div>
         {isOpen && filteredOptions.length > 0 && (
           <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded shadow max-h-60 overflow-y-auto text-sm">
-            {filteredOptions.map((option) => (
+            {filteredOptions.map((option, index) => (
               <li
-                key={option.name}
+                key={option.name + index}
                 onClick={() => handleSelect(option)}
                 className="px-3 py-2 cursor-pointer hover:bg-blue-100"
               >
