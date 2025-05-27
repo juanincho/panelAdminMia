@@ -96,6 +96,12 @@ const navItems: NavItem[] = [
   },
   {
     navShow: false,
+    title: "Facturación",
+    href: "/dashboard/facturacion",
+    icon: Receipt,
+  },
+  {
+    navShow: false,
     title: "Empresas",
     href: "/dashboard/empresas",
     icon: Factory,
