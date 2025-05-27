@@ -363,53 +363,53 @@ const FiltersModal: React.FC<{
                 />
               )}
 
-              {"precioMin" in filters && (
+              {"sencilla_precio_min" in filters && (
                 <NumberInput
                   label="Precio mínimo"
-                  value={filters.precioMin}
+                  value={filters.sencilla_precio_min}
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      precioMin: value === "" ? null : Number(value),
+                      sencilla_precio_min: value === "" ? null : Number(value),
                     }))
                   }
                 />
               )}
 
-              {"precioMax" in filters && (
+              {"sencilla_precio_max" in filters && (
                 <NumberInput
                   label="Precio máximo"
-                  value={filters.precioMax}
+                  value={filters.sencilla_precio_max}
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      precioMax: value === "" ? null : Number(value),
+                      sencilla_precio_max: value === "" ? null : Number(value),
                     }))
                   }
                 />
               )}
 
-              {"costoMin" in filters && (
+              {"sencilla_costo_min" in filters && (
                 <NumberInput
                   label="Costo mínimo"
-                  value={filters.costoMin}
+                  value={filters.sencilla_costo_min}
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      costoMin: value === "" ? null : Number(value),
+                      sencilla_costo_min: value === "" ? null : Number(value),
                     }))
                   }
                 />
               )}
 
-              {"costoMax" in filters && (
+              {"sencilla_costo_max" in filters && (
                 <NumberInput
                   label="Costo máximo"
-                  value={filters.costoMax}
+                  value={filters.sencilla_costo_max}
                   onChange={(value) =>
                     setFilters((prev) => ({
                       ...prev,
-                      costoMax: value === "" ? null : Number(value),
+                      sencilla_costo_max: value === "" ? null : Number(value),
                     }))
                   }
                 />
