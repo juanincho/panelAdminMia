@@ -315,11 +315,7 @@ export function ReservationForm({
       onSubmit={handleSubmit}
       className="space-y-6 mx-5 overflow-y-auto rounded-md bg-white p-4"
     >
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="shadow-none"
-      >
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-[80vw]">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="cliente">Cliente</TabsTrigger>
           <TabsTrigger value="proveedor">Proveedor</TabsTrigger>

@@ -22,7 +22,7 @@ const Modal: React.FC<ModalProps> = ({
       ></div>
       {/* Contenido del modal */}
       <div
-        className="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all w-[90vw]"
+        className="relative bg-white rounded-lg overflow-hidden shadow-xl transform transition-all w-fit max-w-[90vw]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Botón de cerrar */}

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { use, useEffect, useState } from "react";
-import { Pencil } from "lucide-react";
+import { Pencil, TriangleAlert } from "lucide-react";
 import { ReservationForm } from "../../../components/structure/FormReservation";
 import Filters from "@/components/Filters";
 import { fetchSolicitudes } from "@/services/solicitudes";
@@ -177,18 +177,40 @@ function App() {
             onClose={() => {
               setSelectedItem(null);
             }}
-            title="Editar reserva"
-            subtitle="Modifica los detalles de una reservación anteriormente procesada."
+            title={
+              selectedItem.id_booking == null
+                ? "Se encontro una anomalia"
+                : "Editar reserva"
+            }
+            subtitle={
+              selectedItem.id_booking == null
+                ? "Revisa el mensaje de error"
+                : "Modifica los detalles de una reservación anteriormente procesada."
+            }
           >
-            <ReservationForm
-              hotels={hoteles}
-              solicitud={selectedItem}
-              onClose={() => {
-                setSelectedItem(null);
-                handleFetchSolicitudes();
-              }}
-              edicion={true}
-            />
+            {selectedItem.id_booking == null ? (
+              <div className="text-red-500 w-full flex justify-center p-4 max-w-sm">
+                <p className="flex items-center gap-4 border border-red-300 bg-red-100 text-red-700 p-4 rounded-lg text-sm">
+                  <TriangleAlert className="w-12 h-12" />
+                  <span>
+                    {" "}
+                    Esta reservación aun no ha sido procesada. Por favor, crea
+                    la reservación en la parte de solicitudes para poder
+                    editarla.
+                  </span>
+                </p>
+              </div>
+            ) : (
+              <ReservationForm
+                hotels={hoteles}
+                solicitud={selectedItem}
+                onClose={() => {
+                  setSelectedItem(null);
+                  handleFetchSolicitudes();
+                }}
+                edicion={true}
+              />
+            )}
           </Modal>
         )}
       </div>

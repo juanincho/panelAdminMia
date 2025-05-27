@@ -1,6 +1,6 @@
 import { exportToCSV } from "@/helpers/utils";
 import { ArrowDown, FileDown } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, use } from "react";
 
 type Registro = {
   [key: string]: any;
@@ -34,7 +34,12 @@ export const Table = ({
 
   useEffect(() => {
     setDisplayData(registros);
+    setCurrentSort(defaultSort);
   }, [registros]);
+
+  useEffect(() => {
+    handleSort(defaultSort.key);
+  }, [currentSort]);
 
   const columnKeys = useMemo(() => {
     if (
@@ -49,13 +54,10 @@ export const Table = ({
   }, [registros]);
 
   const handleSort = (key: string) => {
-    let updateSort = { key, sort: !currentSort.sort };
-
     const sortedData = displayData.toSorted((a, b) =>
       (currentSort.sort ? a[key] < b[key] : a[key] > b[key]) ? 1 : -1
     );
     setDisplayData(sortedData);
-    setCurrentSort(updateSort);
   };
 
   return (
@@ -79,7 +81,9 @@ export const Table = ({
                 <th
                   key={key}
                   scope="col"
-                  onClick={() => handleSort(key)}
+                  onClick={() =>
+                    setCurrentSort({ key, sort: !currentSort.sort })
+                  }
                   className="px-6 min-w-fit whitespace-nowrap py-3 text-left cursor-pointer text-xs font-medium text-gray-600 uppercase tracking-wider"
                 >
                   <span className="flex gap-2">

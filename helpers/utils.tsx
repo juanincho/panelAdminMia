@@ -8,6 +8,10 @@ import {
   LogOut,
   Headset,
   User,
+  ShieldCheck,
+  CalendarPlus,
+  AlertTriangle,
+  DollarSign,
 } from "lucide-react";
 
 export const formatDate = (dateString: string) => {
@@ -123,6 +127,7 @@ export const getWhoCreateBadge = (status: string) => {
       );
   }
 };
+
 export const getStageBadge = (status: string) => {
   switch (status) {
     case "Reservado":
@@ -154,6 +159,7 @@ export const getStageBadge = (status: string) => {
       );
   }
 };
+
 export const exportToCSV = (data, filename = "archivo.csv") => {
   if (!data || data.length === 0) return;
   const headers = Object.keys(data[0]);
@@ -209,3 +215,78 @@ export function formatNumberWithCommas(numberStr: string): string {
     return formattedInteger;
   }
 }
+
+export const getStatusCreditBadge = (status: boolean) => {
+  if (status === null || status === undefined) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        Sin datos
+      </span>
+    );
+  }
+  if (status) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <CheckCircle2 className="w-3 h-3 mr-1" />
+        Con credito
+      </span>
+    );
+  } else {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+        <HandCoins className="w-3 h-3 mr-1" />
+        Sin credito
+      </span>
+    );
+  }
+};
+
+export const getRoleBadge = (role: string) => {
+  switch (role.toUpperCase()) {
+    case "ADMINISTRADOR":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+          <ShieldCheck className="w-3 h-3 mr-1" />
+          Administrador
+        </span>
+      );
+    case "RESERVANTE":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+          <CalendarPlus className="w-3 h-3 mr-1" />
+          Reservante
+        </span>
+      );
+    case "VIAJERO":
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+          <User className="w-3 h-3 mr-1" />
+          Viajero
+        </span>
+      );
+    default:
+      return (
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+          {role}
+        </span>
+      );
+  }
+};
+
+export const getCreditoBadge = (monto: number | null) => {
+  if (!monto) {
+    return (
+      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <AlertTriangle className="w-3 h-3 mr-1 text-gray-500" />
+        Sin crédito
+      </span>
+    );
+  }
+
+  return (
+    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+      <DollarSign className="w-3 h-3 mr-1 text-emerald-600" />
+      {monto.toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+    </span>
+  );
+};

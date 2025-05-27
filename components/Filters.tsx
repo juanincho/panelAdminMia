@@ -29,8 +29,8 @@ const Filters: React.FC<{
 
   return (
     <div className=" overflow-hidden max-w-full mx-auto relative flex flex-col md:flex-row md:items-center md:flex-wrap justify-between gap-4">
-      <div className="relative flex-1">
-        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+      <div className="relative flex-1 pt-2">
+        <div className="absolute inset-y-0 left-0 pl-3 pt-2 flex items-center pointer-events-none">
           <Search className="h-5 w-5 text-gray-400" />
         </div>
         <input
@@ -292,8 +292,6 @@ const FiltersModal: React.FC<{
                   options={["Contado", "Credito"]}
                 />
               )}
-
-              {/*Campos hotels table, proovedor ya existe */}
 
               {"hay_convenio" in filters && (
                 <Dropdown
@@ -616,7 +614,7 @@ const FiltersModal: React.FC<{
               key={key}
             >
               {key.toLowerCase()} :{" "}
-              {typeof value != "boolean"
+              {typeof value == "string"
                 ? value.toLowerCase()
                 : value.toString()}
               <X
