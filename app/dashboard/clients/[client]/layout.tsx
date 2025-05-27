@@ -6,7 +6,14 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Receipt, CalendarDays, Users, Building, User, CreditCard } from "lucide-react";
+import {
+  Receipt,
+  CalendarDays,
+  Users,
+  Building,
+  User,
+  CreditCard,
+} from "lucide-react";
 
 const sidebarNavItems = [
   {
@@ -51,7 +58,7 @@ export default function ClientLayout({ children }: ClientLayoutProps) {
   const [isOpen, setIsOpen] = useState(true);
 
   return (
-    <div className="flex h-fit">
+    <div className="flex h-fit w-full">
       {/* Sidebar */}
       <div
         className={cn(

@@ -38,6 +38,12 @@ export interface TypeFilters {
   statusPagoProveedor?: null | string;
   markup_start?: null | number;
   markup_end?: null | number;
+  telefono: number | null;
+  estado_credito: "Activo" | "Inactivo" | null;
+  vendedor: string | null;
+  notas: string | null;
+  startCantidad: number | null;
+  endCantidad: number | null;
 }
 
 export type Solicitud = {

@@ -22,4 +22,7 @@ interface Agente {
   nombre_agente_completo: string;
   tiene_credito_consolidado: number;
   monto_credito: number | null;
+  notas: string | null;
+  vendedor: string | null;
+  created_at: Date;
 }

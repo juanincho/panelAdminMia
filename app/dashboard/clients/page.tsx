@@ -12,24 +12,23 @@ import { Table } from "@/components/Table";
 import { TypeFilters } from "@/types";
 import { Loader } from "@/components/atom/Loader";
 import { fetchAgentes } from "@/services/agentes";
+import Link from "next/link";
 
 function App() {
   const [clients, setClient] = useState<Agente[]>([]);
-  const [selectedItem, setSelectedItem] = useState<Agente | null>(null);
   const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<TypeFilters>(
     defaultFiltersSolicitudes
   );
 
-  const handleEdit = (item: Agente) => {
-    setSelectedItem(item);
-  };
-
   let formatedSolicitudes = clients
-    .filter((item) => true)
+    .filter(
+      (item) => item.nombre_agente_completo.toUpperCase().includes(searchTerm)
+      // item.correo.to
+    )
     .map((item) => ({
-      creado: item.created_viajero,
+      creado: item.created_at,
       id: item.id_agente,
       cliente: item.nombre_agente_completo,
       correo: item.correo,
@@ -38,8 +37,9 @@ function App() {
       estado_credito: Boolean(item.tiene_credito_consolidado),
       credito: item.monto_credito ? Number(item.monto_credito) : 0,
       categoria: "Administrador",
-      notas_internas: "",
-      vendedor: "",
+      notas_internas: item.notas || "",
+      vendedor: item.vendedor || "",
+      detalles: item.id_agente || "",
     }));
 
   let componentes = {
@@ -76,11 +76,21 @@ function App() {
         </div>
       </span>
     ),
+    detalles: ({ value }: { value: string }) => (
+      <Link
+        href={`/dashboard/clients/${value}`}
+        className="hover:underline font-medium"
+      >
+        <span className="text-blue-600 hover:underline cursor-pointer">
+          Detalles
+        </span>
+      </Link>
+    ),
   };
 
-  const handleFetchSolicitudes = () => {
+  const handleFetchClients = () => {
     setLoading(true);
-    fetchAgentes((data) => {
+    fetchAgentes(filters, {} as TypeFilters, (data) => {
       console.log("Agentes fetched:", data);
       setClient(data);
       setLoading(false);
@@ -88,12 +98,12 @@ function App() {
   };
 
   useEffect(() => {
-    handleFetchSolicitudes();
+    handleFetchClients();
   }, [filters]);
 
   return (
     <div className="h-fit">
-      <div className="max-w-7xl mx-auto bg-white p-4 rounded-lg shadow">
+      <div className="w-full mx-auto bg-white p-4 rounded-lg shadow">
         <div>
           <Filters
             defaultFilters={filters}
@@ -104,7 +114,7 @@ function App() {
         </div>
 
         {/* Reservations Table */}
-        <div className="overflow-hidden0">
+        <div className="overflow-hidden">
           {loading ? (
             <Loader />
           ) : (
@@ -112,6 +122,7 @@ function App() {
               registros={formatedSolicitudes}
               renderers={componentes}
               defaultSort={defaultSort}
+              leyenda={`Haz filtrado ${clients.length} clientes`}
             />
           )}
         </div>
@@ -122,9 +133,21 @@ function App() {
 
 const defaultSort = {
   key: "creado",
-  sort: true,
+  sort: false,
 };
 
-const defaultFiltersSolicitudes: TypeFilters = {};
+const defaultFiltersSolicitudes: TypeFilters = {
+  filterType: null,
+  startDate: null,
+  endDate: null,
+  client: null,
+  correo: null,
+  telefono: null,
+  estado_credito: null,
+  vendedor: null,
+  notas: null,
+  startCantidad: null,
+  endCantidad: null,
+};
 
 export default App;

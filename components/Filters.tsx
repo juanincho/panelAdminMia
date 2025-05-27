@@ -69,7 +69,9 @@ const FiltersModal: React.FC<{
   defaultFilter?: TypeFilters;
   setSearchTerm?: (value: string) => void;
 }> = ({ onClose, isOpen, onFilter, defaultFilter, setSearchTerm }) => {
-  const [filters, setFilters] = useState<TypeFilters>(defaultFilter || {});
+  const [filters, setFilters] = useState<TypeFilters>(
+    defaultFilter ?? ({} as TypeFilters)
+  );
 
   const handleFilter = () => {
     console.log(filters);
@@ -181,6 +183,20 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+              {"estado_credito" in filters && (
+                <Dropdown
+                  label="Estado de credito"
+                  value={String(filters.estado_credito || "")}
+                  onChange={(value) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      estado_credito: value as TypeFilters["estado_credito"],
+                    }))
+                  }
+                  options={["Activo", "Inactivo"]}
+                />
+              )}
+
               {"id_client" in filters && (
                 <TextInput
                   label="ID del cliente"
@@ -191,13 +207,40 @@ const FiltersModal: React.FC<{
                 />
               )}
 
+              {"vendedor" in filters && (
+                <TextInput
+                  label="Vendedor"
+                  value={filters.vendedor}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, vendedor: value }))
+                  }
+                />
+              )}
+
               {"client" in filters && (
                 <TextInput
-                  label="Nombre y RFC del cliente"
+                  label="Cliente"
                   value={filters.client}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, client: value }))
                   }
+                />
+              )}
+
+              {"telefono" in filters && (
+                <NumberInput
+                  value={filters.telefono}
+                  label="Telefono"
+                  onChange={(value) => {
+                    if (value === "" || isNaN(Number(value))) {
+                      setFilters((prev) => ({ ...prev, telefono: null }));
+                      return;
+                    }
+                    setFilters((prev) => ({
+                      ...prev,
+                      telefono: Number(value),
+                    }));
+                  }}
                 />
               )}
 
@@ -218,6 +261,40 @@ const FiltersModal: React.FC<{
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, nombre: value }))
                   }
+                />
+              )}
+
+              {"startCantidad" in filters && (
+                <NumberInput
+                  value={filters.startCantidad}
+                  label="Cantidad inicial"
+                  onChange={(value) => {
+                    if (value === "" || isNaN(Number(value))) {
+                      setFilters((prev) => ({ ...prev, startCantidad: null }));
+                      return;
+                    }
+                    setFilters((prev) => ({
+                      ...prev,
+                      startCantidad: Number(value),
+                    }));
+                  }}
+                />
+              )}
+
+              {"endCantidad" in filters && (
+                <NumberInput
+                  value={filters.endCantidad}
+                  label="Cantidad final"
+                  onChange={(value) => {
+                    if (value === "" || isNaN(Number(value))) {
+                      setFilters((prev) => ({ ...prev, endCantidad: null }));
+                      return;
+                    }
+                    setFilters((prev) => ({
+                      ...prev,
+                      endCantidad: Number(value),
+                    }));
+                  }}
                 />
               )}
 
@@ -524,6 +601,16 @@ const FiltersModal: React.FC<{
                   value={filters.tipo_hospedaje}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, tipo_hospedaje: value }))
+                  }
+                />
+              )}
+
+              {"notas" in filters && (
+                <TextInput
+                  label="Notas"
+                  value={filters.notas}
+                  onChange={(value) =>
+                    setFilters((prev) => ({ ...prev, notas: value }))
                   }
                 />
               )}

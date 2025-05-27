@@ -1,15 +1,31 @@
+import { TypeFilters } from "@/types";
 import { API_KEY, URL } from "./constant";
 
-export const fetchAgentes = async (callback: (data) => void) => {
-  const response = await fetch(`${URL}/mia/agentes/all`, {
-    headers: {
-      "x-api-key": API_KEY,
-      "Cache-Control": "no-cache, no-store, must-revalidate",
-      Pragma: "no-cache",
-      Expires: "0",
-    },
-    cache: "no-store",
+export const fetchAgentes = async (
+  filters: TypeFilters,
+  defaultFilters: TypeFilters,
+  callback: (data: Agente[]) => void
+) => {
+  const queryParams = new URLSearchParams();
+
+  Object.entries({ ...filters, ...defaultFilters }).forEach(([key, value]) => {
+    if (value !== undefined && value !== null && value !== "") {
+      queryParams.append(key, value.toString());
+    }
   });
+
+  const response = await fetch(
+    `${URL}/mia/agentes/all?${queryParams.toString()}`,
+    {
+      headers: {
+        "x-api-key": API_KEY,
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        Pragma: "no-cache",
+        Expires: "0",
+      },
+      cache: "no-store",
+    }
+  );
   if (!response.ok) {
     throw new Error("Error al cargar los datos");
   }
