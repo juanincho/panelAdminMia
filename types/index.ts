@@ -17,10 +17,14 @@ export interface TypeFilters {
   tipo_negociacion?: string | null;
   estado?: string | null;
   ciudad?: string | null;
-  precioMin?: number | null;
-  precioMax?: number | null;
-  costoMin?: number | null;
-  costoMax?: number | null;
+  sencilla_precio_min?: number | null;
+  sencilla_precio_max?: number | null;
+  sencilla_costo_min?: number | null;
+  sencilla_costo_max?: number | null;
+  doble_precio_min?: number | null;
+  doble_precio_max?: number | null;
+  doble_costo_min?: number | null;
+  doble_costo_max?: number | null;
   incluye_desayuno?: boolean | "SI" | "NO" | null;
   acepta_mascotas?: "SI" | "NO";
   tiene_transportacion?: "SI" | "NO";

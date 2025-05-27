@@ -438,57 +438,109 @@ const FiltersModal: React.FC<{
                 />
               )}
 
-              {"precioMin" in filters && (
-                <NumberInput
-                  label="Precio mínimo"
-                  value={filters.precioMin}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      precioMin: value === "" ? null : Number(value),
-                    }))
-                  }
-                />
-              )}
+              {"sencilla_costo_min" in filters && (
+                  <NumberInput
+                    label="Costo mínimo hab sencilla"
+                    value={filters.sencilla_costo_min}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        sencilla_costo_min: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
 
-              {"precioMax" in filters && (
-                <NumberInput
-                  label="Precio máximo"
-                  value={filters.precioMax}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      precioMax: value === "" ? null : Number(value),
-                    }))
-                  }
-                />
-              )}
+                {"sencilla_costo_max" in filters && (
+                  <NumberInput
+                    label="Costo máximo hab sencilla"
+                    value={filters.sencilla_costo_max}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        sencilla_costo_max: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
 
-              {"costoMin" in filters && (
-                <NumberInput
-                  label="Costo mínimo"
-                  value={filters.costoMin}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      costoMin: value === "" ? null : Number(value),
-                    }))
-                  }
-                />
-              )}
+                {"sencilla_precio_min" in filters && (
+                  <NumberInput
+                    label="Precio mínimo hab sencilla"
+                    value={filters.sencilla_precio_min}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        sencilla_precio_min: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
 
-              {"costoMax" in filters && (
-                <NumberInput
-                  label="Costo máximo"
-                  value={filters.costoMax}
-                  onChange={(value) =>
-                    setFilters((prev) => ({
-                      ...prev,
-                      costoMax: value === "" ? null : Number(value),
-                    }))
-                  }
-                />
-              )}
+                {"sencilla_precio_max" in filters && (
+                  <NumberInput
+                    label="Precio máximo hab sencilla"
+                    value={filters.sencilla_precio_max}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        sencilla_precio_max: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
+
+                {"doble_costo_min" in filters && (
+                  <NumberInput
+                    label="Costo mínimo hab doble"
+                    value={filters.doble_costo_min}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        doble_costo_min: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
+
+                {"doble_costo_max" in filters && (
+                  <NumberInput
+                    label="Costo máximo hab doble"
+                    value={filters.doble_costo_max}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        doble_costo_max: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
+
+                {"doble_precio_min" in filters && (
+                  <NumberInput
+                    label="Precio mínimo hab doble"
+                    value={filters.doble_precio_min}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        doble_precio_min: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
+
+                {"doble_precio_max" in filters && (
+                  <NumberInput
+                    label="Precio máximo hab doble"
+                    value={filters.doble_precio_max}
+                    onChange={(value) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        doble_precio_max: value === "" ? null : Number(value),
+                      }))
+                    }
+                  />
+                )}
 
               {"incluye_desayuno" in filters && (
                 <Dropdown
@@ -527,7 +579,7 @@ const FiltersModal: React.FC<{
 
               {"tiene_transportacion" in filters && (
                 <Dropdown
-                  label="¿Tiene transportacion?"
+                  label="¿Tiene transportación?"
                   value={filters.tiene_transportacion}
                   onChange={(value) =>
                     setFilters((prev) => ({
@@ -641,7 +693,7 @@ const FiltersModal: React.FC<{
               )}
               {"pais" in filters && (
                 <TextInput
-                  label="pais"
+                  label="País"
                   value={filters.pais}
                   onChange={(value) =>
                     setFilters((prev) => ({ ...prev, pais: value }))
