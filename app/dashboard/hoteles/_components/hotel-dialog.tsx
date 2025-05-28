@@ -369,8 +369,8 @@ const extractNotesSection = (notes: string, section: string): string => {
 const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
-      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
-      //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+      //`https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
+      `http://localhost:3001/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
       {
         method: "GET",
         headers: {
@@ -397,7 +397,7 @@ const buscarAgentes = async (nombre: string, correo: string) => {
       `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(
         nombre
       )}&correo=${encodeURIComponent(correo)}`,
-      //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      //`http://localhost:3001/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
       {
         method: "GET",
         headers: {
@@ -602,11 +602,16 @@ export function HotelDialog({
         ? extractNotesSection(hotel.Comentarios, "INFORMACION ADICIONAL")
         : "";
       const rawComentarios = hotel.Comentarios || "";
-      const extractedNotasGenerales = extractNotesSection(
-        rawComentarios,
-        "NOTAS GENERALES"
-      );
-      const notasGenerales = extractedNotasGenerales || rawComentarios;
+
+// Validamos si hay al menos un encabezado presente
+const tieneEncabezados = /##\s+[A-Z\s]+?\s+##/.test(rawComentarios);
+
+// Si tiene encabezados, solo extraemos 'NOTAS GENERALES'
+// Si no hay ningún encabezado, asumimos que todo el texto previo es una nota general heredada
+const notasGenerales = tieneEncabezados
+  ? extractNotesSection(rawComentarios, "NOTAS GENERALES")
+  : rawComentarios;
+
 
       setFormData({
         Id_hotel_excel: hotel.Id_hotel_excel?.toString() || "",
@@ -742,8 +747,8 @@ export function HotelDialog({
     try {
       setIsFetchingRates(true);
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
-        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
+        `http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
         {
           method: "GET",
           headers: {
@@ -1202,8 +1207,8 @@ const handleInternacionalChange = (checked: boolean) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-hotel/`,
-        //http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`
+        //`${URL_VERCEL}hoteles/Eliminar-hotel/`,
+        `http://localhost:3001/v1/mia/hoteles/Eliminar-hotel/`,
         {
           method: "PATCH",
           headers: {
@@ -1250,8 +1255,8 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
-        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
+        `http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         {
           method: "GET",
           headers: {
@@ -1346,8 +1351,8 @@ const handleInternacionalChange = (checked: boolean) => {
       console.log("Actualizando hotel:", hotelPayload);
 
       const hotelResponse = await fetch(
-        `${URL_VERCEL}hoteles/Editar-hotel/`
-        //`http://localhost:3001/v1/mia/hoteles/Editar-hotel/`
+        //`${URL_VERCEL}hoteles/Editar-hotel/`
+        `http://localhost:3001/v1/mia/hoteles/Editar-hotel/`
         ,
         {
           method: "PATCH",
@@ -1472,8 +1477,9 @@ const handleInternacionalChange = (checked: boolean) => {
 
       const tarifasPromises = allTarifasPayloads.map((payload) =>
         fetch(
-          `${URL_VERCEL}hoteles/Actualiza-tarifa`,
-          //`http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`
+          //`${URL_VERCEL}hoteles/Actualiza-tarifa`,
+          `http://localhost:3001/v1/mia/hoteles/Actualiza-tarifa`
+          ,
           {
             method: "PATCH",
             headers: {
@@ -1519,8 +1525,9 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
-        //http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        //`${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
+        `http://localhost:3001/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        ,
         {
           method: "PATCH",
           headers: {
