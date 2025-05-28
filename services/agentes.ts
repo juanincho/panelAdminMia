@@ -1,5 +1,5 @@
 import { TypeFilters } from "@/types";
-import { API_KEY, URL } from "./constant";
+import { API_KEY, URL } from "../constant";
 
 export const fetchAgentes = async (
   filters: TypeFilters,

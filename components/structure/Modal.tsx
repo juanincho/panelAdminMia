@@ -1,4 +1,5 @@
-import React, { ReactNode } from "react";
+"use client";
+import React, { ReactNode, useEffect } from "react";
 
 interface ModalProps {
   onClose: () => void;
@@ -13,6 +14,26 @@ const Modal: React.FC<ModalProps> = ({
   children,
   subtitle,
 }) => {
+  useEffect(() => {
+    // Función para agregar la clase al body
+    const addBodyClass = () => {
+      document.body.classList.add("modal-open-no-scroll");
+    };
+
+    // Función para remover la clase del body
+    const removeBodyClass = () => {
+      document.body.classList.remove("modal-open-no-scroll");
+    };
+
+    // Aplicar o remover la clase basado en el estado 'isOpen'
+    addBodyClass();
+
+    // Limpieza: se ejecuta cuando el componente se desmonta o antes de que el efecto se ejecute de nuevo
+    return () => {
+      removeBodyClass(); // Asegúrate de remover la clase si el modal se desmonta estando abierto
+    };
+  }, []);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Fondo oscuro */}

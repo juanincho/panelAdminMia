@@ -8,14 +8,26 @@ import {
   getRoleBadge,
   getStatusCreditBadge,
 } from "@/helpers/utils";
+import {
+  Receipt,
+  CalendarDays,
+  Users,
+  Building,
+  User,
+  CreditCard,
+} from "lucide-react";
 import { Table } from "@/components/Table";
 import { TypeFilters } from "@/types";
 import { Loader } from "@/components/atom/Loader";
 import { fetchAgentes } from "@/services/agentes";
-import Link from "next/link";
+import Modal from "@/components/structure/Modal";
+import NavContainer from "@/components/structure/NavContainer";
+import { AgentDetailsCard } from "./_components/DetailsClient";
+import { Agent } from "node:http";
 
 function App() {
   const [clients, setClient] = useState<Agente[]>([]);
+  const [selectedItem, setSelectedItem] = useState<Agente | null>(null);
   const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState<TypeFilters>(
@@ -39,7 +51,7 @@ function App() {
       categoria: "Administrador",
       notas_internas: item.notas || "",
       vendedor: item.vendedor || "",
-      detalles: item.id_agente || "",
+      detalles: item,
     }));
 
   let componentes = {
@@ -76,15 +88,17 @@ function App() {
         </div>
       </span>
     ),
-    detalles: ({ value }: { value: string }) => (
-      <Link
-        href={`/dashboard/clients/${value}`}
+    detalles: ({ value }: { value: Agente }) => (
+      <button
+        onClick={() => {
+          setSelectedItem(value);
+        }}
         className="hover:underline font-medium"
       >
         <span className="text-blue-600 hover:underline cursor-pointer">
           Detalles
         </span>
-      </Link>
+      </button>
     ),
   };
 
@@ -96,6 +110,45 @@ function App() {
       setLoading(false);
     });
   };
+
+  const tabs = [
+    {
+      title: "Perfil",
+      tab: "",
+      icon: User,
+      component: <AgentDetailsCard agente={selectedItem}></AgentDetailsCard>,
+    },
+    {
+      title: "Facturas",
+      tab: "invoices",
+      icon: Receipt,
+      component: <div>Facturas</div>,
+    },
+    {
+      title: "Reservaciones",
+      tab: "reservations",
+      icon: CalendarDays,
+      component: <div>Reservaciones</div>,
+    },
+    {
+      title: "Usuarios",
+      tab: "users",
+      icon: Users,
+      component: <div>Usuarios</div>,
+    },
+    {
+      title: "Empresas",
+      tab: "empresas",
+      icon: Building,
+      component: <div>Empresas</div>,
+    },
+    {
+      title: "Metodos de pago",
+      tab: "metodos-pago",
+      icon: CreditCard,
+      component: <div>Metodo de pago</div>,
+    },
+  ];
 
   useEffect(() => {
     handleFetchClients();
@@ -127,6 +180,15 @@ function App() {
           )}
         </div>
       </div>
+      {selectedItem && (
+        <Modal
+          onClose={() => setSelectedItem(null)}
+          title="Datos del cliente"
+          subtitle="Puedes ver y editar los datos del cliente desde aqui"
+        >
+          <NavContainer tabs={tabs}></NavContainer>
+        </Modal>
+      )}
     </div>
   );
 }

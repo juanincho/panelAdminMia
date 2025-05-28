@@ -1,330 +1,189 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
-import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
-
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Building2, User, PencilIcon, Save, CreditCard } from "lucide-react";
-import { fetchAgenteById } from "@/services/agentes";
 import { createNewEmpresa, updateViajero } from "@/hooks/useDatabase";
+import { formatDate } from "@/helpers/utils";
+import {
+  CheckboxInput,
+  DateInput,
+  Dropdown,
+  NumberInput,
+  TextAreaInput,
+  TextInput,
+} from "@/components/atom/Input";
 
-interface Company {
-  id_empresa: string;
-  razon_social: string;
-}
-
-interface Agent {
-  created_viajero: string;
-  id_agente: string;
-  id_viajero: string;
-  primer_nombre: string;
-  segundo_nombre: string | null;
-  apellido_paterno: string;
-  apellido_materno: string | null;
-  correo: string | null;
-  genero: string | null;
-  fecha_nacimiento: string | null;
-  telefono: string | null;
-  nacionalidad: string | null;
-  numero_pasaporte: string | null;
-  numero_empleado: string | null;
-  tiene_credito_consolidado: boolean;
-  monto_credito: number;
-  empresas: Company[];
-}
-
-export default function AgentDetailsCard(props) {
-  const [isEditing, setIsEditing] = useState(false);
-
-  const {
-    data: agent,
-    isLoading,
-    error,
-  } = useQuery<Agent>({
-    queryKey: ["agent", props.agente],
-    queryFn: async ({ queryKey }) => {
-      const [, agenteId] = queryKey;
-      try {
-        const response = await fetchAgenteById(agenteId);
-
-        return response;
-      } catch (error) {
-        console.error("Error fetching agent:", error);
-        throw error;
-      }
-    },
-    staleTime: 0,
-    refetchOnMount: "always",
+export function AgentDetailsCard({ agente }: { agente: Agente }) {
+  const [form, setForm] = useState({
+    numero_empleado: agente.numero_empleado || "",
+    vendedor: agente.vendedor || "",
+    notas: agente.notas || "",
+    numero_pasaporte: agente.numero_pasaporte || "",
+    telefono: Number(agente.telefono) || null,
+    fecha_nacimiento: agente.fecha_nacimiento
+      ? agente.fecha_nacimiento.split("T")[0]
+      : "",
+    nacionalidad: agente.nacionalidad || "",
+    tiene_credito_consolidado: Boolean(agente.tiene_credito_consolidado),
+    monto_credito: Number(agente.monto_credito) || null,
   });
-  useEffect(() => {
-    if (agent) {
-      setFormData({
-        ...agent,
-        fecha_nacimiento: agent.fecha_nacimiento
-          ? format(new Date(agent.fecha_nacimiento), "yyyy-MM-dd")
-          : null,
-        empresas: agent.empresas.map((company) => ({
-          ...company,
-          razon_social: company.razon_social || "",
-        })),
-      });
-    }
-  }, [agent]);
 
-  useEffect(() => {
-    if (agent) {
-      console.log("Agent data received:", agent); // Debug
-      setFormData(agent);
-    }
-  }, [agent]);
-
-
-
-  const [formData, setFormData] = useState<Agent | null>(agent || null);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-pulse flex flex-col items-center">
-          <div className="h-12 w-12 rounded-full bg-blue-200 mb-4"></div>
-          <div className="h-6 w-48 bg-gray-200 rounded mb-2"></div>
-          <div className="h-4 w-36 bg-gray-200 rounded"></div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !agent) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-red-500 text-center">
-          <p className="text-xl font-bold mb-2">
-            Error al cargar los datos del agente
-          </p>
-          <p>Por favor, intente nuevamente más tarde.</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-    field: keyof Agent
-  ) => {
-    console.log("Campo cambiado:", field, e.target.value);
-    setFormData((prev) => {
-      if (!prev) return prev;
-
-      // Manejo especial para campos booleanos (como checkboxes)
-      // if (field === "tiene_credito_consolidado") {
-      //   return {
-      //     ...prev,
-      //     [field]: (e as React.ChangeEvent<HTMLInputElement>).target.checked,
-      //   };
-      // }
-
-      // Manejo especial para campos numéricos
-      // if (field === "monto_credito") {
-      //   return {
-      //     ...prev,
-      //     [field]: Number(e.target.value),
-      //   };
-      // }
-
-      // Para todos los demás campos (strings)
-      return {
-        ...prev,
-        [field]: e.target.value !== "" ? e.target.value : null,
-      };
-    });
-  };
-
-  const handleSave = async () => {
-    console.log(formData);
-    try {
-      const responseCompany = await updateViajero(
-        formData,
-        formData.empresas.map((company) => company.id_empresa),
-        agent.id_viajero
-      );
-      if (!responseCompany.success) {
-        throw new Error("No se pudo actualizar al viajero");
-      }
-      console.log(responseCompany);
-    } catch (error) {
-      console.error("Error actualizando viajero", error);
-    }
-    setIsEditing(false);
-  };
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return "N/A";
-    const [year, month, day] = dateString.split("T")[0].split("-");
-    const date = new Date(+year, +month - 1, +day);
-    return date.toLocaleDateString("es-MX", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-    });
-  };
-
-  const getFullName = (agent: Agent) => {
-    return [
-      agent.primer_nombre,
-      agent.segundo_nombre,
-      agent.apellido_paterno,
-      agent.apellido_materno,
-    ]
-      .filter(Boolean)
-      .join(" ");
-  };
+  // const handleSave = async () => {
+  //   try {
+  //     const responseCompany = await updateViajero(
+  //       agente,
+  //       agente.empresas.map((company) => company.id_empresa),
+  //       agente.id_viajero
+  //     );
+  //     if (!responseCompany.success) {
+  //       throw new Error("No se pudo actualizar al viajero");
+  //     }
+  //     console.log(responseCompany);
+  //   } catch (error) {
+  //     console.error("Error actualizando viajero", error);
+  //   }
+  // };
 
   return (
-    <Card className="w-full max-w-3xl mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-        <CardTitle className="text-2xl font-bold">
-          Detalles del Agente
-        </CardTitle>
-        <Button
-          variant={isEditing ? "default" : "outline"}
-          size="icon"
-          onClick={() => (isEditing ? handleSave() : setIsEditing(true))}
-        >
-          {isEditing ? (
-            <Save className="h-4 w-4" />
-          ) : (
-            <PencilIcon className="h-4 w-4" />
-          )}
-        </Button>
+    <Card className="w-full mx-auto border-none shadow-none hover:shadow-none">
+      <CardHeader className="flex flex-row items-center gap-2 space-y-0">
+        <CardTitle className="text-xl font-bold">Detalles del Agente</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Información Personal */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="col-span-2 flex items-center gap-3 mb-2">
-            <div className="h-12 w-12 rounded-full bg-blue-100 flex items-center justify-center">
-              <User className="h-6 w-6 text-blue-600" />
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center w-full lg:flex-row gap-4 justify-between mb-4">
+            <div className="flex flex-col md:flex-row items-center gap-4">
+              <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                <User className="h-6 w-6 text-blue-600" />
+              </div>
+              <div className="gap-3">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    {agente.nombre_agente_completo.toUpperCase()}
+                  </h2>
+                  <p className="text-xs text-gray-500">
+                    ID: {agente.id_agente}
+                  </p>
+                  <p className="text-xs text-gray-500">{agente.correo}</p>
+                </div>
+              </div>
             </div>
-
-            <div>
-              <h2 className="text-xl font-semibold">{getFullName(agent)}</h2>
-              <p className="text-sm text-gray-500">Correo: {agent.correo}</p>
-              <p className="text-sm text-gray-500">ID: {agent.id_viajero}</p>
+            <div className="flex flex-col gap-4 w-full max-w-sm">
+              <CheckboxInput
+                checked={form.tiene_credito_consolidado}
+                onChange={(value) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    tiene_credito_consolidado: value,
+                  }))
+                }
+                label="Activar credito"
+              />
+              <NumberInput
+                onChange={(value) =>
+                  setForm((prev) => ({ ...prev, monto_credito: Number(value) }))
+                }
+                disabled={!form.tiene_credito_consolidado}
+                label="Credito aprobado"
+                value={form.monto_credito}
+                placeholder="5535..."
+              />
             </div>
           </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="numero_empleado">Número de empleado</Label>
-            <Input
-              id="numero_empleado"
-              value={formData?.numero_empleado || ""}
-              onChange={(e) => handleInputChange(e, "numero_empleado")}
-              disabled={!isEditing}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <TextInput
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, vendedor: value }))
+              }
+              label="Vendedor"
+              value={form.vendedor}
+              placeholder=""
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="telefono">Teléfono</Label>
-            <Input
-              id="telefono"
-              value={formData?.telefono || ""}
-              onChange={(e) => handleInputChange(e, "telefono")}
-              disabled={!isEditing}
+            <NumberInput
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, telefono: Number(value) }))
+              }
+              label="Numero de telefono"
+              value={form.telefono}
+              placeholder="5535..."
             />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="nacionalidad">Nacionalidad</Label>
-            <select
-              name="nacionalidad"
-              value={formData?.nacionalidad || ""}
-              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              onChange={(e) => handleInputChange(e, "nacionalidad")}
-              disabled={!isEditing}
-            >
-              <option value="">Selecciona una nacionalidad</option>
-              <option value="MX">Mexicana</option>
-              <option value="US">Estadounidense</option>
-              <option value="CA">Canadiense</option>
-              <option value="ES">Española</option>
-              <option value="AR">Argentina</option>
-              <option value="BR">Brasileña</option>
-              <option value="FR">Francesa</option>
-              <option value="DE">Alemana</option>
-              <option value="IT">Italiana</option>
-              <option value="JP">Japonesa</option>
-              <option value="CN">China</option>
-              <option value="IN">India</option>
-              <option value="UK">Británica</option>
-              <option value="AU">Australiana</option>
-              <option value="CL">Chilena</option>
-            </select>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="numero_pasaporte">Número de Pasaporte</Label>
-            <Input
-              id="numero_pasaporte"
-              value={formData?.numero_pasaporte || ""}
-              onChange={(e) => handleInputChange(e, "numero_pasaporte")}
-              disabled={!isEditing}
+            <DateInput
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, fecha_nacimiento: value }))
+              }
+              label="Fecha de nacimiento"
+              value={form.fecha_nacimiento}
             />
           </div>
         </div>
 
-        {/* Información de Crédito */}
-        {/* <div className="border-t pt-4">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-blue-500" />
-              <h3 className="text-lg font-semibold">Crédito Consolidado</h3>
-            </div>
-            <Switch
-              checked={formData.tiene_credito_consolidado}
-              onCheckedChange={(checked) =>
-                setFormData((prev) => ({
-                  ...prev!,
-                  tiene_credito_consolidado: checked,
-                  monto_credito: checked ? prev!.monto_credito : 0,
-                }))
+        <div className="border-t pt-4">
+          <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+            Datos extra del cliente
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
+            <TextInput
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, numero_empleado: value }))
               }
-              disabled={!isEditing}
+              label="Numero de empleado"
+              value={form.numero_empleado}
+              placeholder=""
+            />
+            <TextInput
+              onChange={(value) =>
+                setForm((prev) => ({ ...prev, numero_pasaporte: value }))
+              }
+              label="Numero de pasaporte"
+              value={form.numero_pasaporte}
+              placeholder=""
+            />
+            <Dropdown
+              label="Nacionalidad"
+              onChange={(value) => {
+                setForm((prev) => ({
+                  ...prev,
+                  estado_reserva: value,
+                }));
+              }}
+              options={[
+                "MX",
+                "US",
+                "CA",
+                "ES",
+                "AR",
+                "BR",
+                "FR",
+                "DE",
+                "IT",
+                "JP",
+                "CN",
+                "IN",
+                "UK",
+                "AU",
+                "CL",
+              ]}
+              value={form.nacionalidad}
             />
           </div>
-          {Boolean(formData.tiene_credito_consolidado) && (
-            <div className="space-y-2">
-              <Label htmlFor="monto_credito">Monto de Crédito</Label>
-              <Input
-                id="monto_credito"
-                type="number"
-                value={formData.monto_credito}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev!,
-                    monto_credito: Number(e.target.value),
-                  }))
-                }
-                disabled={!isEditing}
-                className="max-w-[200px]"
-              />
-            </div>
-          )}
-        </div> */}
+          <TextAreaInput
+            onChange={(value) => setForm((prev) => ({ ...prev, notas: value }))}
+            label="Notas"
+            value={form.notas}
+            placeholder=""
+          />
+        </div>
 
         {/* Empresas Asociadas */}
         <div className="border-t pt-4">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <Building2 className="h-5 w-5 text-blue-500" />
-            Empresas Asociadas ({agent.empresas.length})
+            Empresas Asociadas ({agente.empresas.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {agent.empresas.map((company) => (
+            {agente.empresas.map((company) => (
               <div
                 key={company.id_empresa}
                 className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -344,8 +203,11 @@ export default function AgentDetailsCard(props) {
         </div>
 
         {/* Fecha de Registro */}
-        <div className="text-sm text-gray-500 pt-4 border-t">
-          Fecha de registro: {formatDate(agent.created_viajero)}
+        <div className="text-sm text-gray-500 pt-4 border-t flex justify-between">
+          <p>Fecha de registro: {formatDate(agente.created_at)}</p>
+          <button className="inline-flex items-center px-4 py-2 border border-sky-100 bg-sky-600 shadow-md text-sm font-medium rounded-md text-gray-100 hover:bg-gray-50 focus:outline-none focus:ring-2">
+            <Save className="w-4 h-4 mr-2" /> Guardar
+          </button>
         </div>
       </CardContent>
     </Card>
