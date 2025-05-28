@@ -747,8 +747,8 @@ const notasGenerales = tieneEncabezados
     try {
       setIsFetchingRates(true);
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
-        `http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
+        //`http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
         {
           method: "GET",
           headers: {
@@ -1207,8 +1207,8 @@ const handleInternacionalChange = (checked: boolean) => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Eliminar-hotel/`,
-        `http://localhost:3001/v1/mia/hoteles/Eliminar-hotel/`,
+        `${URL_VERCEL}hoteles/Eliminar-hotel/`,
+        //`http://localhost:3001/v1/mia/hoteles/Eliminar-hotel/`,
         {
           method: "PATCH",
           headers: {
@@ -1255,8 +1255,8 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
-        `http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
+        `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
+        //`http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         {
           method: "GET",
           headers: {
@@ -1351,8 +1351,8 @@ const handleInternacionalChange = (checked: boolean) => {
       console.log("Actualizando hotel:", hotelPayload);
 
       const hotelResponse = await fetch(
-        //`${URL_VERCEL}hoteles/Editar-hotel/`
-        `http://localhost:3001/v1/mia/hoteles/Editar-hotel/`
+        `${URL_VERCEL}hoteles/Editar-hotel/`
+        //`http://localhost:3001/v1/mia/hoteles/Editar-hotel/`
         ,
         {
           method: "PATCH",
@@ -1477,8 +1477,8 @@ const handleInternacionalChange = (checked: boolean) => {
 
       const tarifasPromises = allTarifasPayloads.map((payload) =>
         fetch(
-          //`${URL_VERCEL}hoteles/Actualiza-tarifa`,
-          `http://localhost:3001/v1/mia/hoteles/Actualiza-tarifa`
+          `${URL_VERCEL}hoteles/Actualiza-tarifa`
+          //`http://localhost:3001/v1/mia/hoteles/Actualiza-tarifa`
           ,
           {
             method: "PATCH",
