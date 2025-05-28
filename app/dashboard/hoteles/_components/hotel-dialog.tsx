@@ -369,8 +369,8 @@ const extractNotesSection = (notes: string, section: string): string => {
 const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
-      //`https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
-      `http://localhost:3001/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
+      `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
+      //`http://localhost:3001/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
       {
         method: "GET",
         headers: {
@@ -1525,8 +1525,8 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        //`${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
-        `http://localhost:3001/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
+        //`http://localhost:3001/v1/mia/hoteles/Eliminar-tarifa-preferencial`
         ,
         {
           method: "PATCH",
