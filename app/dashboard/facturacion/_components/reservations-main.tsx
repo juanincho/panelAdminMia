@@ -2,9 +2,10 @@
 
 import React, { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { da, es } from "date-fns/locale";
 import { fetchReservationsAll } from "@/services/reservas";
 import Link from "next/link";
+import { fetchEmpresasDatosFiscales } from "@/hooks/useFetch";
 
 // Types
 interface Reservation {
@@ -13,6 +14,7 @@ interface Reservation {
   is_credito: boolean | null;
   id_solicitud: string;
   confirmation_code: string;
+  nombre: string;
   hotel: string;
   check_in: string;
   check_out: string;
@@ -27,6 +29,18 @@ interface Reservation {
   id_factura: string | null;
   primer_nombre: string | null;
   apellido_paterno: string | null;
+}
+
+interface FiscalData {
+  id_datos_fiscales: number;
+  rfc: string;
+  razon_social_df: string;
+  calle: string;
+  colonia: string;
+  estado: string;
+  municipio: string;
+  codigo_postal_fiscal: string;
+  regimen_fiscal: string;
 }
 
 type ReservationStatus =
@@ -97,16 +111,52 @@ const Loader: React.FC = () => (
 const FacturacionModal: React.FC<{
   selectedReservations: Reservation[];
   onClose: () => void;
-  onConfirm: () => void;
+  onConfirm: (fiscalData: FiscalData) => void;
 }> = ({ selectedReservations, onClose, onConfirm }) => {
+  const [fiscalDataList, setFiscalDataList] = useState<FiscalData[]>([]);
+  const [selectedFiscalData, setSelectedFiscalData] = useState<FiscalData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const totalAmount = selectedReservations.reduce(
     (sum, res) => sum + parseFloat(res.total),
     0
   );
 
+  useEffect(() => {
+    const fetchFiscalData = async () => {
+      try {
+        setLoading(true);
+        const data = await fetchEmpresasDatosFiscales(selectedReservations[0].id_usuario_generador)
+      
+        setFiscalDataList(data);
+        if (data.length > 0) {
+          setSelectedFiscalData(data[0]);
+        }
+      } catch (err) {
+        setError('Error al cargar los datos fiscales');
+        console.error('Error fetching fiscal data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (selectedReservations[0].id_usuario_generador) {
+      fetchFiscalData();
+    }
+  }, [selectedReservations[0].id_usuario_generador]);
+
+  const handleConfirm = () => {
+    if (!selectedFiscalData) {
+      setError('Debes seleccionar unos datos fiscales');
+      return;
+    }
+    onConfirm(selectedFiscalData);
+  };
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full">
+      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
@@ -138,7 +188,7 @@ const FacturacionModal: React.FC<{
               Estás a punto de generar una factura para las siguientes reservaciones:
             </p>
 
-            <div className="max-h-60 overflow-y-auto border rounded-md">
+            <div className="max-h-60 overflow-y-auto border rounded-md mb-6">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
@@ -174,6 +224,62 @@ const FacturacionModal: React.FC<{
               </table>
             </div>
 
+            <div className="mb-6">
+              <h4 className="text-md font-medium text-gray-900 mb-3">
+                Datos Fiscales
+              </h4>
+              
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-500">Cargando datos fiscales...</p>
+                </div>
+              ) : error ? (
+                <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-red-700">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              ) : fiscalDataList.length === 0 ? (
+                <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-yellow-700">No se encontraron datos fiscales registrados.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {fiscalDataList.map((data) => (
+                    data.id_datos_fiscales != null && (<div 
+                      key={data.id_datos_fiscales} 
+                      className={`border rounded-md p-4 cursor-pointer ${selectedFiscalData?.id_datos_fiscales === data.id_datos_fiscales ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+                      onClick={() => setSelectedFiscalData(data)}
+                    >
+                      <div className="flex justify-between">
+                        <h5 className="font-medium text-gray-900">{data.razon_social_df}</h5>
+                        <span className="text-sm text-gray-500">RFC: {data.rfc}</span>
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">Regimen Fiscal: {data.regimen_fiscal}</p>
+                      <p className="text-sm text-gray-600 mt-1">{data.estado}, {data.municipio}, {data.colonia} {data.codigo_postal_fiscal}, {data.calle}</p>
+                    </div>)
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="mt-4 p-4 bg-gray-50 rounded-md">
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium text-gray-700">
@@ -199,10 +305,11 @@ const FacturacionModal: React.FC<{
             </button>
             <button
               type="button"
-              onClick={onConfirm}
-              className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              onClick={handleConfirm}
+              disabled={!selectedFiscalData || loading}
+              className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!selectedFiscalData || loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
-              Confirmar Facturación
+              {loading ? 'Cargando...' : 'Confirmar Facturación'}
             </button>
           </div>
         </div>
@@ -242,6 +349,7 @@ export function ReservationsMain() {
   useEffect(() => {
     setLoading(true);
     fetchReservationsAll((data) => {
+      console.log(data);
       setReservations(data);
       setLoading(false);
     }).catch((err) => {
@@ -603,7 +711,13 @@ export function ReservationsMain() {
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                     >
-                      Viajero
+                      Cliente
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      id Cliente
                     </th>
                     <th
                       scope="col"
@@ -650,7 +764,7 @@ export function ReservationsMain() {
                     </tr>
                   ) : (
                     filteredReservations.map((reservation) => (
-                      <tr
+                      reservation.id_factura == null && (<tr
                         key={reservation.id_servicio}
                         className="hover:bg-gray-50"
                       >
@@ -673,10 +787,10 @@ export function ReservationsMain() {
                           {reservation.codigo_reservacion_hotel}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {reservation.primer_nombre &&
-                            reservation.apellido_paterno
-                            ? `${reservation.primer_nombre} ${reservation.apellido_paterno}`
-                            : "Sin información"}
+                          {reservation.nombre}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {reservation.id_usuario_generador}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                           <div className="flex flex-col">
@@ -748,7 +862,7 @@ export function ReservationsMain() {
                             )}
                           </div>
                         </td>
-                      </tr>
+                      </tr>)
                     ))
                   )}
                 </tbody>
