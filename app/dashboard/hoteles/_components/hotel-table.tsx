@@ -163,8 +163,16 @@ export function HotelTable({ data, onRowClick, onSort, sortField, sortDirection 
                 <td className="px-4 py-2">{quitarAcentos((hotel.Estado || "").toUpperCase())}</td>
                 <td className="px-4 py-2">{quitarAcentos((hotel.Ciudad_Zona || "").toUpperCase())}</td>
                 <td className="px-4 py-2">{getVigenciaLabel(hotel.vigencia_convenio || '')}</td>
-                <td className="px-4 py-2">{hotel.precio_sencilla}</td>
-                <td className="px-4 py-2">{hotel.precio_doble}</td>
+                                <td className="px-4 py-2">
+                  {hotel.precio_sencilla !== undefined && hotel.precio_sencilla !== null && !isNaN(Number(hotel.precio_sencilla))
+                    ? `$ ${Number(hotel.precio_sencilla).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : ""}
+                </td>
+                <td className="px-4 py-2">
+                  {hotel.precio_doble !== undefined && hotel.precio_doble !== null && !isNaN(Number(hotel.precio_doble))
+                    ? `$ ${Number(hotel.precio_doble).toLocaleString("es-MX", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                    : ""}
+                </td>
                 <td className="px-4 py-2">{quitarAcentos(hotel.tipo_pago.toUpperCase())}</td>
                 <td className="px-4 py-2">
                   {isHotelComplete(hotel) === "COMPLETA" ? (
