@@ -279,9 +279,12 @@ interface DeleteTarifaPreferencialProps {
   id_tarifa_preferencial_sencilla?: number | null;
   id_tarifa_preferencial_doble?: number | null;
 }
+
+
 export function quitarAcentos(texto) {
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
+
 
 const estadosMX = [
   "AGUASCALIENTES",
@@ -610,13 +613,18 @@ export function HotelDialog({
       const rawComentarios = hotel.Comentarios || "";
 
 // Validamos si hay al menos un encabezado presente
-const tieneEncabezados = /##\s+[A-Z\s]+?\s+##/.test(rawComentarios);
+const tieneEncabezados = /##\s+[A-ZÁÉÍÓÚÑ\s]+?\s+##/.test(rawComentarios);
 
-// Si tiene encabezados, solo extraemos 'NOTAS GENERALES'
-// Si no hay ningún encabezado, asumimos que todo el texto previo es una nota general heredada
+// Verificamos si existe una sección explícita de 'NOTAS GENERALES'
+const tieneNotasGenerales = /##\s*NOTAS GENERALES\s*##/.test(rawComentarios);
+
+// Si tiene encabezados y hay sección de notas generales, extraerla
+// Si no tiene encabezados, es un comentario antiguo → usar todo
+// Si tiene encabezados pero no tiene 'NOTAS GENERALES', no mostrar nada
 const notasGenerales = tieneEncabezados
-  ? extractNotesSection(rawComentarios, "NOTAS GENERALES")
+  ? (tieneNotasGenerales ? extractNotesSection(rawComentarios, "NOTAS GENERALES") : "")
   : rawComentarios;
+
 
 
       setFormData({
