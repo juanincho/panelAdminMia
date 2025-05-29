@@ -78,7 +78,7 @@ export function isHotelComplete(hotel: FullHotelData): string {
     'cuenta_de_deposito', 'correo', 'telefono',
     'codigopostal', 'colonia',
     'vigencia_convenio','otros_impuestos','Comentarios','comentario_pago',
-    'otros_impuestos_porcentaje'
+    'otros_impuestos_porcentaje','score_operaciones'
   ].map(k => k.toLowerCase());
 
   const entriesToCheck = Object.entries(hotel).filter(([rawKey]) => {

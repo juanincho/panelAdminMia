@@ -176,6 +176,8 @@ export interface FullHotelData {
   salones?: string;
   hay_convenio?: boolean;
   pais?: string;
+  score_operaciones?: number;
+  score_sistemas?: number;
 }
 
 interface HotelRate {
@@ -261,6 +263,8 @@ interface FormData {
   doble: HabitacionData;
   internacional?: boolean;
   pais?: string;
+  score_operaciones?: number;
+  score_sistemas?: number;
 }
 
 interface HotelDialogProps {
@@ -527,6 +531,8 @@ export function HotelDialog({
     },
     internacional: false,
     pais: "",
+    score_operaciones: 0,
+    score_sistemas: 0,
   };
 
   const [formData, setFormData] = useState<FormData>(defaultFormData);
@@ -683,6 +689,8 @@ const notasGenerales = tieneEncabezados
         },
         pais: hotel.pais==="MEXICO" ? "" : hotel.pais,
         internacional:hotel.pais && hotel.pais !== "MEXICO",
+        score_operaciones: hotel.score_operaciones || 0,
+        score_sistemas: hotel.score_sistemas || 0,
       });
 
       // Fetch colonias if we have a valid postal code
@@ -1346,6 +1354,8 @@ const handleInternacionalChange = (checked: boolean) => {
         idSepomex: formData.idSepomex ? Number(formData.idSepomex) : null,
         comentario_pago: formData.comentario_pago || null,
         pais: formData.pais || null,
+        score_operaciones: formData.score_operaciones || 0,
+        score_sistemas: formData.score_sistemas || 0,
       };
 
       console.log("Actualizando hotel:", hotelPayload);
@@ -3480,6 +3490,28 @@ const handleInternacionalChange = (checked: boolean) => {
                     }
                     className="min-h-[100px] font-medium"
                     placeholder="DETALLES DE TRANSPORTACION"
+                  />
+                </div>
+
+                     <div className="flex flex-col space-y-1">
+                  <Label htmlFor="score_operaciones">SCORE </Label>
+                  <Input
+                    type="number"
+                    id="salones"
+                    value={formData.score_operaciones || ""}
+                    onChange={(e) => handleChange("score_operaciones", e.target.value)}
+                    disabled={mode === "view"}
+                    style={
+                      mode === "view"
+                        ? {
+                            color: "black",
+                            opacity: 1,
+                            backgroundColor: "white",
+                          }
+                        : {}
+                    }
+                    className=" font-medium"
+                    placeholder="SCORE DEL PROVEEDOR"
                   />
                 </div>
 
