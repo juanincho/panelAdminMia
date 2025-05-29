@@ -6,6 +6,15 @@ import { DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Calendar, CreditCard } from "lucide-react";
+import {
   fetchCreateReservaFromSolicitud,
   updateReserva,
 } from "@/services/reservas";
@@ -42,6 +51,12 @@ export function ReservationForm({
     parseISO(solicitud.check_out),
     parseISO(solicitud.check_in)
   );
+  const [paymentMethod, setPaymentMethod] = useState({
+    type: "",
+    paymentDate: "",
+    cardLastDigits: "",
+    comments: "",
+  });
   const [form, setForm] = useState<ReservaForm>({
     hotel: {
       name: solicitud.hotel || "",
@@ -696,17 +711,17 @@ export function ReservationForm({
         </TabsContent>
 
         <TabsContent value="pago" className="space-y-4">
-          {/*     <div className="grid gap-4">
+          <div className="grid gap-4">
             <div className="space-y-2">
               <Label>Método de Pago</Label>
               <Select
                 value={paymentMethod.type}
-                onValueChange={(value: "spei" | "credit_card" | "balance") =>
+                onValueChange={(value: "spei" | "credit_card" | "balance" | "") =>
                   setPaymentMethod({ ...paymentMethod, type: value })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecciona un método" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="spei">SPEI</SelectItem>
@@ -770,8 +785,6 @@ export function ReservationForm({
               />
             </div>
           </div>
-           */}
-          <p>Proximamente...</p>
         </TabsContent>
       </Tabs>
 
