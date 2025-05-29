@@ -73,14 +73,11 @@ export function isHotelComplete(hotel: FullHotelData): string {
     'noktosq', 'noktosqq',
     'convenio', 'descripcion',
     'desayunoincluido', 'desayunocomentarios', 'desayunoprecioporpersona',
-    'paxextrapersona',
-    'transportacion', 'transportacioncomentarios',
-    'mascotas', 'salones',
+    'paxextrapersona', 'transportacioncomentarios',
     'urlimagenhotel', 'urlimagenhotelq', 'urlimagenhotelqq',
-    'cuenta_de_deposito', 'correo', 'telefono', 'rfc', 'razon_social',
+    'cuenta_de_deposito', 'correo', 'telefono',
     'codigopostal', 'colonia',
-    'tipo_negociacion', 'disponibilidad_precio',
-    'vigencia_convenio',
+    'vigencia_convenio','otros_impuestos','Comentarios','comentario_pago',
     'otros_impuestos_porcentaje'
   ].map(k => k.toLowerCase());
 
