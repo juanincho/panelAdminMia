@@ -68,7 +68,7 @@ export interface HotelTableProps {
 }
 
 export function isHotelComplete(hotel: FullHotelData): string {
-  const keysToExclude = [
+  const baseKeysToExclude = [
     'id_hotel_excel', 'id_sepomex', 'latitud', 'longitud', 'calificacion',
     'noktosq', 'noktosqq',
     'convenio', 'descripcion',
@@ -77,9 +77,17 @@ export function isHotelComplete(hotel: FullHotelData): string {
     'urlimagenhotel', 'urlimagenhotelq', 'urlimagenhotelqq',
     'cuenta_de_deposito', 'correo', 'telefono',
     'codigopostal', 'colonia',
-    'vigencia_convenio','otros_impuestos','Comentarios','comentario_pago',
-    'otros_impuestos_porcentaje','score_operaciones'
+    'vigencia_convenio', 'otros_impuestos', 'Comentarios', 'comentario_pago',
+    'otros_impuestos_porcentaje', 'score_operaciones'
   ].map(k => k.toLowerCase());
+
+  const keysToExclude = [...baseKeysToExclude];
+
+  // Excluir contacto_convenio solo si comentario_vigencia dice SIN CONVENIO
+  const comentario = hotel.comentario_vigencia?.trim().toUpperCase();
+  if (comentario === "SIN CONVENIO") {
+    keysToExclude.push("contacto_convenio");
+  }
 
   const entriesToCheck = Object.entries(hotel).filter(([rawKey]) => {
     const key = rawKey.toLowerCase();
@@ -96,6 +104,7 @@ export function isHotelComplete(hotel: FullHotelData): string {
 
   return nonNullCount === entriesToCheck.length ? "COMPLETA" : "INCOMPLETA";
 }
+
 
 export function HotelTable({ data, onRowClick, onSort, sortField, sortDirection }: HotelTableProps) {
   const formatDate = (rawDate: string): string => {
