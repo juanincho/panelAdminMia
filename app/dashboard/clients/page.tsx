@@ -182,7 +182,10 @@ function App() {
       </div>
       {selectedItem && (
         <Modal
-          onClose={() => setSelectedItem(null)}
+          onClose={() => {
+            handleFetchClients();
+            setSelectedItem(null);
+          }}
           title="Datos del cliente"
           subtitle="Puedes ver y editar los datos del cliente desde aqui"
         >

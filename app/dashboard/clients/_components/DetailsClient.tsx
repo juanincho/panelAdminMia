@@ -13,8 +13,18 @@ import {
   TextAreaInput,
   TextInput,
 } from "@/components/atom/Input";
+import {
+  fetchEmpresasAgentes,
+  fetchUpdateEmpresasAgentes,
+} from "@/services/agentes";
 
 export function AgentDetailsCard({ agente }: { agente: Agente }) {
+  const [edicion, setEdicion] = useState({
+    empresas: {},
+    viajero: {},
+    agente: {},
+  });
+  const [empresas, setEmpresas] = useState<EmpresaFromAgent[]>([]);
   const [form, setForm] = useState({
     numero_empleado: agente.numero_empleado || "",
     vendedor: agente.vendedor || "",
@@ -45,6 +55,30 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
   //   }
   // };
 
+  const handleSave = async () => {
+    console.log(edicion);
+    fetchUpdateEmpresasAgentes(edicion, (data) => {
+      console.log(data);
+      if (data.details) {
+        console.log(data);
+      }
+      alert("Actualizado correctamente");
+      setEdicion({
+        empresas: {},
+        viajero: {},
+        agente: {},
+      });
+    });
+  };
+
+  useEffect(() => {
+    if (agente.id_agente) {
+      fetchEmpresasAgentes(agente.id_agente, (data) => {
+        setEmpresas(data);
+      });
+    }
+  }, []);
+
   return (
     <Card className="w-full mx-auto border-none shadow-none hover:shadow-none">
       <CardHeader className="flex flex-row items-center gap-2 space-y-0">
@@ -73,18 +107,41 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
             <div className="flex flex-col gap-4 w-full max-w-sm">
               <CheckboxInput
                 checked={form.tiene_credito_consolidado}
-                onChange={(value) =>
+                onChange={(value) => {
+                  setEdicion((prev) => ({
+                    ...prev,
+                    agente: {
+                      ...prev.agente,
+                      [agente.id_agente]: {
+                        ...prev.agente[agente.id_agente],
+                        tiene_credito_consolidado: value ? 1 : 0,
+                      },
+                    },
+                  }));
                   setForm((prev) => ({
                     ...prev,
                     tiene_credito_consolidado: value,
-                  }))
-                }
+                  }));
+                }}
                 label="Activar credito"
               />
               <NumberInput
-                onChange={(value) =>
-                  setForm((prev) => ({ ...prev, monto_credito: Number(value) }))
-                }
+                onChange={(value) => {
+                  setEdicion((prev) => ({
+                    ...prev,
+                    agente: {
+                      ...prev.agente,
+                      [agente.id_agente]: {
+                        ...prev.agente[agente.id_agente],
+                        monto_credito: value,
+                      },
+                    },
+                  }));
+                  setForm((prev) => ({
+                    ...prev,
+                    monto_credito: Number(value),
+                  }));
+                }}
                 disabled={!form.tiene_credito_consolidado}
                 label="Credito aprobado"
                 value={form.monto_credito}
@@ -94,25 +151,55 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <TextInput
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, vendedor: value }))
-              }
+              onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  agente: {
+                    ...prev.agente,
+                    [agente.id_agente]: {
+                      ...prev.agente[agente.id_agente],
+                      vendedor: value,
+                    },
+                  },
+                }));
+                setForm((prev) => ({ ...prev, vendedor: value }));
+              }}
               label="Vendedor"
               value={form.vendedor}
               placeholder=""
             />
             <NumberInput
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, telefono: Number(value) }))
-              }
+              onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  viajero: {
+                    ...prev.viajero,
+                    [agente.id_viajero]: {
+                      ...prev.viajero[agente.id_viajero],
+                      telefono: value,
+                    },
+                  },
+                }));
+                setForm((prev) => ({ ...prev, telefono: Number(value) }));
+              }}
               label="Numero de telefono"
               value={form.telefono}
               placeholder="5535..."
             />
             <DateInput
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, fecha_nacimiento: value }))
-              }
+              onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  viajero: {
+                    ...prev.viajero,
+                    [agente.id_viajero]: {
+                      ...prev.viajero[agente.id_viajero],
+                      fecha_nacimiento: value,
+                    },
+                  },
+                }));
+                setForm((prev) => ({ ...prev, fecha_nacimiento: value }));
+              }}
               label="Fecha de nacimiento"
               value={form.fecha_nacimiento}
             />
@@ -125,17 +212,37 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-2">
             <TextInput
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, numero_empleado: value }))
-              }
+              onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  viajero: {
+                    ...prev.viajero,
+                    [agente.id_viajero]: {
+                      ...prev.viajero[agente.id_viajero],
+                      numero_empleado: value,
+                    },
+                  },
+                }));
+                setForm((prev) => ({ ...prev, numero_empleado: value }));
+              }}
               label="Numero de empleado"
               value={form.numero_empleado}
               placeholder=""
             />
             <TextInput
-              onChange={(value) =>
-                setForm((prev) => ({ ...prev, numero_pasaporte: value }))
-              }
+              onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  viajero: {
+                    ...prev.viajero,
+                    [agente.id_viajero]: {
+                      ...prev.viajero[agente.id_viajero],
+                      numero_pasaporte: value,
+                    },
+                  },
+                }));
+                setForm((prev) => ({ ...prev, numero_pasaporte: value }));
+              }}
               label="Numero de pasaporte"
               value={form.numero_pasaporte}
               placeholder=""
@@ -143,9 +250,19 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
             <Dropdown
               label="Nacionalidad"
               onChange={(value) => {
+                setEdicion((prev) => ({
+                  ...prev,
+                  viajero: {
+                    ...prev.viajero,
+                    [agente.id_viajero]: {
+                      ...prev.viajero[agente.id_viajero],
+                      nacionalidad: value,
+                    },
+                  },
+                }));
                 setForm((prev) => ({
                   ...prev,
-                  estado_reserva: value,
+                  nacionalidad: value,
                 }));
               }}
               options={[
@@ -169,7 +286,19 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
             />
           </div>
           <TextAreaInput
-            onChange={(value) => setForm((prev) => ({ ...prev, notas: value }))}
+            onChange={(value) => {
+              setEdicion((prev) => ({
+                ...prev,
+                agente: {
+                  ...prev.agente,
+                  [agente.id_agente]: {
+                    ...prev.agente[agente.id_agente],
+                    notas: value,
+                  },
+                },
+              }));
+              setForm((prev) => ({ ...prev, notas: value }));
+            }}
             label="Notas"
             value={form.notas}
             placeholder=""
@@ -180,10 +309,10 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
         <div className="border-t pt-4">
           <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
             <Building2 className="h-5 w-5 text-blue-500" />
-            Empresas Asociadas ({agente.empresas.length})
+            Empresas Asociadas ({empresas.length})
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {agente.empresas.map((company) => (
+            {empresas.map((company, id) => (
               <div
                 key={company.id_empresa}
                 className="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
@@ -196,6 +325,55 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
                   <div className="text-xs text-gray-500">
                     ID: {company.id_empresa}
                   </div>
+                  <div className="grid grid-cols-4 gap-2 place-items-center mt-2">
+                    <CheckboxInput
+                      checked={Boolean(company.tiene_credito)}
+                      onChange={(value) => {
+                        setEdicion((prev) => ({
+                          ...prev,
+                          empresas: {
+                            ...prev.empresas,
+                            [company.id_empresa]: {
+                              ...prev.empresas[company.id_empresa],
+                              tiene_credito: value ? 1 : 0,
+                            },
+                          },
+                        }));
+                        setEmpresas((previus) =>
+                          previus.map((current_company, current_id) =>
+                            current_id == id
+                              ? { ...company, tiene_credito: value ? 1 : 0 }
+                              : current_company
+                          )
+                        );
+                      }}
+                      label=""
+                    />
+                    <div className="col-span-3">
+                      <NumberInput
+                        onChange={(value) => {
+                          setEdicion((prev) => ({
+                            ...prev,
+                            empresas: {
+                              ...prev.empresas,
+                              [company.id_empresa]: {
+                                ...prev.empresas[company.id_empresa],
+                                monto_credito: Number(value),
+                              },
+                            },
+                          }));
+                          setEmpresas((previus) =>
+                            previus.map((current_company, current_id) =>
+                              current_id == id
+                                ? { ...company, monto_credito: Number(value) }
+                                : current_company
+                            )
+                          );
+                        }}
+                        value={company.monto_credito}
+                      />
+                    </div>
+                  </div>
                 </div>
               </div>
             ))}
@@ -205,7 +383,10 @@ export function AgentDetailsCard({ agente }: { agente: Agente }) {
         {/* Fecha de Registro */}
         <div className="text-sm text-gray-500 pt-4 border-t flex justify-between">
           <p>Fecha de registro: {formatDate(agente.created_at)}</p>
-          <button className="inline-flex items-center px-4 py-2 border border-sky-100 bg-sky-600 shadow-md text-sm font-medium rounded-md text-gray-100 hover:bg-gray-50 focus:outline-none focus:ring-2">
+          <button
+            onClick={handleSave}
+            className="inline-flex items-center px-4 py-2 border border-sky-100 bg-sky-600 shadow-md text-sm font-medium rounded-md text-gray-100 hover:bg-gray-50 focus:outline-none focus:ring-2"
+          >
             <Save className="w-4 h-4 mr-2" /> Guardar
           </button>
         </div>

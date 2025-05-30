@@ -1,6 +1,49 @@
-import { TypeFilters } from "@/types";
+import { TypeFilters, UpdateRequestBody } from "@/types";
 import { API_KEY, URL } from "../constant";
 
+export const fetchUpdateEmpresasAgentes = async (
+  updateBody: UpdateRequestBody,
+  callback: (data) => void
+) => {
+  const response = await fetch(`${URL}/mia/agentes/`, {
+    method: "PUT",
+    headers: {
+      "x-api-key": API_KEY,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(updateBody),
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Error al cargar los datos");
+  }
+  const data = await response.json();
+  callback(data);
+  return data;
+};
+export const fetchEmpresasAgentes = async (
+  id_agente: string,
+  callback: (data: EmpresaFromAgent[]) => void
+) => {
+  const response = await fetch(`${URL}/mia/agentes/empresas?id=${id_agente}`, {
+    headers: {
+      "x-api-key": API_KEY,
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error("Error al cargar los datos");
+  }
+  const data: EmpresaFromAgent[] = await response.json();
+  callback(data);
+  return data;
+};
 export const fetchAgentes = async (
   filters: TypeFilters,
   defaultFilters: TypeFilters,

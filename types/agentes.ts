@@ -28,3 +28,21 @@ interface Agente {
   notas: string | null;
   vendedor: string | null;
 }
+
+interface EmpresaFromAgent {
+  id_empresa: string;
+  razon_social: string;
+  tipo_persona: "fisica" | "moral";
+  nombre_comercial: string;
+  created_at: string; // o Date si lo vas a convertir
+  updated_at: string; // o Date si lo vas a convertir
+  tiene_credito: 0 | 1;
+  monto_credito: number | null;
+  calle: string | null;
+  colonia: string | null;
+  estado: string | null;
+  municipio: string | null;
+  codigo_postal: string | null;
+  active: 0 | 1;
+  id_agente: string;
+}
