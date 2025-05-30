@@ -42,48 +42,48 @@ export interface TypeFilters {
   statusPagoProveedor?: null | string;
   markup_start?: null | number;
   markup_end?: null | number;
-  telefono: number | null;
-  estado_credito: "Activo" | "Inactivo" | null;
-  vendedor: string | null;
-  notas: string | null;
-  startCantidad: number | null;
-  endCantidad: number | null;
+  telefono?: number | null;
+  estado_credito?: "Activo" | "Inactivo" | null;
+  vendedor?: string | null;
+  notas?: string | null;
+  startCantidad?: number | null;
+  endCantidad?: number | null;
 }
 
 export type Solicitud = {
-  id_servicio: string;
-  estado_reserva: string;
-  created_at: string; // o Date si lo vas a convertir
-  is_credito: boolean | null;
-  id_solicitud: string;
-  id_viajero: string;
-  comments: string;
-  hotel: string;
-  check_in: string; // o Date
-  check_out: string; // o Date
-  room: string;
-  costo_total: string; // puede ser number si lo vas a convertir
-  total: string; // puede ser number si lo vas a convertir
-  status: "pending" | "confirmed" | "cancelled" | string;
-  id_usuario_generador: string;
-  nombre_viajero: string | null;
-  id_booking: string | null;
-  id_hospedaje: string | null; // <--- Propiedad añadida
-  codigo_reservacion_hotel: string | null;
-  id_pago: string | null;
-  metodo_de_pago: string | null;
-  tipo_de_pago: string | null;
-  id_credito: string | null;
-  pendiente_por_cobrar: string | null;
-  monto_a_credito: string | null;
-  id_agente: string;
-  nombre_viajero_completo: string;
-  nombre_agente_completo: string;
-  correo: string;
-  telefono: string | null; // <--- Tipo corregido para permitir null
-  razon_social: string;
-  rfc: string | null;
-  tipo_persona: string;
+  id_servicio?: string;
+  estado_reserva?: string;
+  created_at?: string; // o Date si lo vas a convertir
+  is_credito?: boolean | null;
+  id_solicitud?: string;
+  id_viajero?: string;
+  comments?: string;
+  hotel?: string;
+  check_in?: string; // o Date
+  check_out?: string; // o Date
+  room?: string;
+  costo_total?: string; // puede ser number si lo vas a convertir
+  total?: string; // puede ser number si lo vas a convertir
+  status?: "pending" | "confirmed" | "cancelled" | string;
+  id_usuario_generador?: string;
+  nombre_viajero?: string | null;
+  id_booking?: string | null;
+  id_hospedaje?: string | null; // <--- Propiedad añadida
+  codigo_reservacion_hotel?: string | null;
+  id_pago?: string | null;
+  metodo_de_pago?: string | null;
+  tipo_de_pago?: string | null;
+  id_credito?: string | null;
+  pendiente_por_cobrar?: string | null;
+  monto_a_credito?: string | null;
+  id_agente?: string;
+  nombre_viajero_completo?: string;
+  nombre_agente_completo?: string;
+  correo?: string;
+  telefono?: string | null; // <--- Tipo corregido para permitir null
+  razon_social?: string;
+  rfc?: string | null;
+  tipo_persona?: string;
 };
 export interface Tax {
   id_impuesto: number;

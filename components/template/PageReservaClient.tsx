@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { use, useEffect, useState } from "react";
 import { Building2, Pencil, TriangleAlert } from "lucide-react";
-import { ReservationForm } from "../../../components/structure/FormReservation";
+import { ReservationForm } from "@/components/structure/FormReservation";
 import Filters from "@/components/Filters";
 import { fetchSolicitudes } from "@/services/solicitudes";
 import {
@@ -20,12 +20,13 @@ import Modal from "@/components/structure/Modal";
 import { TypeFilters, Solicitud } from "@/types";
 import { Loader } from "@/components/atom/Loader";
 
-function App() {
+export function PageReservasClientes({ id_agente }) {
   const [allSolicitudes, setAllSolicitudes] = useState<Solicitud[]>([]);
   const [selectedItem, setSelectedItem] = useState<Solicitud | null>(null);
   const [searchTerm, setSearchTerm] = useState<string | null>("");
   const [loading, setLoading] = useState(false);
   const [hoteles, setHoteles] = useState([]);
+  const [createReserva, setCreateReserva] = useState(false);
   const [filters, setFilters] = useState<TypeFilters>(
     defaultFiltersSolicitudes
   );
@@ -132,7 +133,8 @@ function App() {
 
   const handleFetchSolicitudes = () => {
     setLoading(true);
-    fetchSolicitudes(filters, {}, (data) => {
+    console.log(id_agente);
+    fetchSolicitudes(filters, { id_client: id_agente }, (data) => {
       setAllSolicitudes(data);
       setLoading(false);
     });
@@ -169,7 +171,17 @@ function App() {
               registros={formatedSolicitudes}
               renderers={componentes}
               defaultSort={defaultSort}
-            ></Table>
+            >
+              <button
+                onClick={() => {
+                  setCreateReserva(true);
+                }}
+                className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
+              >
+                <Building2 className="w-4 h-4 mr-2" />
+                Crear reserva
+              </button>
+            </Table>
           )}
         </div>
         {selectedItem && (
@@ -179,38 +191,49 @@ function App() {
             }}
             title={
               selectedItem.id_booking == null
-                ? "Se encontro una anomalia"
+                ? "Crear reserva"
                 : "Editar reserva"
             }
             subtitle={
               selectedItem.id_booking == null
-                ? "Revisa el mensaje de error"
+                ? "Modifica los detalles para crear la reserva"
                 : "Modifica los detalles de una reservación anteriormente procesada."
             }
           >
-            {selectedItem.id_booking == null ? (
-              <div className="text-red-500 w-full flex justify-center p-4 max-w-sm">
-                <p className="flex items-center gap-4 border border-red-300 bg-red-100 text-red-700 p-4 rounded-lg text-sm">
-                  <TriangleAlert className="w-12 h-12" />
-                  <span>
-                    {" "}
-                    Esta reservación aun no ha sido procesada. Por favor, crea
-                    la reservación en la parte de solicitudes para poder
-                    editarla.
-                  </span>
-                </p>
-              </div>
-            ) : (
-              <ReservationForm
-                hotels={hoteles}
-                solicitud={selectedItem}
-                onClose={() => {
-                  setSelectedItem(null);
-                  handleFetchSolicitudes();
-                }}
-                edicion={true}
-              />
-            )}
+            <ReservationForm
+              hotels={hoteles}
+              solicitud={selectedItem}
+              onClose={() => {
+                setSelectedItem(null);
+                handleFetchSolicitudes();
+              }}
+              edicion={!!selectedItem.id_booking}
+            />
+          </Modal>
+        )}
+        {createReserva && (
+          <Modal
+            onClose={() => {
+              setSelectedItem(null);
+            }}
+            title="Crea una nueva reserva"
+            subtitle="Agrega los detalles de una nueva reserva"
+          >
+            <ReservationForm
+              solicitud={{
+                hotel: null,
+                check_in: null,
+                check_out: null,
+                id_agente: id_agente,
+              }}
+              hotels={hoteles}
+              onClose={() => {
+                handleFetchSolicitudes();
+                setCreateReserva(false);
+              }}
+              edicion={false}
+              create={true}
+            />
           </Modal>
         )}
       </div>
@@ -229,16 +252,14 @@ const defaultFiltersSolicitudes: TypeFilters = {
   reservante: null,
   reservationStage: null,
   hotel: null,
-  status: "Confirmada",
-  startDate: new Date().toISOString().split("T")[0],
-  endDate: new Date().toISOString().split("T")[0],
+  status: null,
+  startDate: null,
+  endDate: null,
   traveler: null,
   paymentMethod: null,
   id_client: null,
   statusPagoProveedor: null,
-  filterType: "Creacion",
+  filterType: null,
   markup_end: null,
   markup_start: null,
 };
-
-export default App;

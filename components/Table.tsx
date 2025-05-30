@@ -19,6 +19,7 @@ interface TableProps {
   };
   exportButton?: boolean;
   leyenda?: string;
+  children?: React.ReactNode;
 }
 
 export const Table = ({
@@ -27,6 +28,7 @@ export const Table = ({
   defaultSort,
   exportButton = true,
   leyenda = "",
+  children,
 }: TableProps) => {
   const [displayData, setDisplayData] = useState<Registro[]>(registros);
   const [currentSort, setCurrentSort] = useState<{
@@ -69,13 +71,16 @@ export const Table = ({
               {leyenda}
             </span>
           </div>
-          <button
-            onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
-          >
-            <FileDown className="w-4 h-4 mr-2" />
-            Exportar CSV
-          </button>
+          <div className="flex gap-4">
+            {children}
+            <button
+              onClick={() => exportToCSV(displayData, "Solicitudes.csv")}
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2"
+            >
+              <FileDown className="w-4 h-4 mr-2" />
+              Exportar CSV
+            </button>
+          </div>
         </div>
       )}
       <div className="overflow-auto border border-gray-200 rounded-sm w-full">

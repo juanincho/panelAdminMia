@@ -99,8 +99,10 @@ export default function ClientLayout({ tabs = [] }: ClientLayoutProps) {
           }
         >
           {tabs
-            .filter((item) => item.tab == currentTab)
-            .map((item) => item.component)}
+            .filter((item) => item.tab === currentTab) // Usar === para comparación estricta
+            .map((item) => (
+              <div key={item.tab}>{item.component}</div>
+            ))}
         </Suspense>
       </div>
     </div>

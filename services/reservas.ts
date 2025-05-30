@@ -29,6 +29,32 @@ export async function updateReserva(
   }
 }
 
+export async function fetchCreateReservaOperaciones(reserva, callback) {
+  try {
+    const response = await fetch(`${URL}/mia/reservas/operaciones`, {
+      method: "POST",
+      headers: {
+        "x-api-key": API_KEY || "",
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(reserva),
+      cache: "no-store",
+    }).then((res) => res.json());
+
+    console.log(response);
+
+    if (response.error) {
+      throw new Error("Error al cargar los datos en reservas");
+    }
+    callback(response);
+
+    return response;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
 export async function fetchCreateReserva(reserva) {
   try {
     const response = await fetch(`${URL}/mia/reservas/operaciones`, {
@@ -54,6 +80,7 @@ export async function fetchCreateReserva(reserva) {
     throw error;
   }
 }
+
 export async function fetchCreateReservaFromSolicitud(
   reserva: ReservaForm,
   callback: (data: any) => void

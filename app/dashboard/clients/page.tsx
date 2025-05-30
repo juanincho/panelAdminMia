@@ -24,6 +24,7 @@ import Modal from "@/components/structure/Modal";
 import NavContainer from "@/components/structure/NavContainer";
 import { AgentDetailsCard } from "./_components/DetailsClient";
 import { Agent } from "node:http";
+import { PageReservasClientes } from "@/components/template/PageReservaClient";
 
 function App() {
   const [clients, setClient] = useState<Agente[]>([]);
@@ -119,16 +120,20 @@ function App() {
       component: <AgentDetailsCard agente={selectedItem}></AgentDetailsCard>,
     },
     {
+      title: "Reservaciones",
+      tab: "reservations",
+      icon: CalendarDays,
+      component: (
+        <PageReservasClientes
+          id_agente={selectedItem ? selectedItem.id_agente : ""}
+        ></PageReservasClientes>
+      ),
+    },
+    {
       title: "Facturas",
       tab: "invoices",
       icon: Receipt,
       component: <div>Facturas</div>,
-    },
-    {
-      title: "Reservaciones",
-      tab: "reservations",
-      icon: CalendarDays,
-      component: <div>Reservaciones</div>,
     },
     {
       title: "Usuarios",
