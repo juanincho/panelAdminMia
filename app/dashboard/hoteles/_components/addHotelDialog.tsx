@@ -137,6 +137,7 @@ interface FormData {
   precio_persona_extra: string;
   sencilla: HabitacionData;
   doble: HabitacionData;
+  score_operaciones?: number; 
 }
 
 // API Functions
@@ -318,6 +319,7 @@ export function AddHotelDialog({
       precio_persona_extra: "",
       precio_noche_extra: "",
     },
+    score_operaciones: 0, 
   });
 
   // State for CP search and form management
@@ -796,6 +798,7 @@ const handleInternacionalChange = (checked: boolean) => {
           })),
         },
         pais: formData.pais || null,
+        score_operaciones: formData.score_operaciones || 0,
       };
 
       const response = await fetch(
@@ -906,6 +909,7 @@ const handleInternacionalChange = (checked: boolean) => {
         precio_persona_extra: "",
         precio_noche_extra: "",
       },
+      score_operaciones: 0,
     });
     setTarifasPreferenciales([]);
     setSuccessMessage("");
@@ -2129,6 +2133,22 @@ const handleInternacionalChange = (checked: boolean) => {
                   className="min-h-[100px]"
                 />
               </div>
+              <div className="flex flex-col space-y-1">
+                  <Label htmlFor="score_operaciones">SCORE</Label>
+                  <Input
+                    type="number"
+                    id="score_operaciones"
+                    value={formData.score_operaciones ?? ""}
+                    onChange={(e) => handleChange("score_operaciones", e.target.value)}
+                    style={{
+                      color: "black",
+                      opacity: 1,
+                      backgroundColor: "white",
+                    }}
+                    className="font-medium"
+                    placeholder="SCORE DEL PROVEEDOR"
+                  />
+                </div>
 
               <div className="flex flex-col space-y-1">
                 <Label htmlFor="notas_informacion_adicional">

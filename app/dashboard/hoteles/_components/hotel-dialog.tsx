@@ -176,6 +176,8 @@ export interface FullHotelData {
   salones?: string;
   hay_convenio?: boolean;
   pais?: string;
+  score_operaciones?: number;
+  score_sistemas?: number;
 }
 
 interface HotelRate {
@@ -261,6 +263,8 @@ interface FormData {
   doble: HabitacionData;
   internacional?: boolean;
   pais?: string;
+  score_operaciones?: number;
+  score_sistemas?: number;
 }
 
 interface HotelDialogProps {
@@ -275,9 +279,12 @@ interface DeleteTarifaPreferencialProps {
   id_tarifa_preferencial_sencilla?: number | null;
   id_tarifa_preferencial_doble?: number | null;
 }
+
+
 export function quitarAcentos(texto) {
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
+
 
 const estadosMX = [
   "AGUASCALIENTES",
@@ -370,7 +377,7 @@ const buscarCodigoPostal = async (CodigoPostal: string) => {
   try {
     const response = await fetch(
       `https://mianoktos.vercel.app/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
-      //`http://localhost:5173/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`
+      //`http://localhost:3001/v1/sepoMex/buscar-codigo-postal?d_codigo=${CodigoPostal}`,
       {
         method: "GET",
         headers: {
@@ -397,7 +404,7 @@ const buscarAgentes = async (nombre: string, correo: string) => {
       `${URL_VERCEL}agentes/get-agente-id?nombre=${encodeURIComponent(
         nombre
       )}&correo=${encodeURIComponent(correo)}`,
-      //`http://localhost:5173/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
+      //`http://localhost:3001/v1/mia/agentes/get-agente-id?nombre=${encodeURIComponent(nombre)}&correo=${encodeURIComponent(correo)}`
       {
         method: "GET",
         headers: {
@@ -527,6 +534,8 @@ export function HotelDialog({
     },
     internacional: false,
     pais: "",
+    score_operaciones: 0,
+    score_sistemas: 0,
   };
 
   const [formData, setFormData] = useState<FormData>(defaultFormData);
@@ -602,11 +611,21 @@ export function HotelDialog({
         ? extractNotesSection(hotel.Comentarios, "INFORMACION ADICIONAL")
         : "";
       const rawComentarios = hotel.Comentarios || "";
-      const extractedNotasGenerales = extractNotesSection(
-        rawComentarios,
-        "NOTAS GENERALES"
-      );
-      const notasGenerales = extractedNotasGenerales || rawComentarios;
+
+// Validamos si hay al menos un encabezado presente
+const tieneEncabezados = /##\s+[A-ZÁÉÍÓÚÑ\s]+?\s+##/.test(rawComentarios);
+
+// Verificamos si existe una sección explícita de 'NOTAS GENERALES'
+const tieneNotasGenerales = /##\s*NOTAS GENERALES\s*##/.test(rawComentarios);
+
+// Si tiene encabezados y hay sección de notas generales, extraerla
+// Si no tiene encabezados, es un comentario antiguo → usar todo
+// Si tiene encabezados pero no tiene 'NOTAS GENERALES', no mostrar nada
+const notasGenerales = tieneEncabezados
+  ? (tieneNotasGenerales ? extractNotesSection(rawComentarios, "NOTAS GENERALES") : "")
+  : rawComentarios;
+
+
 
       setFormData({
         Id_hotel_excel: hotel.Id_hotel_excel?.toString() || "",
@@ -678,6 +697,8 @@ export function HotelDialog({
         },
         pais: hotel.pais==="MEXICO" ? "" : hotel.pais,
         internacional:hotel.pais && hotel.pais !== "MEXICO",
+        score_operaciones: hotel.score_operaciones || 0,
+        score_sistemas: hotel.score_sistemas || 0,
       });
 
       // Fetch colonias if we have a valid postal code
@@ -743,7 +764,7 @@ export function HotelDialog({
       setIsFetchingRates(true);
       const response = await fetch(
         `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
-        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`
+        //`http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${idHotel}`,
         {
           method: "GET",
           headers: {
@@ -1203,7 +1224,7 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       const response = await fetch(
         `${URL_VERCEL}hoteles/Eliminar-hotel/`,
-        //http://localhost:5173/v1/mia/hoteles/Eliminar-hotel/`
+        //`http://localhost:3001/v1/mia/hoteles/Eliminar-hotel/`,
         {
           method: "PATCH",
           headers: {
@@ -1251,7 +1272,7 @@ const handleInternacionalChange = (checked: boolean) => {
       // First, get the current rates to obtain the IDs
       const response = await fetch(
         `${URL_VERCEL}hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
-        //`http://localhost:5173/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`
+        //`http://localhost:3001/v1/mia/hoteles/Consultar-tarifas-por-hotel/${hotel.id_hotel}`,
         {
           method: "GET",
           headers: {
@@ -1341,6 +1362,8 @@ const handleInternacionalChange = (checked: boolean) => {
         idSepomex: formData.idSepomex ? Number(formData.idSepomex) : null,
         comentario_pago: formData.comentario_pago || null,
         pais: formData.pais || null,
+        score_operaciones: formData.score_operaciones || 0,
+        score_sistemas: formData.score_sistemas || 0,
       };
 
       console.log("Actualizando hotel:", hotelPayload);
@@ -1472,8 +1495,9 @@ const handleInternacionalChange = (checked: boolean) => {
 
       const tarifasPromises = allTarifasPayloads.map((payload) =>
         fetch(
-          `${URL_VERCEL}hoteles/Actualiza-tarifa`,
-          //`http://localhost:5173/v1/mia/hoteles/Actualiza-tarifa`
+          `${URL_VERCEL}hoteles/Actualiza-tarifa`
+          //`http://localhost:3001/v1/mia/hoteles/Actualiza-tarifa`
+          ,
           {
             method: "PATCH",
             headers: {
@@ -1519,8 +1543,9 @@ const handleInternacionalChange = (checked: boolean) => {
     try {
       // Call the endpoint for logical deletion with both IDs
       const response = await fetch(
-        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`,
-        //http://localhost:5173/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        `${URL_VERCEL}hoteles/Eliminar-tarifa-preferencial`
+        //`http://localhost:3001/v1/mia/hoteles/Eliminar-tarifa-preferencial`
+        ,
         {
           method: "PATCH",
           headers: {
@@ -3473,6 +3498,28 @@ const handleInternacionalChange = (checked: boolean) => {
                     }
                     className="min-h-[100px] font-medium"
                     placeholder="DETALLES DE TRANSPORTACION"
+                  />
+                </div>
+
+                     <div className="flex flex-col space-y-1">
+                  <Label htmlFor="score_operaciones">SCORE </Label>
+                  <Input
+                    type="number"
+                    id="salones"
+                    value={formData.score_operaciones || ""}
+                    onChange={(e) => handleChange("score_operaciones", e.target.value)}
+                    disabled={mode === "view"}
+                    style={
+                      mode === "view"
+                        ? {
+                            color: "black",
+                            opacity: 1,
+                            backgroundColor: "white",
+                          }
+                        : {}
+                    }
+                    className=" font-medium"
+                    placeholder="SCORE DEL PROVEEDOR"
                   />
                 </div>
 
