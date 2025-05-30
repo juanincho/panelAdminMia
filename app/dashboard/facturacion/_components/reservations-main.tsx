@@ -5,8 +5,27 @@ import { format } from "date-fns";
 import { da, es } from "date-fns/locale";
 import { fetchReservationsAll } from "@/services/reservas";
 import Link from "next/link";
-import { fetchEmpresasDatosFiscales } from "@/hooks/useFetch";
+import { fetchEmpresasDatosFiscales, fetchSolicitudesItems } from "@/hooks/useFetch";
+import { formatDate } from "@/helpers/utils";
+import useApi from "@/hooks/useApi";
+import { DescargaFactura } from "@/types/billing";
 
+
+const cfdiUseOptions = [
+  { value: "P01", label: "Por definir" },
+  { value: "G01", label: "Adquisición de mercancías" },
+  { value: "G02", label: "Devoluciones, descuentos o bonificaciones" },
+  { value: "G03", label: "Gastos en general" },
+  { value: "P01", label: "Por definir" },
+];
+
+const paymentFormOptions = [
+  { value: "01", label: "Efectivo" },
+  { value: "02", label: "Cheque nominativo" },
+  { value: "03", label: "Transferencia electrónica de fondos" },
+  { value: "04", label: "Tarjeta de crédito" },
+  { value: "28", label: "Tarjeta de débito" },
+];
 // Types
 interface Reservation {
   id_servicio: string;
@@ -32,6 +51,7 @@ interface Reservation {
 }
 
 interface FiscalData {
+  id_empresa: string;
   id_datos_fiscales: number;
   rfc: string;
   razon_social_df: string;
@@ -41,6 +61,37 @@ interface FiscalData {
   municipio: string;
   codigo_postal_fiscal: string;
   regimen_fiscal: string;
+}
+
+// Tipos actualizados
+interface Item {
+  id_item: string;
+  id_catalogo_item: string | null;
+  id_factura: string | null;
+  total: string;
+  subtotal: string;
+  impuestos: string;
+  is_facturado: boolean | null;
+  fecha_uso: string;
+  id_hospedaje: string;
+  created_at: string;
+  updated_at: string;
+  costo_total: string;
+  costo_subtotal: string;
+  costo_impuestos: string;
+  saldo: string;
+  costo_iva: string;
+  // Campos adicionales del join
+  id_booking?: string;
+  id_hotel?: string;
+  nombre_hotel?: string;
+  codigo_reservacion_hotel?: string;
+  tipo_cuarto?: string;
+  noches?: string;
+}
+
+interface ReservationWithItems extends Reservation {
+  items: Item[];
 }
 
 type ReservationStatus =
@@ -108,6 +159,418 @@ const Loader: React.FC = () => (
 );
 
 // Facturación Modal Component
+// const FacturacionModal: React.FC<{
+//   selectedReservations: Reservation[];
+//   onClose: () => void;
+//   onConfirm: (fiscalData: FiscalData) => void;
+// }> = ({ selectedReservations, onClose, onConfirm }) => {
+//   console.log(selectedReservations)
+//   const [fiscalDataList, setFiscalDataList] = useState<FiscalData[]>([]);
+//   const [selectedFiscalData, setSelectedFiscalData] = useState<FiscalData | null>(null);
+//   const [loading, setLoading] = useState(true);
+//   const [error, setError] = useState<string | null>(null);
+//   const [selectedCfdiUse, setSelectedCfdiUse] = useState("G03");
+//   const [selectedPaymentForm, setSelectedPaymentForm] = useState("03");
+//   const { crearCfdi, descargarFactura, mandarCorreo } = useApi();
+//   const [descarga, setDescarga] = useState<DescargaFactura | null>(null);
+//   //placeholder del cfdi
+//   const [cfdi, setCfdi] = useState({
+//     Receiver: {
+//       Name: "",
+//       CfdiUse: "",
+//       Rfc: "",
+//       FiscalRegime: "",
+//       TaxZipCode: "",
+//     },
+//     CfdiType: "",
+//     NameId: "",
+//     Observations: "",
+//     ExpeditionPlace: "",
+//     Serie: null,
+//     Folio: 0,
+//     PaymentForm: "",
+//     PaymentMethod: "",
+//     Exportation: "",
+//     Items: [
+//       {
+//         Quantity: "",
+//         ProductCode: "",
+//         UnitCode: "",
+//         Unit: "",
+//         Description: "",
+//         IdentificationNumber: "",
+//         UnitPrice: "",
+//         Subtotal: "",
+//         TaxObject: "",
+//         Taxes: [
+//           {
+//             Name: "",
+//             Rate: "",
+//             Total: "",
+//             Base: "",
+//             IsRetention: "",
+//             IsFederalTax: "",
+//           },
+//         ],
+//         Total: "",
+//       },
+//     ],
+//   });
+//   //Crear cfdi inicial
+//   useEffect(() => {
+//     const fetchReservation = async () => {
+//       try {
+//         setLoading(true);
+//         const data = await fetchEmpresasDatosFiscales(selectedReservations[0].id_usuario_generador);
+
+//         setFiscalDataList(data);
+//         if (data.length > 0) {
+//           setSelectedFiscalData(data[0]);
+
+//           // Mover la lógica del CFDI aquí después de establecer los datos fiscales
+//           setCfdi({
+//             Receiver: {
+//               Name: data[0].razon_social_df,
+//               CfdiUse: selectedCfdiUse,
+//               Rfc: data[0].rfc,
+//               FiscalRegime: data[0].regimen_fiscal || "612",
+//               TaxZipCode: data[0].codigo_postal_fiscal,
+//             },
+//             CfdiType: "I",
+//             NameId: "1",
+//             ExpeditionPlace: "42501",
+//             Serie: null,
+//             Folio: Math.round(Math.random() * 999999999),
+//             PaymentForm: selectedPaymentForm,
+//             PaymentMethod: "PUE",
+//             Exportation: "01",
+//             Observations: selectedReservations.map(reserva =>
+//               `${reserva.hotel} de ${formatDate(reserva.check_in)} - ${formatDate(reserva.check_out)}`
+//             ).join('; '),
+//             Items: selectedReservations.map(reserva => ({
+//               Quantity: "1",
+//               ProductCode: "90121500",
+//               UnitCode: "E48",
+//               Unit: "Unidad de servicio",
+//               Description: `Servicio de administración y Gestión de Reservas - ${reserva.hotel} de ${formatDate(reserva.check_in)} - ${formatDate(reserva.check_out)}`,
+//               IdentificationNumber: "EDL",
+//               UnitPrice: (parseFloat(reserva.total) * 0.84).toFixed(2),
+//               Subtotal: (parseFloat(reserva.total) * 0.84).toFixed(2),
+//               TaxObject: "02",
+//               Taxes: [
+//                 {
+//                   Name: "IVA",
+//                   Rate: "0.16",
+//                   Total: (parseFloat(reserva.total) * 0.16).toFixed(2),
+//                   Base: parseFloat(reserva.total).toFixed(2),
+//                   IsRetention: "false",
+//                   IsFederalTax: "true",
+//                 },
+//               ],
+//               Total: parseFloat(reserva.total).toFixed(2),
+//             })),
+//           });
+//         } else {
+//           // Manejar caso cuando no hay datos fiscales
+//           setCfdi({
+//             Receiver: {
+//               Name: "",
+//               CfdiUse: selectedCfdiUse,
+//               Rfc: "",
+//               FiscalRegime: "",
+//               TaxZipCode: "",
+//             },
+//             CfdiType: "",
+//             NameId: "",
+//             Observations: "",
+//             ExpeditionPlace: "",
+//             Serie: null,
+//             Folio: 0,
+//             PaymentForm: selectedPaymentForm,
+//             PaymentMethod: "",
+//             Exportation: "",
+//             Items: [
+//               {
+//                 Quantity: "",
+//                 ProductCode: "",
+//                 UnitCode: "",
+//                 Unit: "",
+//                 Description: "",
+//                 IdentificationNumber: "",
+//                 UnitPrice: "",
+//                 Subtotal: "",
+//                 TaxObject: "",
+//                 Taxes: [
+//                   {
+//                     Name: "",
+//                     Rate: "",
+//                     Total: "",
+//                     Base: "",
+//                     IsRetention: "",
+//                     IsFederalTax: "",
+//                   },
+//                 ],
+//                 Total: "",
+//               },
+//             ],
+//           });
+//         }
+//       } catch (err) {
+//         setError('Error al cargar los datos fiscales');
+//         console.error('Error fetching fiscal data:', err);
+//       } finally {
+//         setLoading(false);
+//       }
+//     };
+
+//     if (selectedReservations[0]?.id_usuario_generador) {
+//       fetchReservation();
+//     }
+//   }, [selectedReservations[0]?.id_usuario_generador, selectedCfdiUse, selectedPaymentForm]);
+
+//   const totalAmount = selectedReservations.reduce(
+//     (sum, res) => sum + parseFloat(res.total),
+//     0
+//   );
+
+//   const validateInvoiceData = () => {
+//     console.log(cfdi.Receiver);
+//     console.log(selectedCfdiUse);
+//     console.log(selectedPaymentForm);
+
+//     const missingFields = [];
+
+//     if (!cfdi.Receiver.Rfc) missingFields.push("RFC del receptor");
+//     if (!cfdi.Receiver.TaxZipCode) missingFields.push("código postal del receptor");
+//     if (!selectedCfdiUse) missingFields.push("uso CFDI");
+//     if (!selectedPaymentForm) missingFields.push("forma de pago");
+
+//     if (missingFields.length > 0) {
+//       alert(`Faltan los siguientes campos: ${missingFields.join(", ")}`);
+//       return false;
+//     }
+
+//     return true;
+//   };
+
+//   const handleConfirm = async () => {
+//     if (!selectedFiscalData) {
+//       setError('Debes seleccionar unos datos fiscales');
+//       return;
+//     }
+//     if (validateInvoiceData()) {
+//       const invoiceData = {
+//         ...cfdi,
+//         Receiver: {
+//           ...cfdi.Receiver,
+//           CfdiUse: selectedCfdiUse,
+//         },
+//         PaymentForm: selectedPaymentForm,
+//       };
+//       try {
+//         // Obtener la fecha actual
+//         const now = new Date();
+
+//         // Restar una hora a la fecha actual
+//         now.setHours(now.getHours() - 6);
+
+//         // Formatear la fecha en el formato requerido: "YYYY-MM-DDTHH:mm:ss"
+//         const formattedDate = now.toISOString().split(".")[0];
+
+//         console.log(formattedDate);
+//         // Ejemplo: "2025-04-06T12:10:00"
+
+//         const response = await crearCfdi({
+//           cfdi: {
+//             ...cfdi,
+//             Currency: "MXN", // Add the required currency
+//             OrderNumber: "12345", // Add a placeholder or dynamic order number
+//             Date: formattedDate, // Ensure the date is within the 72-hour limit
+//           },
+//           info_user: {
+//             id_user: selectedReservations[0].id_usuario_generador,
+//             id_solicitud: selectedReservations.map(reserva => reserva.id_solicitud),
+//           },
+//         });
+//         if (response.error) {
+//           throw new Error(response);
+//         }
+//         alert("Se ha generado con exito la factura");
+//         descargarFactura(response.data.Id)
+//           .then((factura) => setDescarga(factura))
+//           .catch((err) => console.error(err));
+//         onConfirm(selectedFiscalData);
+//       } catch (error) {
+//         alert("Ocurrio un error, intenta mas tarde");
+//       }
+//     }
+//     onConfirm(selectedFiscalData);
+//   };
+
+//   return (
+//     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+//       <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+//         <div className="p-6">
+//           <div className="flex justify-between items-center mb-4">
+//             <h3 className="text-lg font-medium text-gray-900">
+//               Facturar Reservaciones
+//             </h3>
+//             <button
+//               onClick={onClose}
+//               className="text-gray-400 hover:text-gray-500"
+//             >
+//               <span className="sr-only">Cerrar</span>
+//               <svg
+//                 className="h-6 w-6"
+//                 fill="none"
+//                 viewBox="0 0 24 24"
+//                 stroke="currentColor"
+//               >
+//                 <path
+//                   strokeLinecap="round"
+//                   strokeLinejoin="round"
+//                   strokeWidth={2}
+//                   d="M6 18L18 6M6 6l12 12"
+//                 />
+//               </svg>
+//             </button>
+//           </div>
+
+//           <div className="mb-6">
+//             <p className="text-sm text-gray-500 mb-4">
+//               Estás a punto de generar una factura para las siguientes reservaciones:
+//             </p>
+
+//             <div className="max-h-60 overflow-y-auto border rounded-md mb-6">
+//               <table className="min-w-full divide-y divide-gray-200">
+//                 <thead className="bg-gray-50">
+//                   <tr>
+//                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Hotel
+//                     </th>
+//                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Código
+//                     </th>
+//                     <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+//                       Total
+//                     </th>
+//                   </tr>
+//                 </thead>
+//                 <tbody className="bg-white divide-y divide-gray-200">
+//                   {selectedReservations.map((reservation) => (
+//                     <tr key={reservation.id_servicio}>
+//                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+//                         {reservation.hotel}
+//                       </td>
+//                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+//                         {reservation.codigo_reservacion_hotel || "N/A"}
+//                       </td>
+//                       <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+//                         {new Intl.NumberFormat("es-MX", {
+//                           style: "currency",
+//                           currency: "MXN",
+//                         }).format(parseFloat(reservation.total))}
+//                       </td>
+//                     </tr>
+//                   ))}
+//                 </tbody>
+//               </table>
+//             </div>
+
+//             <div className="mb-6">
+//               <h4 className="text-md font-medium text-gray-900 mb-3">
+//                 Datos Fiscales
+//               </h4>
+
+//               {loading ? (
+//                 <div className="text-center py-4">
+//                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+//                   <p className="mt-2 text-sm text-gray-500">Cargando datos fiscales...</p>
+//                 </div>
+//               ) : error ? (
+//                 <div className="bg-red-50 border-l-4 border-red-400 p-4 mb-4">
+//                   <div className="flex">
+//                     <div className="flex-shrink-0">
+//                       <svg className="h-5 w-5 text-red-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+//                         <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+//                       </svg>
+//                     </div>
+//                     <div className="ml-3">
+//                       <p className="text-sm text-red-700">{error}</p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ) : fiscalDataList.length === 0 ? (
+//                 <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4">
+//                   <div className="flex">
+//                     <div className="flex-shrink-0">
+//                       <svg className="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+//                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+//                       </svg>
+//                     </div>
+//                     <div className="ml-3">
+//                       <p className="text-sm text-yellow-700">No se encontraron datos fiscales registrados.</p>
+//                     </div>
+//                   </div>
+//                 </div>
+//               ) : (
+//                 <div className="space-y-4">
+//                   {fiscalDataList.map((data) => (
+//                     data.id_datos_fiscales != null && (<div
+//                       key={data.id_datos_fiscales}
+//                       className={`border rounded-md p-4 cursor-pointer ${selectedFiscalData?.id_datos_fiscales === data.id_datos_fiscales ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
+//                       onClick={() => setSelectedFiscalData(data)}
+//                     >
+//                       <div className="flex justify-between">
+//                         <h5 className="font-medium text-gray-900">{data.razon_social_df}</h5>
+//                         <span className="text-sm text-gray-500">RFC: {data.rfc}</span>
+//                       </div>
+//                       <p className="text-sm text-gray-600 mt-1">Regimen Fiscal: {data.regimen_fiscal}</p>
+//                       <p className="text-sm text-gray-600 mt-1">{data.estado}, {data.municipio}, {data.colonia} {data.codigo_postal_fiscal}, {data.calle}</p>
+//                     </div>)
+//                   ))}
+//                 </div>
+//               )}
+//             </div>
+
+//             <div className="mt-4 p-4 bg-gray-50 rounded-md">
+//               <div className="flex justify-between items-center">
+//                 <span className="text-sm font-medium text-gray-700">
+//                   Total a facturar:
+//                 </span>
+//                 <span className="text-lg font-bold text-gray-900">
+//                   {new Intl.NumberFormat("es-MX", {
+//                     style: "currency",
+//                     currency: "MXN",
+//                   }).format(totalAmount)}
+//                 </span>
+//               </div>
+//             </div>
+//           </div>
+
+//           <div className="flex justify-end space-x-3">
+//             <button
+//               type="button"
+//               onClick={onClose}
+//               className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+//             >
+//               Cancelar
+//             </button>
+//             <button
+//               type="button"
+//               onClick={handleConfirm}
+//               disabled={!selectedFiscalData || loading}
+//               className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!selectedFiscalData || loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+//             >
+//               {loading ? 'Cargando...' : 'Confirmar Facturación'}
+//             </button>
+//           </div>
+//         </div>
+//       </div>
+//     </div>
+//   );
+// };
+
 const FacturacionModal: React.FC<{
   selectedReservations: Reservation[];
   onClose: () => void;
@@ -117,118 +580,345 @@ const FacturacionModal: React.FC<{
   const [selectedFiscalData, setSelectedFiscalData] = useState<FiscalData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedCfdiUse, setSelectedCfdiUse] = useState("G03");
+  const [selectedPaymentForm, setSelectedPaymentForm] = useState("03");
+  const { crearCfdi, descargarFactura, mandarCorreo } = useApi();
+  const [descarga, setDescarga] = useState<DescargaFactura | null>(null);
+  const [reservationsWithItems, setReservationsWithItems] = useState<ReservationWithItems[]>([]);
+  const [selectedItems, setSelectedItems] = useState<Item[]>([]);
 
-  const totalAmount = selectedReservations.reduce(
-    (sum, res) => sum + parseFloat(res.total),
-    0
-  );
+  // Estado para el CFDI
+  const [cfdi, setCfdi] = useState({
+    Receiver: {
+      Name: "",
+      CfdiUse: "",
+      Rfc: "",
+      FiscalRegime: "",
+      TaxZipCode: "",
+    },
+    CfdiType: "",
+    NameId: "",
+    Observations: "",
+    ExpeditionPlace: "",
+    Serie: null,
+    Folio: 0,
+    PaymentForm: "",
+    PaymentMethod: "",
+    Exportation: "",
+    Items: [] as any[],
+  });
 
-  useEffect(() => {
-    const fetchFiscalData = async () => {
+  // Cargar items de cada reserva
+ useEffect(() => {
+    let isMounted = true; // Para evitar actualizaciones en componentes desmontados
+
+    const fetchItems = async () => {
       try {
         setLoading(true);
-        const data = await fetchEmpresasDatosFiscales(selectedReservations[0].id_usuario_generador)
-      
-        setFiscalDataList(data);
-        if (data.length > 0) {
-          setSelectedFiscalData(data[0]);
+        setError(null);
+
+        const promises = selectedReservations.map(async (reserva) => {
+          const items = await fetchSolicitudesItems(reserva.id_solicitud);
+          console.log("fdsfsefesfesfsegdffhfghfhg")
+          console.log(items)
+          return {
+            ...reserva,
+            items: Array.isArray(items) ? items : [], // Asegurar que siempre sea un array
+          };
+        });
+
+        const reservationsWithItemsData = await Promise.all(promises);
+        console.log(reservationsWithItemsData)
+
+        if (isMounted) {
+          setReservationsWithItems(reservationsWithItemsData);
+          
+          // Seleccionar todos los items por defecto
+          const allItems = reservationsWithItemsData.flatMap(r => r.items);
+          setSelectedItems(allItems);
         }
       } catch (err) {
-        setError('Error al cargar los datos fiscales');
-        console.error('Error fetching fiscal data:', err);
+        if (isMounted) {
+          setError('Error al cargar los items de las reservaciones');
+          console.error('Error fetching items:', err);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    if (selectedReservations[0].id_usuario_generador) {
+    fetchItems();
+
+    return () => {
+      isMounted = false; // Cleanup para evitar memory leaks
+    };
+  }, [selectedReservations]);
+
+  // Cargar datos fiscales
+  useEffect(() => {
+    if (selectedReservations[0]?.id_usuario_generador) {
+      const fetchFiscalData = async () => {
+        try {
+          const data = await fetchEmpresasDatosFiscales(selectedReservations[0].id_usuario_generador);
+          setFiscalDataList(data);
+          if (data.length > 0) {
+            setSelectedFiscalData(data[0]);
+          }
+        } catch (err) {
+          setError('Error al cargar los datos fiscales');
+          console.error('Error fetching fiscal data:', err);
+        }
+      };
       fetchFiscalData();
     }
-  }, [selectedReservations[0].id_usuario_generador]);
+  }, [selectedReservations[0]?.id_usuario_generador]);
 
-  const handleConfirm = () => {
+  // Actualizar CFDI cuando cambian los items seleccionados o datos fiscales
+  useEffect(() => {
+    if (selectedFiscalData && selectedItems.length > 0) {
+      const itemsForCfdi = selectedItems.map(item => ({
+        Quantity: "1",
+        ProductCode: "90121500",
+        UnitCode: "E48",
+        Unit: "Noche de hospedaje",
+        Description: `Hospedaje en ${item.id_hospedaje} - ${formatDate(item.fecha_uso)}`,
+        IdentificationNumber: "HSP",
+        UnitPrice: (parseFloat(item.total) * 0.84).toFixed(2),
+        Subtotal: (parseFloat(item.total) * 0.84).toFixed(2),
+        TaxObject: "02",
+        Taxes: [
+          {
+            Name: "IVA",
+            Rate: "0.16",
+            Total: (parseFloat(item.total) * 0.16).toFixed(2),
+            Base: parseFloat(item.total).toFixed(2),
+            IsRetention: "false",
+            IsFederalTax: "true",
+          },
+        ],
+        Total: parseFloat(item.total).toFixed(2),
+      }));
+
+      setCfdi({
+        Receiver: {
+          Name: selectedFiscalData.razon_social_df,
+          CfdiUse: selectedCfdiUse,
+          Rfc: selectedFiscalData.rfc,
+          FiscalRegime: selectedFiscalData.regimen_fiscal || "612",
+          TaxZipCode: selectedFiscalData.codigo_postal_fiscal,
+        },
+        CfdiType: "I",
+        NameId: "1",
+        ExpeditionPlace: "42501",
+        Serie: null,
+        Folio: Math.round(Math.random() * 999999999),
+        PaymentForm: selectedPaymentForm,
+        PaymentMethod: "PUE",
+        Exportation: "01",
+        Observations: `Facturación de noches de hospedaje seleccionadas`,
+        Items: itemsForCfdi,
+      });
+    }
+  }, [selectedItems, selectedFiscalData, selectedCfdiUse, selectedPaymentForm]);
+
+  // Manejar selección/deselección de items
+  const toggleItemSelection = (item: Item) => {
+    setSelectedItems(prev => {
+      const isSelected = prev.some(i => i.id_item === item.id_item);
+      if (isSelected) {
+        return prev.filter(i => i.id_item !== item.id_item);
+      } else {
+        return [...prev, item];
+      }
+    });
+  };
+
+  // Calcular total de items seleccionados
+  const totalAmount = selectedItems.reduce(
+    (sum, item) => sum + parseFloat(item.total),
+    0
+  );
+
+  const validateInvoiceData = () => {
+    if (selectedItems.length === 0) {
+      alert("Debes seleccionar al menos un item para facturar");
+      return false;
+    }
+
+    const missingFields = [];
+    if (!cfdi.Receiver.Rfc) missingFields.push("RFC del receptor");
+    if (!cfdi.Receiver.TaxZipCode) missingFields.push("código postal del receptor");
+    if (!selectedCfdiUse) missingFields.push("uso CFDI");
+    if (!selectedPaymentForm) missingFields.push("forma de pago");
+
+    if (missingFields.length > 0) {
+      alert(`Faltan los siguientes campos: ${missingFields.join(", ")}`);
+      return false;
+    }
+
+    return true;
+  };
+
+  const handleConfirm = async () => {
     if (!selectedFiscalData) {
       setError('Debes seleccionar unos datos fiscales');
       return;
     }
-    onConfirm(selectedFiscalData);
+
+    if (validateInvoiceData()) {
+      try {
+        const now = new Date();
+        now.setHours(now.getHours() - 6);
+        const formattedDate = now.toISOString().split(".")[0];
+
+        const response = await crearCfdi({
+          cfdi: {
+            ...cfdi,
+            Currency: "MXN",
+            OrderNumber: "12345",
+            Date: formattedDate,
+          },
+          info_user: {
+            id_user: selectedReservations[0].id_usuario_generador,
+            id_solicitud: selectedReservations.map(reserva => reserva.id_solicitud),
+            id_items: selectedItems.map(item => item.id_item),
+          },
+        });
+
+        if (response.error) {
+          throw new Error(response);
+        }
+
+        alert("Se ha generado con éxito la factura");
+        descargarFactura(response.data.Id)
+          .then((factura) => setDescarga(factura))
+          .catch((err) => console.error(err));
+        onConfirm(selectedFiscalData);
+      } catch (error) {
+        alert("Ocurrió un error, intenta más tarde");
+      }
+    }
   };
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-medium text-gray-900">
-              Facturar Reservaciones
+              Facturar Items de Reservaciones
             </h3>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-500"
-            >
+            <button onClick={onClose} className="text-gray-400 hover:text-gray-500">
               <span className="sr-only">Cerrar</span>
-              <svg
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
+              <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
           </div>
 
           <div className="mb-6">
             <p className="text-sm text-gray-500 mb-4">
-              Estás a punto de generar una factura para las siguientes reservaciones:
+              Selecciona los items (noches) que deseas incluir en la factura:
             </p>
 
-            <div className="max-h-60 overflow-y-auto border rounded-md mb-6">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Hotel
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Código
-                    </th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {selectedReservations.map((reservation) => (
-                    <tr key={reservation.id_servicio}>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
-                        {reservation.hotel}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {reservation.codigo_reservacion_hotel || "N/A"}
-                      </td>
-                      <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
-                        {new Intl.NumberFormat("es-MX", {
+            <div className="max-h-96 overflow-y-auto border rounded-md mb-6">
+              {loading ? (
+                <div className="text-center py-4">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="mt-2 text-sm text-gray-500">Cargando items...</p>
+                </div>
+              ) : (
+                reservationsWithItems.map((reserva) => (
+                  <div key={reserva.id_solicitud} className="border-b last:border-b-0">
+                    <div className="bg-gray-50 p-3 sticky top-0 z-10">
+                      <h4 className="font-medium">
+                        {reserva.hotel} - {formatDate(reserva.check_in)} a {formatDate(reserva.check_out)}
+                      </h4>
+                      <p className="text-sm text-gray-600">
+                        Código: {reserva.codigo_reservacion_hotel || "N/A"} |
+                        Total reserva: {new Intl.NumberFormat("es-MX", {
                           style: "currency",
                           currency: "MXN",
-                        }).format(parseFloat(reservation.total))}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        }).format(parseFloat(reserva.total))}
+                      </p>
+                    </div>
+
+                    <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gray-100">
+                        <tr>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Seleccionar
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Fecha
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Subtotal
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Impuestos
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Total
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="bg-white divide-y divide-gray-200">
+                        {reserva.items.map((item) => {
+                          const isSelected = selectedItems.some(i => i.id_item === item.id_item);
+                          return (
+                            <tr
+                              key={item.id_item}
+                              className={`${isSelected ? 'bg-blue-50' : ''} hover:bg-gray-50 cursor-pointer`}
+                              onClick={() => toggleItemSelection(item)}
+                            >
+                              <td className="px-4 py-2 whitespace-nowrap text-center">
+                                <input
+                                  type="checkbox"
+                                  checked={isSelected}
+                                  onChange={() => toggleItemSelection(item)}
+                                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-900">
+                                {formatDate(item.fecha_uso)}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {new Intl.NumberFormat("es-MX", {
+                                  style: "currency",
+                                  currency: "MXN",
+                                }).format(parseFloat(item.subtotal))}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {new Intl.NumberFormat("es-MX", {
+                                  style: "currency",
+                                  currency: "MXN",
+                                }).format(parseFloat(item.impuestos))}
+                              </td>
+                              <td className="px-4 py-2 whitespace-nowrap text-sm text-gray-500">
+                                {new Intl.NumberFormat("es-MX", {
+                                  style: "currency",
+                                  currency: "MXN",
+                                }).format(parseFloat(item.total))}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                ))
+              )}
             </div>
 
             <div className="mb-6">
               <h4 className="text-md font-medium text-gray-900 mb-3">
                 Datos Fiscales
               </h4>
-              
+
               {loading ? (
                 <div className="text-center py-4">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
@@ -263,8 +953,8 @@ const FacturacionModal: React.FC<{
               ) : (
                 <div className="space-y-4">
                   {fiscalDataList.map((data) => (
-                    data.id_datos_fiscales != null && (<div 
-                      key={data.id_datos_fiscales} 
+                    data.id_datos_fiscales != null && (<div
+                      key={data.id_datos_fiscales}
                       className={`border rounded-md p-4 cursor-pointer ${selectedFiscalData?.id_datos_fiscales === data.id_datos_fiscales ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}
                       onClick={() => setSelectedFiscalData(data)}
                     >
@@ -293,6 +983,7 @@ const FacturacionModal: React.FC<{
                 </span>
               </div>
             </div>
+
           </div>
 
           <div className="flex justify-end space-x-3">
@@ -306,8 +997,8 @@ const FacturacionModal: React.FC<{
             <button
               type="button"
               onClick={handleConfirm}
-              disabled={!selectedFiscalData || loading}
-              className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!selectedFiscalData || loading ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
+              disabled={!selectedFiscalData || loading || selectedItems.length === 0}
+              className={`px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${!selectedFiscalData || loading || selectedItems.length === 0 ? 'bg-blue-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'} focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
             >
               {loading ? 'Cargando...' : 'Confirmar Facturación'}
             </button>
@@ -317,6 +1008,8 @@ const FacturacionModal: React.FC<{
     </div>
   );
 };
+
+
 
 export function ReservationsMain() {
   const [reservations, setReservations] = useState<Reservation[]>([]);

@@ -26,6 +26,7 @@ export const createAgente = async (data: any, id: string) => {
         "Content-Type": "application/json",
         ...AUTH,
       },
+      cache: "no-store",
       body: JSON.stringify({
         name: data.primer_nombre,
         secondName: data.segundo_nombre,
@@ -564,6 +565,31 @@ export const getEmpresasDatosFiscales = async (agent_id: string) => {
       }
     );
     const json = await response.json();
+    console.log(json);
+    return json;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const getSolicitudesItems = async (id_solicitud: string) => {
+  try {
+    console.log("En proceso de obtener viajeros");
+    const response = await fetch(
+      `${URL}/v1/mia/solicitud/items?id_solicitud=${encodeURIComponent(
+        id_solicitud
+      )}`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          ...AUTH,
+        },
+        cache: "no-store",
+      }
+    );
+    const json = await response.json();
+    console.log("sfsasdsa")
     console.log(json);
     return json;
   } catch (error) {

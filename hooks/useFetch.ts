@@ -1,4 +1,4 @@
-import { getCompaniesAgent, getCompaniesAgentViajeros, getEmpresasDatosFiscales, getPaymentMethods, getCreditAgent, getPagosAgente, getHoteles, getPendientesAgente } from "./useDatabase";
+import { getCompaniesAgent, getCompaniesAgentViajeros, getEmpresasDatosFiscales, getPaymentMethods, getCreditAgent, getPagosAgente, getHoteles, getPendientesAgente, getSolicitudesItems } from "./useDatabase";
 
 export const fetchCompaniesAgent = async (user_id:string) => {
   try {
@@ -24,6 +24,16 @@ export const fetchEmpresasDatosFiscales = async (user_id:string) => {
   try {
     const employeesData = await getEmpresasDatosFiscales(user_id);
     return employeesData.data || [];
+  } catch (error) {
+    console.error("Error fetching employees:", error);
+    return [];
+  }
+};
+
+export const fetchSolicitudesItems = async (id_solicitud:string) => {
+  try {
+    const employeesData = await getSolicitudesItems(id_solicitud);
+    return employeesData|| [];
   } catch (error) {
     console.error("Error fetching employees:", error);
     return [];
