@@ -59,15 +59,37 @@ export const useApi = () => {
     return json;
   };
 
-  const crearCfdi = async (cfdi: CfdiInvoice) => {
-    const response = await fetch(`${URL}/mia/factura/combinada`, {
-      method: "POST",
-      headers: HEADERS_API,
-      body: JSON.stringify(cfdi),
-    });
-    const json = await response.json();
-    console.log(json);
-    return json;
+  const crearCfdi = async (cfdi: CfdiInvoice, info_user: {
+    id_user: string;
+    id_solicitud: string[];
+    id_items: string[];
+  }) => {
+    try {
+      const response = await fetch(`${URL}/mia/factura/combinada`, {
+        method: "POST",
+        headers: HEADERS_API,
+        body: JSON.stringify({ cfdi, info_user }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const json = await response.json();
+
+      if (json.error) {
+        throw new Error(json.error);
+      }
+
+      return json;
+    } catch (error) {
+      console.error('Error en crearCfdi:', error);
+      throw {
+        error: 'Error al crear CFDI',
+        details: error.message,
+        originalError: error
+      };
+    }
   };
 
   const obtenerClientes = async () =>

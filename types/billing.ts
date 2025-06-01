@@ -29,18 +29,18 @@ export interface ClientInvoice {
 }
 
 export interface CfdiInvoice {
-  NameId: string; //"34";
-  Folio: string; //"203";
+  NameId: string; // "1"
+  Folio: number; // Cambiado a number ya que generas un número aleatorio
   Serie: null;
-  CfdiType: string; //"I";
-  Currency: string; //"MXN";
-  PaymentForm: string; //"03";
-  PaymentMethod: string; //"PUE";
-  OrderNumber: string; //"RES189123";
-  ExpeditionPlace: string; //"42501";
-  Date: string; //"2025-02-24T12:10:00";
-  Observations: string; //"";
-  Exportation: string; //"01";
+  CfdiType: string; // "I"
+  Currency: string; // "MXN"
+  PaymentForm: string; // "03"
+  PaymentMethod: string; // "PUE"
+  OrderNumber: string; // "12345"
+  ExpeditionPlace: string; // "42501"
+  Date: string; // Formato ISO
+  Observations: string;
+  Exportation: string; // "01"
   Receiver: ClientInvoice;
   Items: ProductInvoice[];
 }
